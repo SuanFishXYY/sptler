@@ -100,7 +100,7 @@ def score_sage(topic: str, sage: str) -> tuple[float, list[str]]:
 
 
 def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
-    """返回 (track, reason)。fast=快速轨，formal=正式轨，followup=续议轨。"""
+    """返回 (track, reason)。verdict=单圣人裁决，fast=快速轨，formal=正式轨，followup=续议轨。"""
     t = (topic or "").lower()
     tr = (track or "auto").lower()
     if tr in ("fast", "快速", "quick"):
@@ -109,8 +109,11 @@ def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
         return "formal", "用户指定正式轨"
     if tr in ("followup", "续议"):
         return "followup", "用户指定续议轨"
+    if tr in ("verdict", "裁决", "单圣人"):
+        return "verdict", "用户指定单圣人裁决"
     formal_hits = [k for k in STRATEGIC_KWS if k in topic]
     chief_domains = sum(any(k in t for k in SAGES[s]["keywords"].split()) for s in CHIEFS)
+    medium_markers = sum(k in t for k in MEDIUM_MARKERS)
     if formal_hits:
         return "formal", f"命中正式轨信号：{'、'.join(formal_hits[:3])}"
     if chief_domains >= 2:
@@ -118,12 +121,17 @@ def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
     medium_markers = sum(k in t for k in MEDIUM_MARKERS)
     if medium_markers >= 2:
         return "fast", "中等复杂但未触发正式轨，先走快速轨"
+    # 单一明确、单领域、无战略信号 → 单圣人裁决（最轻量，3 句话出结论）
+    if medium_markers == 0 and chief_domains <= 1:
+        return "verdict", "单一明确问题，单圣人裁决"
     return "fast", "单一明确议题，默认快速轨"
 
 
 def mode_size(mode: str, topic: str, track: str = "auto") -> tuple[int, str, str, str]:
     resolved_track, track_reason = decide_track(topic, track)
     mode = (mode or "dynamic").lower()
+    if resolved_track == "verdict":
+        return 1, "单圣人裁决", resolved_track, track_reason
     if resolved_track == "followup":
         return int(TRACK_RULES.get("followup_size", 3)), "续议轨", resolved_track, track_reason
     if mode in ("fast", "quick", "快速", "快速会议"):
@@ -179,10 +187,15 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
                 if name in SAGES:
                     add(name, f"领域必到：{domain}", 50, parts)
 
-    # 至少核心
+    # 至少核心（verdict 单圣人裁决不强制核心）
     core_scores = [(score_sage(topic, c), c) for c in CORE]
     core_scores.sort(key=lambda x: x[0][0], reverse=True)
-    min_core = 2 if ("复杂" in resolved_mode or any(k in topic for k in STRATEGIC_KWS)) else 1
+    if resolved_track == "verdict":
+        min_core = 0
+    elif "复杂" in resolved_mode or any(k in topic for k in STRATEGIC_KWS):
+        min_core = 2
+    else:
+        min_core = 1
     current_core = sum(1 for n in roster if n in CORE)
     for (sc_hits, c) in core_scores:
         if current_core >= min_core:

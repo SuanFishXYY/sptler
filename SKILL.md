@@ -81,15 +81,29 @@ Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one
 
 ## Track system (双轨制)
 
-sptler uses two main tracks plus a follow-up track:
+sptler auto-sizes the deliberation to the question. Four tracks, lightest first:
 
-- **Fast track (快速轨)** — default for daily/single-domain questions. 3–5 sages, one combined plan, short weighted vote, mandatory result md. `/sptler!` always uses fast-track briefing unless the prompt explicitly says formal.
+- **Verdict track (单圣人裁决)** — for single, clear, single-domain questions ("这个权利要求边界怎么收"). 1 sage + 邹蕴. The sage gives a 3-sentence judgment (call / why / risk). No brainstorm, no vote, no four-law gate. Only update memory + deliverable. This is the daily-productivity mode — most questions land here. Auto-triggered by `route_sages.py --track auto` when no formal signal, ≤1 committee domain, no medium markers.
+- **Fast track (快速轨)** — for medium multi-domain questions. 3–5 sages, one combined plan, short weighted vote, mandatory result md. `/sptler!` forces fast-track briefing.
 - **Formal track (正式轨)** — for strategic/cross-domain/irreversible decisions. 7–9 sages, full six-stage deliberation, complete four-law check, formal resolution, meeting index, memories.
 - **Follow-up track (续议轨)** — after a meeting closes. Minimal召集, ≤8 bullets, uses `continue_meeting.py`, exports followup/amendment/revote only when needed.
 
-Use fast track unless formal triggers appear: 战略、预算、制度、不可逆、组织变更、跨多个委员会领域、对外客户重大承诺、重投票、修正原决议, or user explicitly requests 复杂/正式. Use `route_sages.py --track auto` to make this deterministic.
+Use `route_sages.py --track auto` to make the track decision deterministic. The lighter the track, the lower the ceremony tax — this is how sptler stays productive for daily work instead of only suiting big decisions.
 
 ## The six deliberation phases (run all, in order)
+
+### Special lightest path — Verdict mode (auto, single-sage)
+
+If `route_sages.py --track auto` returns `verdict` (single clear single-domain question), skip the full ceremony:
+
+1. No Phase 0 AskUser, no Phase 0.5 invite (unless user named a sage).
+2. Summon the 1 matched sage (`summon_sage.py --sage <name> --topic`) + 邹蕴 hosts.
+3. The sage gives a **3-sentence judgment**: the call / why / one risk. `[姓名]` prefix, cite memory if relevant.
+4. No brainstorm, no four-law gate, no weighted vote. 邹蕴 closes in 1 line.
+5. Produce the deliverable (Template 7) if applicable + record memory + index. No result md ceremony needed — the deliverable IS the output.
+6. End with `议会到此结束。`
+
+This is the mode most daily questions should hit — it's what makes sptler faster than plain Claude for "just give me the expert take".
 
 ### Special fast path — Briefing mode (`/sptler!`)
 
@@ -131,7 +145,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Routing rules (track keywords, sizes, weights, domain→must-include, fallback order) are configurable in `references/routing_rules.json` — edit that file to tune routing without touching Python. Use the script's track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
 3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. **Inject full saint context**: for each attendee, prefer `python scripts/summon_sage.py --sage <name>` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS in one block. If unavailable, fall back to `read_soul.py` + `read_memory.py`. The SOUL file governs persona and boundaries; memory provides past experience; relations provide collaboration/friction context. Sages with no memory yet are noted as 新晋圣人.
+5. **Inject full saint context**: for each attendee, prefer `python scripts/summon_sage.py --sage <name> --topic "<topic>"` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS, plus relevant past experiences matched to the current topic (the "magic moment" material). If unavailable, fall back to `read_soul.py` + `read_memory.py`. The SOUL file governs persona and boundaries; memory provides past experience; relations provide collaboration/friction context. Sages with no memory yet are noted as 新晋圣人.
 6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 
@@ -139,7 +153,9 @@ Right after mode selection, before routing, ask the user whether they want to in
 
 > **Absolutely no negation, criticism, or judgment of any idea in this phase.** All judgment is deferred to voting.
 
-Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3 ideas**, the wilder the better. Strictly follow:
+Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3 ideas**, the wilder the better.
+
+**Memory citation is mandatory (the magic moment):** if `summon_sage --topic` returned 相关记忆 for a sage, that sage's FIRST utterance must explicitly reference the prior experience — e.g. `[王升] 上次我们议过类似的 OA 流水线(2026-06-15),当时张鑫否决了全自动方案,这次我建议直接从半自动起步……`. This is what makes the parliament visibly smarter than a fresh Claude session. Sages with no relevant memory speak as 新晋圣人. Strictly follow:
 
 1. **自由思考** — liberated thinking; even absurd ideas recorded as-is.
 2. **延迟评判** — no one may negate another's idea. If 邹蕴 detects premature judging, she intervenes and logs "judgment deferred."
@@ -174,6 +190,13 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 **5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
 **5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
+
+**5d-bis. Produce the deliverable (parliament is the means, the deliverable is the end).** Classify the topic and write an additional deliverable file per `references/templates.md` Template 7, so the user gets the actual artifact they would have written anyway — not just a document about the meeting:
+- 权利要求/claim/专利撰写 → 权利要求骨架 `deliverable-claim-*` (主笔王升, 卢若雨精修)
+- 架构/选型/技术方案/是否用X → ADR `deliverable-adr-*`
+- 流程/SOP/规范/操作步骤 → SOP `deliverable-sop-*`
+- 无明确交付物类型 → skip (result md 即交付物)
+The deliverable is the headline output; the result md is the decision record behind it.
 
 **5e. Index the meeting and update relations.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. Then run `python scripts/build_relations.py` so saint RELATIONS.json reflects co-attendance history. This enables later `展开行动项3` across sessions and lets saints remember collaboration patterns.
 
@@ -218,6 +241,7 @@ After a parliament has closed, the user may ask for a focused continuation inste
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
 11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
 12. **No open-ended closers** — never end a turn with "还有什么需要帮助的吗 / 要不要我... / 还有其他问题吗" or similar. The parliament either ends at收口, or waits at a defined checkpoint. Nothing in between.
+13. **Cite memory on entry (magic moment)** — any sage with relevant past experience (from `summon_sage --topic`) must open Phase 2 by referencing it; this is the single most important behavior for making users feel the system has accumulated value. A sage that ignores its own memory is just a fresh Claude — defeats the purpose.
 
 ## Host behavior (邹蕴)
 
