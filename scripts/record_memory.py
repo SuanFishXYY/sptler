@@ -31,8 +31,9 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-# 记忆目录：技能根目录下的 memories/
-MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+# 记忆目录：默认技能根目录下的 memories/；可用 --mem-dir 覆盖
+DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+MEM_DIR = DEFAULT_MEM_DIR
 
 
 def ensure_dir():
@@ -41,6 +42,10 @@ def ensure_dir():
 
 def memory_path(sage: str) -> Path:
     return MEM_DIR / f"{sage}.json"
+
+
+def auto_meeting_id() -> str:
+    return "SPTLER-" + datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def _fresh_profile() -> dict:
@@ -226,14 +231,24 @@ def main():
     ap.add_argument("--reason", default="", help="投票理由")
     ap.add_argument("--ideas", default="", help="本次设想（分号分隔）")
     ap.add_argument("--recommendation", default="", help="最终建议")
-    ap.add_argument("--batch", help="批量 JSON 文件路径（覆盖单条参数）")
+    ap.add_argument("--batch", help="批量 JSON 文件路径（覆盖单条参数）；传 - 表示从 stdin 读取")
+    ap.add_argument("--mem-dir", help="覆盖记忆目录（默认：技能目录/memories）")
     args = ap.parse_args()
+
+    global MEM_DIR
+    if args.mem_dir:
+        MEM_DIR = Path(args.mem_dir).expanduser().resolve()
 
     ensure_dir()
 
     if args.batch:
         try:
-            data = json.loads(Path(args.batch).read_text(encoding="utf-8"))
+            if args.batch == "-":
+                # Windows/Git Bash 下 sys.stdin 文本解码可能使用本地编码，导致中文乱码；强制按 UTF-8 读取 bytes。
+                raw = sys.stdin.buffer.read().decode("utf-8-sig")
+                data = json.loads(raw)
+            else:
+                data = json.loads(Path(args.batch).read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as e:
             print(f"❌ 无法读取 batch 文件 {args.batch}：{e}", file=sys.stderr)
             sys.exit(1)
@@ -242,6 +257,8 @@ def main():
             sys.exit(1)
         # null 值统一转空串（避免 .get(k,"") 在值为 null 时返回 None）
         base = {k: (data.get(k) or "") for k in ("topic", "meeting_id", "mode", "verdict")}
+        if not base["meeting_id"]:
+            base["meeting_id"] = auto_meeting_id()
         attendees = data.get("attendees") or []
         if not isinstance(attendees, list):
             attendees = []
@@ -274,7 +291,7 @@ def main():
 
     exp = {
         "topic": args.topic or "",
-        "meeting_id": args.meeting_id or "",
+        "meeting_id": args.meeting_id or auto_meeting_id(),
         "mode": args.mode,
         "verdict": args.verdict,
         "stance": args.stance,

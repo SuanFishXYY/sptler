@@ -1,6 +1,6 @@
 ---
 name: sptler
-description: 算鱼真人议会(Suanfish Parliament)多专家议事技能。把22位圣人专家班子运转起来：用户提问后先AskUser选择会议模式(快速/复杂/动态)，再自动路由匹配专家入会，按头脑风暴四原则发散、组合改善、四律否决闸、加权投票(每人权重不同)，最终强制导出决议结果md。议长由邹蕴(决策圣)固定担任并主持，三大专业委员会首席为孙高德、蔡悦、黄嵩泉。显式触发：输入 /sptler 或 /算鱼议会 或 /议会 后跟问题。适用于需要多专家视角、结构化决策、可追溯方案的技术、专利、AI产品化、系统架构、流程治理、客户价值等议题。
+description: 算鱼真人议会(Suanfish Parliament)多专家议事技能。用户提问后先选会议模式(快速/复杂/动态)，也支持 /sptler! 免提问简报模式；自动路由22位圣人专家入会，按头脑风暴四原则发散、组合改善、四律否决闸、加权投票，最终强制导出决议结果md。议长由邹蕴固定主持，委员会首席为孙高德、蔡悦、黄嵩泉。显式触发：/sptler、/sptler!、/算鱼议会、/议会、/开会、/议一议。适用于技术、专利、AI产品化、架构、流程治理、客户价值等多专家决策议题。
 license: MIT
 metadata:
   version: 1.2.0
@@ -50,7 +50,9 @@ Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, 
 
 ## Trigger and input
 
-- Triggers: `/sptler {question}`, `/算鱼议会 {question}`, `/议会 {question}`.
+- Standard triggers: `/sptler {question}`, `/算鱼议会 {question}`, `/议会 {question}`, `/开会 {question}`, `/议一议 {question}`.
+- **Briefing trigger**: `/sptler! {question}` or `/议会! {question}` means **免提问简报模式** — skip Phase 0 mode selection, Phase 0.5 invite check, roster confirmation, and export-option AskUser. 邹蕴自动判定为动态简报规格（3–5人），single-turn deliver, write only the mandatory result md, and stop.
+- Memory query trigger: `/sptler 记忆 {圣人名}` or `/sptler memory {圣人名}` means do not convene a parliament; run/read `scripts/list_memories.py --sage <name>` (or `read_memory.py --sage <name>`) and answer with that sage's memory summary.
 - If the user invokes `/sptler` with no question, use AskUser to ask what the parliament should deliberate.
 - Topics may be: technology selection, patent drafting strategy, AI productization path, system architecture, process governance, customer value judgment — any decision needing multiple expert perspectives.
 
@@ -58,13 +60,23 @@ Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, 
 
 The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
 
-1. **Only three AskUser checkpoints** — Phase 0 (mode), Phase 0.5 (invite), Phase 5c (export options). At every other phase the agent proceeds without stopping to ask the user anything. Never invent extra AskUser prompts mid-flow.
+1. **Only three AskUser checkpoints** — Phase 0 (mode), Phase 0.5 (invite), Phase 5c (export options). At every other phase the agent proceeds without stopping to ask the user anything. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` uses zero AskUser checkpoints**: auto-route, write result md, stop.
 2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 + 0.5 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits.
 3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
 
 Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one sentence; final recommendation = one sentence. A full quick-meeting should fit in a short response; a full complex-meeting should be thorough but not bloated.
 
 ## The six deliberation phases (run all, in order)
+
+### Special fast path — Briefing mode (`/sptler!`)
+
+If the trigger contains `!` (`/sptler!` or `/议会!`), bypass the normal checkpoints:
+
+1. No Phase 0 AskUser, no Phase 0.5 invite AskUser, no roster confirmation, no export-options AskUser.
+2. 邹蕴 auto-selects **动态简报规格**: 3–5 attendees, at least 1 core, relevant committee chief if applicable; no user invites unless names were already included in the initial prompt.
+3. Use concise output only: each attendee gives 1 idea, one combined plan, one weighted vote line, one final recommendation.
+4. Record memories and write only the mandatory result md (no optional summary/transcript unless user explicitly asked in the initial prompt).
+5. End with `议会到此结束。` and stop.
 
 ### Phase 0 — Mode selection (AskUser)
 
@@ -135,7 +147,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
 
-**5b. Record sage memories.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, where the batch json contains the topic/meeting_id/mode/verdict and an `attendees` array (each: sage, stance, weight, reason, ideas [semicolon-sep], recommendation). This appends each attendee's experience and updates their evolving profile (specialty focus, stance tendencies, risk posture, recurring views). This is mandatory — it is how sages accumulate memory and grow.
+**5b. Record sage memories.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, or pipe JSON directly with `python scripts/record_memory.py --batch -`. The batch json contains topic/meeting_id/mode/verdict and an `attendees` array (each: sage, stance, weight, reason, ideas [semicolon-sep], recommendation); if meeting_id is missing, the script auto-generates one. This appends each attendee's experience and updates their evolving profile (specialty focus, stance tendencies, risk posture, recurring views). This is mandatory — it is how sages accumulate memory and grow.
 
 **5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
@@ -154,6 +166,17 @@ At any point after the roster is set — during brainstorming, combination, or e
 5. The new sage is included in the memory batch (Phase 5b) so their attendance is recorded.
 
 邹蕴 acknowledges each invite aloud (`[邹蕴] 现邀请陆一帆入会——`). Never silently ignore an invite.
+
+## Follow-up / continuation mode (lightweight, no full re-convene)
+
+After a parliament has closed, the user may ask for a focused continuation instead of starting a new full meeting: `展开`, `重议`, `行动项3深入`, `徐奕阳再讲讲`, `让陆一帆评估数据层`. Treat these as **续议**:
+
+1. Do not re-run Phase 0/0.5, do not ask for mode again.
+2. Infer the target: a phase/plan/action item/sage named by the user. If ambiguous, ask one concise clarification; otherwise proceed.
+3.召集 only the minimum relevant people: named sage(s) + 邹蕴, or 1–3 experts; read their memory via `read_memory.py`.
+4. Output ≤ 8 bullets total, all `[姓名]` prefixed. No full brainstorm, no full vote unless the user explicitly says `重投票` or `重议表决`.
+5. If the continuation changes the decision, run a mini weighted vote among the affected attendees and record memory. If it merely explains/expands, record a lightweight memory note only for the speaking sage(s).
+6. End with `续议到此结束。` and stop — no open-ended follow-up.
 
 ## Discipline (non-negotiable)
 

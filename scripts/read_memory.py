@@ -30,7 +30,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+MEM_DIR = DEFAULT_MEM_DIR
 
 
 def memory_path(sage: str) -> Path:
@@ -116,7 +117,12 @@ def main():
     ap.add_argument("--sages", help="多个圣人，逗号分隔")
     ap.add_argument("--recent", type=int, default=0, help="附带最近 N 次经历详情")
     ap.add_argument("--json", action="store_true", help="输出 JSON 而非文本")
+    ap.add_argument("--mem-dir", help="覆盖记忆目录（默认：技能目录/memories）")
     args = ap.parse_args()
+
+    global MEM_DIR
+    if args.mem_dir:
+        MEM_DIR = Path(args.mem_dir).expanduser().resolve()
 
     names = []
     if args.sages:

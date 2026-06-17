@@ -10,7 +10,7 @@
 - **结果 md**（强制）：`sptler-result-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议纪要**（可选）：`sptler-summary-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议过程**（可选）：`sptler-transcript-{主题slug}-{YYYYMMDD-HHMM}.md`
-- **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/record_memory.py --batch <该json路径>` 写入圣人记忆。
+- **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/record_memory.py --batch <该json路径>` 写入圣人记忆；也可直接 `python scripts/record_memory.py --batch -` 从 stdin 读取 JSON（更适合免临时文件）。若 batch 缺 `meeting_id`，脚本会自动生成 `SPTLER-YYYYMMDDHHMMSS`。
 - 主题 slug：取议题前 8 个汉字或关键英文词，去标点。
 - 所有文件 UTF-8 编码。
 - 写盘后，在对话中**明确告知用户每个文件的绝对路径**。
