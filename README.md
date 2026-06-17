@@ -23,7 +23,9 @@
 - **三大专业委员会首席（权重 2.0）**：孙高德（平台委员会）、蔡悦（跨界集成委员会）、黄嵩泉（组合工程委员会）。
 - **专科圣人（权重 1.0）**：其余 14 位按议题路由入会。
 
-## 三种会议模式
+## 双轨制 + 三种会议模式
+
+sptler 默认采用**双轨制**：日常单点问题走快速轨，战略/预算/制度/跨多域问题走正式轨，会议后追问走续议轨。
 
 用户发送需求后用 AskUser 选择：
 
@@ -103,7 +105,7 @@ sptler/
 
 ```bash
 # 自动路由（议题+模式+邀请名单 → 入会名单）
-python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --invites 陆一帆,金辰宇
+python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --track auto --invites 陆一帆,金辰宇
 
 # 从 stdin 记录记忆（免临时文件）
 cat batch.json | python scripts/record_memory.py --batch -

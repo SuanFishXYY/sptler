@@ -66,38 +66,62 @@ def tokens(text: str) -> set[str]:
     return parts
 
 
-def score_sage(topic: str, sage: str) -> tuple[int, list[str]]:
+def score_sage(topic: str, sage: str) -> tuple[float, list[str]]:
     info = SAGES[sage]
     t = topic.lower()
-    score = 0
+    score = 0.0
     hits = []
     for kw in info["keywords"].split():
         if kw.lower() in t:
             score += 3 if len(kw) >= 2 else 1
             hits.append(kw)
+    # 四核心/首席由 min_core 和委员会必到规则保障；这里只给轻微基础分，避免无关核心压过命中关键词的专科。
     if sage in CORE:
-        score += 5
+        score += 1.0
     if sage in CHIEFS:
-        score += 3
+        score += 0.5
     return score, hits[:5]
 
 
-def mode_size(mode: str, topic: str) -> tuple[int, str]:
-    mode = (mode or "dynamic").lower()
-    if mode in ("fast", "quick", "快速", "快速会议"):
-        return 4, "快速会议"
-    if mode in ("complex", "deep", "复杂", "复杂会议"):
-        return 8, "复杂会议"
-    # dynamic
-    strategic = any(k in topic for k in STRATEGIC_KWS)
-    domains = sum(any(k in topic.lower() for k in SAGES[s]["keywords"].split()) for s in CHIEFS)
-    if strategic or domains >= 2:
-        return 8, "动态分辨→复杂规格"
-    # 中等复杂：AI/平台/流程/数据/跨域等同时出现
-    medium_markers = sum(k in topic.lower() for k in ["ai", "平台", "流程", "数据", "跨界", "系统", "流水线", "产品"])
+def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
+    """返回 (track, reason)。fast=快速轨，formal=正式轨，followup=续议轨。"""
+    t = (topic or "").lower()
+    tr = (track or "auto").lower()
+    if tr in ("fast", "快速", "quick"):
+        return "fast", "用户指定快速轨"
+    if tr in ("formal", "正式", "complex"):
+        return "formal", "用户指定正式轨"
+    if tr in ("followup", "续议"):
+        return "followup", "用户指定续议轨"
+    formal_hits = [k for k in STRATEGIC_KWS if k in topic]
+    chief_domains = sum(any(k in t for k in SAGES[s]["keywords"].split()) for s in CHIEFS)
+    if formal_hits:
+        return "formal", f"命中正式轨信号：{'、'.join(formal_hits[:3])}"
+    if chief_domains >= 2:
+        return "formal", "跨多个委员会领域，进入正式轨"
+    medium_markers = sum(k in t for k in ["ai", "平台", "流程", "数据", "跨界", "系统", "流水线", "产品"])
     if medium_markers >= 2:
-        return 6, "动态分辨→中等规格"
-    return 4, "动态分辨→快速规格"
+        return "fast", "中等复杂但未触发正式轨，先走快速轨"
+    return "fast", "单一明确议题，默认快速轨"
+
+
+def mode_size(mode: str, topic: str, track: str = "auto") -> tuple[int, str, str, str]:
+    resolved_track, track_reason = decide_track(topic, track)
+    mode = (mode or "dynamic").lower()
+    if resolved_track == "followup":
+        return 3, "续议轨", resolved_track, track_reason
+    if mode in ("fast", "quick", "快速", "快速会议"):
+        return 4, "快速会议", resolved_track, track_reason
+    if mode in ("complex", "deep", "复杂", "复杂会议"):
+        return 8, "复杂会议", resolved_track, track_reason
+    if resolved_track == "formal":
+        return 8, "动态分辨→正式轨/复杂规格", resolved_track, track_reason
+    # fast track auto sizing
+    t = topic.lower()
+    medium_markers = sum(k in t for k in ["ai", "平台", "流程", "数据", "跨界", "系统", "流水线", "产品"])
+    if medium_markers >= 2:
+        return 6, "动态分辨→快速轨/中等规格", resolved_track, track_reason
+    return 4, "动态分辨→快速轨/简报规格", resolved_track, track_reason
 
 
 def normalize_invites(invites: str) -> list[str]:
@@ -111,8 +135,8 @@ def normalize_invites(invites: str) -> list[str]:
     return out
 
 
-def route(topic: str, mode: str = "dynamic", invites: str = "") -> dict:
-    target_size, resolved_mode = mode_size(mode, topic)
+def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto") -> dict:
+    target_size, resolved_mode, resolved_track, track_reason = mode_size(mode, topic, track)
     invited = normalize_invites(invites)
     roster = []
     reasons = {}
@@ -177,7 +201,7 @@ def route(topic: str, mode: str = "dynamic", invites: str = "") -> dict:
         })
     # 给分数最高的前两位加成（不含host，且必须有命中）
     # 动态加成只给关键词高度契合者；用户邀请本身不等于议题契合，因此排除 invited。
-    boostable = [a for a in attendees if a["score"] > 0 and not a.get("invited")]
+    boostable = [a for a in attendees if a["score"] > 0 and a.get("hits") and not a.get("invited")]
     boostable.sort(key=lambda a: a["score"], reverse=True)
     for a in boostable[:2]:
         a["dynamic_boost"] = 0.5
@@ -187,6 +211,8 @@ def route(topic: str, mode: str = "dynamic", invites: str = "") -> dict:
     return {
         "topic": topic,
         "mode": resolved_mode,
+        "track": resolved_track,
+        "track_reason": track_reason,
         "target_size": target_size,
         "host": HOST,
         "attendees": attendees,
@@ -197,14 +223,15 @@ def main():
     ap = argparse.ArgumentParser(description="算鱼议会自动路由圣人")
     ap.add_argument("--topic", required=True, help="议题")
     ap.add_argument("--mode", default="dynamic", help="fast/complex/dynamic 或 中文模式")
+    ap.add_argument("--track", default="auto", help="fast/formal/followup/auto 或 中文轨道")
     ap.add_argument("--invites", default="", help="用户指定邀请名单，逗号分隔")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args()
-    result = route(args.topic, args.mode, args.invites)
+    result = route(args.topic, args.mode, args.invites, args.track)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
-    print(f"[邹蕴] 路由判定：{result['mode']}，目标 {result['target_size']} 人，主持=邹蕴")
+    print(f"[邹蕴] 路由判定：{result['mode']}（{result['track']}轨：{result['track_reason']}），目标 {result['target_size']} 人，主持=邹蕴")
     for a in result["attendees"]:
         flag = "邀请" if a.get("invited") else "自动"
         print(f"- [{a['name']}] {a['title']}｜{a['role']}｜权重 {a['weight']}｜{flag}｜{a['reason']}")

@@ -48,6 +48,9 @@ KEYWORDS = [
     "index_meeting",
     "continue_meeting",
     "meeting_type=followup",
+    "快速轨",
+    "正式轨",
+    "续议轨",
     "议会到此结束",
     "续议到此结束",
 ]

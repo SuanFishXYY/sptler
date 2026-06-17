@@ -71,6 +71,16 @@ The parliament must **deliver in as few turns as possible and stop when done.** 
 
 Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one sentence; final recommendation = one sentence. A full quick-meeting should fit in a short response; a full complex-meeting should be thorough but not bloated.
 
+## Track system (双轨制)
+
+sptler uses two main tracks plus a follow-up track:
+
+- **Fast track (快速轨)** — default for daily/single-domain questions. 3–5 sages, one combined plan, short weighted vote, mandatory result md. `/sptler!` always uses fast-track briefing unless the prompt explicitly says formal.
+- **Formal track (正式轨)** — for strategic/cross-domain/irreversible decisions. 7–9 sages, full six-stage deliberation, complete four-law check, formal resolution, meeting index, memories.
+- **Follow-up track (续议轨)** — after a meeting closes. Minimal召集, ≤8 bullets, uses `continue_meeting.py`, exports followup/amendment/revote only when needed.
+
+Use fast track unless formal triggers appear: 战略、预算、制度、不可逆、组织变更、跨多个委员会领域、对外客户重大承诺、重投票、修正原决议, or user explicitly requests 复杂/正式. Use `route_sages.py --track auto` to make this deterministic.
+
 ## The six deliberation phases (run all, in order)
 
 ### Special fast path — Briefing mode (`/sptler!`)
@@ -110,7 +120,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 ### Phase 1 — Routing + memory injection
 
 1. **Seed with invites**: start from any user-invited sages (Phase 0.5). These are locked in.
-2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --invites "<comma names>" --json`. Use its attendee list, weights, dynamic boosts, and reasons as the roster baseline.
+2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Use its track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
 3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
 5. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it. Sages with no memory yet are noted as 新晋圣人.
