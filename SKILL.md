@@ -38,6 +38,16 @@ Before deliberating, read these reference files in this skill directory:
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
 - `references/templates.md` — the three output templates (result / summary / transcript), `[姓名]` format, and file naming rules.
 
+## Sage memory system
+
+Every sage accumulates a memory of past deliberations in `memories/<姓名>.json`, managed by three scripts in `scripts/`. This gives sages continuity — they can reference past experience, and their profile (specialty focus, stance tendencies, risk posture, recurring views) evolves over time.
+
+- `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` to record all attendees of one meeting at once.
+- `scripts/read_memory.py` — read a sage's memory summary for injection. Use `--sages a,b,c` for the whole roster.
+- `scripts/list_memories.py` — overview of all sages' memory stats, or `--sage <name>` for one sage's full archive.
+
+Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, so sages learn from every parliament.
+
 ## Trigger and input
 
 - Triggers: `/sptler {question}`, `/算鱼议会 {question}`, `/议会 {question}`.
@@ -58,14 +68,15 @@ Right after the user sends the question, before routing, use AskUser to choose t
 
 For 动态分辨, 邹蕴 first states her judgment in one line (e.g. `[邹蕴] 本议题跨机械与AI两域、涉及平台建设，判为复杂会议规格`), then proceeds at that spec.
 
-### Phase 1 — Routing
+### Phase 1 — Routing + memory injection
 
 1. Analyze the topic for domain keywords (结构/控制/AI/价值/机械/数据/接口/流水线/整车/跨界/生命/材料/可靠性/度量/平台).
 2. Consult the routing table in `references/roster.md`. Select sages by keyword hit count, sized to the chosen mode: 快速 3–4 / 复杂 7–9 / 动态 per judgment (3–9). Include **at least 1 core** (复杂/动态-strategic ≥ 2 cores).
 3. If the topic falls within a committee's scope, that committee chief **must attend** and holds intra-topic final-say.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
-6. Present the roster (with each sage's weight + admission reason) and let the user confirm or adjust.
+5. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it (e.g. "上次我们议过类似OA流水线，这次我建议……"). Sages with no memory yet are noted as 新晋圣人.
+6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
+7. Present the roster (with each sage's weight + admission reason) and let the user confirm or adjust.
 
 ### Phase 2 — Brainstorming (the four principles)
 
@@ -95,15 +106,17 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 - **Close/major** (差距 ≤ 1.0 or tie): 邹蕴 adjudicates (through/否决/重议) and states her reason.
 - **Major topic**: requires 赞成权重占比 ≥ 60% AND no core opposes; otherwise 否决.
 
-### Phase 5 — Final recommendations + output
+### Phase 5 — Final recommendations + memory recording + output
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
 
-**5b. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
+**5b. Record sage memories.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, where the batch json contains the topic/meeting_id/mode/verdict and an `attendees` array (each: sage, stance, weight, reason, ideas [semicolon-sep], recommendation). This appends each attendee's experience and updates their evolving profile (specialty focus, stance tendencies, risk posture, recurring views). This is mandatory — it is how sages accumulate memory and grow.
 
-**5c. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
+**5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
-**5d. Tell the user.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) a paragraph on action items and owners.
+**5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
+
+**5e. Tell the user.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) a paragraph on action items and owners.
 
 ## Discipline (non-negotiable)
 
@@ -115,6 +128,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 6. **Everyone gives a final recommendation** — after voting, each attending sage contributes one `[姓名] 建议`; 邹蕴 closes with a 收口.
 7. **Sages speak in character** — the four cores' idiosyncrasies must show in their speech, voting reasons, and recommendations.
 8. **Run all phases** — never skip mode selection, brainstorming, four-law check, or the final-recommendation round.
+9. **Memory is mandatory** — inject memories in Phase 1 (read_memory) and record in Phase 5 (record_memory --batch). Sages without memory recording cannot grow; a meeting that skips recording is incomplete.
 
 ## Host behavior (邹蕴)
 
@@ -129,9 +143,9 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 ## Interaction rhythm with the user
 
 1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**.
-2. User picks mode → Phase 1 routing → present roster (weights + reasons) → **wait for user confirmation** (or "continue").
-3. User confirms → Phase 2 brainstorm (all `[姓名]` voices, sized to mode) → Phase 3 combine → Phase 4 weighted vote → Phase 5a recommendations.
-4. Phase 5b AskUser export options → write files → report paths and conclusion.
+2. User picks mode → Phase 1 routing + memory injection (read_memory) → present roster (weights + reasons) → **wait for user confirmation** (or "continue").
+3. User confirms → Phase 2 brainstorm (all `[姓名]` voices, sized to mode, memory-aware) → Phase 3 combine → Phase 4 weighted vote → Phase 5a recommendations.
+4. Phase 5b record memories (record_memory --batch) → Phase 5c AskUser export options → write files → report paths and conclusion.
 
 ## Quick reference: brainstorming style cues (keep personas distinct)
 

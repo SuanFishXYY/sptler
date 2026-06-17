@@ -1,6 +1,10 @@
 # 算鱼议会输出目录（运行时生成，不入库）
 sptler-meetings/
 
+# 圣人记忆档案：含真实议事记录，属运行时数据，默认不入库
+# 保留目录结构（.gitkeep），但实际 memories/*.json 不提交
+memories/*.json
+
 # 系统/编辑器
 .DS_Store
 Thumbs.db

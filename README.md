@@ -56,13 +56,34 @@
 
 ```
 sptler/
-├── SKILL.md                  技能主文件（精简编排器）
-└── references/
-    ├── roster.md             22 圣人名册 + 权重 + 路由关键词 + 路由速查表
-    ├── philosophy.md         四律一核（结构/控制/铸模/价值）+ 否决信号
-    ├── orglaw.md             三种会议模式 + 议事程序 + 加权投票规则
-    └── templates.md          三类输出模板 + [姓名] 格式 + 文件命名规则
+├── SKILL.md                  技能主文件（六阶段编排器）
+├── references/
+│   ├── roster.md             22 圣人名册 + 权重 + 路由关键词 + 路由速查表
+│   ├── philosophy.md         四律一核（结构/控制/铸模/价值）+ 否决信号
+│   ├── orglaw.md             三种会议模式 + 议事程序 + 加权投票规则
+│   └── templates.md          四类输出模板 + [姓名] 格式 + 记忆 batch json 格式
+├── scripts/
+│   ├── record_memory.py      记录圣人经历 + 更新演化画像（支持 --batch）
+│   ├── read_memory.py        读取圣人记忆摘要供入会发言注入
+│   └── list_memories.py      总览所有圣人记忆 / 查询某人完整档案
+└── memories/                 运行时生成：每位圣人一个 <姓名>.json（默认不入库）
 ```
+
+## 圣人记忆系统
+
+每位圣人有独立记忆档案 `memories/<姓名>.json`，记录其参与过的所有议事：
+
+- **经历列表**：每次议事的议题、模式、立场、投票理由、设想、最终建议
+- **演化画像**：总议事数、专长焦点、立场倾向（赞/反/弃）、风险偏好（审慎保守/平衡中立/积极进取）、常提观点
+
+**工作流**：
+1. **Phase 1 入会时**：`python scripts/read_memory.py --sages <名单>` 读取每位与会者的记忆摘要，注入发言上下文——圣人能引用过往经验（"上次我们议过类似议题……"）
+2. **Phase 5 议事后**：生成 batch json 并 `python scripts/record_memory.py --batch <json>`，把每位与会者的经历写入档案并更新画像
+
+圣人由此随时间积累、成长——议得越多，画像越清晰，发言越有积淀。可用 `python scripts/list_memories.py` 查看所有圣人的记忆统计。
+
+> 记忆档案含真实议事记录，默认被 `.gitignore` 排除不入库。如需备份/共享，手动 force-add 或建私有仓库。
+
 
 ## 安装
 

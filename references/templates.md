@@ -1,6 +1,7 @@
 # /sptler 输出模板
 
 > 三类输出：① **结果 md（强制）** ② 会议纪要 md（可选） ③ 会议过程 md（可选）。
+> 另有 ④ **记忆 batch json（强制，每次议事后生成）**，喂给 `record_memory.py` 记录圣人经历。
 > 文件写入当前工作目录的 `sptler-meetings/` 子目录。文件名规则：`sptler-{类型}-{主题slug}-{YYYYMMDD-HHMM}.md`。
 
 ## 文件命名与路径规则
@@ -9,6 +10,7 @@
 - **结果 md**（强制）：`sptler-result-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议纪要**（可选）：`sptler-summary-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议过程**（可选）：`sptler-transcript-{主题slug}-{YYYYMMDD-HHMM}.md`
+- **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/record_memory.py --batch <该json路径>` 写入圣人记忆。
 - 主题 slug：取议题前 8 个汉字或关键英文词，去标点。
 - 所有文件 UTF-8 编码。
 - 写盘后，在对话中**明确告知用户每个文件的绝对路径**。
@@ -234,3 +236,68 @@
 
 > 会议结束。完整决议见结果 md。
 ```
+
+---
+
+## 模板四：记忆 batch json（强制 · 每次议事后生成）
+
+> 议会 Phase 5b 强制生成此 json 并立即运行 `python scripts/record_memory.py --batch <路径>`，把每位与会圣人的经历写入 `memories/<姓名>.json` 并更新其画像。这是圣人积累记忆、随时间成长的唯一途径。
+
+```json
+{
+  "topic": "把OA审查意见答复做成AI辅助流水线",
+  "meeting_id": "SPTLER-202606171430",
+  "mode": "复杂会议",
+  "verdict": "通过",
+  "attendees": [
+    {
+      "sage": "邹蕴",
+      "stance": "弃权",
+      "weight": "0",
+      "reason": "主持人不投票，判定本次为复杂会议规格并完成四律检查与收口。",
+      "ideas": "议题跨AI与流程两域，判复杂规格;四律检查无否决信号触发",
+      "recommendation": "收口：按结构-控制-铸模-价值四段落地，先做3个种子模板跑通。"
+    },
+    {
+      "sage": "王升",
+      "stance": "赞成",
+      "weight": "3.0",
+      "reason": "骨架清晰——先拆输入输出评估三段，再铸成可复用Prompt模具。",
+      "ideas": "先建权利要求骨架;AI初稿+人工复核双轨;异常OA单独建模板",
+      "recommendation": "建议把高频OA类型先做成3个种子模板，跑通再扩。"
+    },
+    {
+      "sage": "张鑫",
+      "stance": "反对",
+      "weight": "3.0",
+      "reason": "无人工接管点与回退路径，触发控制律否决信号——'全交给AI不用人管'。",
+      "ideas": "加监控;加回退;加异常分支",
+      "recommendation": "先补异常分支和留痕，再谈自动化。"
+    },
+    {
+      "sage": "徐奕阳",
+      "stance": "赞成",
+      "weight": "3.0",
+      "reason": "可铸模——OA答复流程可拆为标准Prompt模具，经验资产化。",
+      "ideas": "Prompt模具化;多步推理工作流;人机协同边界显式",
+      "recommendation": "铸3个种子Prompt，每个带修改标记和评估标准。"
+    },
+    {
+      "sage": "徐骋",
+      "stance": "赞成",
+      "weight": "1.0",
+      "reason": "可流水线化——OA翻译/清洗这类长链路任务适合状态图编排。",
+      "ideas": "状态图编排;节点事件流;质量闭环",
+      "recommendation": "用状态图把流程跑成可观测可恢复的流水线。"
+    }
+  ]
+}
+```
+
+**字段说明**：
+- `topic` / `meeting_id` / `mode` / `verdict`：会议级信息，对所有 attendees 共用。
+- `attendees[]`：每位与会圣人一条，含 `sage`（姓名）、`stance`（赞成/反对/弃权，邹蕴填弃权）、`weight`（本次权重，字符串）、`reason`（投票理由）、`ideas`（本次设想，分号 `;` 分隔多条）、`recommendation`（最终建议一句话）。
+- `ideas` 用分号分隔，脚本会拆成多条计入「常提观点」。
+- 议长邹蕴也写入一条（stance=弃权, weight=0, recommendation=收口），保留其主持记录。
+
+**记录后**：每位圣人的 `memories/<姓名>.json` 会追加本次经历，并增量更新画像（总议事数、专长焦点、立场倾向、风险偏好、常提观点）。下次该圣人入会时，`read_memory.py` 会读出这些画像供其发言引用。
