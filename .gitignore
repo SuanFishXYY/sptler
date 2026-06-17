@@ -1,0 +1,9 @@
+# 算鱼议会输出目录（运行时生成，不入库）
+sptler-meetings/
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
