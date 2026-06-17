@@ -68,15 +68,28 @@ Right after the user sends the question, before routing, use AskUser to choose t
 
 For 动态分辨, 邹蕴 first states her judgment in one line (e.g. `[邹蕴] 本议题跨机械与AI两域、涉及平台建设，判为复杂会议规格`), then proceeds at that spec.
 
+### Phase 0.5 — Invite sages (AskUser, optional)
+
+Right after mode selection, before routing, ask the user whether they want to invite specific sages:
+
+> Question: "是否要指定邀请某几位圣人入会？（可填姓名或选'由议会自动路由'）"
+> multiSelect: false. Options: 由议会自动路由 / 我要指定邀请。
+
+- If **由议会自动路由** → skip to Phase 1, route purely by keyword.
+- If **我要指定邀请** → the user replies with names (e.g. "邀请陆一帆、金辰宇" or "把张鑫叫上"). These sages are **mandatory attendees** — they enter Phase 1's roster unconditionally, with their real weight (core 3.0 / chief 2.0 / specialist 1.0), regardless of keyword fit. Then auto-routing fills the rest of the roster up to the mode's size.
+
+**Mandatory-invite rules**: invited sages count toward the mode's size cap; they may push the roster over the soft cap by 1–2 if the user insists, but 邹蕴 notes any over-size. Inviting a sage who is a committee chief for the topic's scope does not double-count. The user can also invite **mid-meeting** at any later phase (see "On-the-fly invites" below) — the same mandatory-attendee logic applies.
+
 ### Phase 1 — Routing + memory injection
 
-1. Analyze the topic for domain keywords (结构/控制/AI/价值/机械/数据/接口/流水线/整车/跨界/生命/材料/可靠性/度量/平台).
-2. Consult the routing table in `references/roster.md`. Select sages by keyword hit count, sized to the chosen mode: 快速 3–4 / 复杂 7–9 / 动态 per judgment (3–9). Include **at least 1 core** (复杂/动态-strategic ≥ 2 cores).
-3. If the topic falls within a committee's scope, that committee chief **must attend** and holds intra-topic final-say.
-4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it (e.g. "上次我们议过类似OA流水线，这次我建议……"). Sages with no memory yet are noted as 新晋圣人.
-6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
-7. Present the roster (with each sage's weight + admission reason) and let the user confirm or adjust.
+1. **Seed with invites**: start the roster from any user-invited sages (Phase 0.5). These are locked in.
+2. Analyze the topic for domain keywords (结构/控制/AI/价值/机械/数据/接口/流水线/整车/跨界/生命/材料/可靠性/度量/平台).
+3. Consult the routing table in `references/roster.md`. Auto-select additional sages by keyword hit count, sized to the chosen mode: 快速 3–4 / 复杂 7–9 / 动态 per judgment (3–9). Include **at least 1 core** (复杂/动态-strategic ≥ 2 cores) — unless the user's invites already cover this.
+4. If the topic falls within a committee's scope, that committee chief **must attend** and holds intra-topic final-say.
+5. The host is always 邹蕴 (权重 0, not a routed seat).
+6. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it (e.g. "上次我们议过类似OA流水线，这次我建议……"). Sages with no memory yet are noted as 新晋圣人.
+7. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
+8. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 
 ### Phase 2 — Brainstorming (the four principles)
 
@@ -118,6 +131,18 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5e. Tell the user.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) a paragraph on action items and owners.
 
+## On-the-fly invites (mid-meeting, any phase)
+
+At any point after the roster is set — during brainstorming, combination, or even right before the vote — the user may invite additional sages in natural language: "邀请陆一帆加入会议", "把张鑫也叫上", "让黄嵩泉来评估下可靠性". Treat these the same as Phase 0.5 invites:
+
+1. Add the named sage as a **mandatory attendee** with their real weight.
+2. Run `python scripts/read_memory.py --sages <new sage>` to inject their memory so they can speak with continuity.
+3. Let the new sage contribute: in brainstorming/combination they give their ideas/reactions; if added at/after the vote, they still cast a weighted vote and give a final recommendation.
+4. Re-tally the weighted vote if the addition could change the outcome; 邹蕴 announces any changed result.
+5. The new sage is included in the memory batch (Phase 5b) so their attendance is recorded.
+
+邹蕴 acknowledges each invite aloud (`[邹蕴] 现邀请陆一帆入会——`). Never silently ignore an invite.
+
 ## Discipline (non-negotiable)
 
 1. **Zero judgment in brainstorming** — the core principle; violating it invalidates the parliament. Any "this won't work" / "that's absurd" in Phase 2 must be stopped by 邹蕴.
@@ -129,11 +154,13 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 7. **Sages speak in character** — the four cores' idiosyncrasies must show in their speech, voting reasons, and recommendations.
 8. **Run all phases** — never skip mode selection, brainstorming, four-law check, or the final-recommendation round.
 9. **Memory is mandatory** — inject memories in Phase 1 (read_memory) and record in Phase 5 (record_memory --batch). Sages without memory recording cannot grow; a meeting that skips recording is incomplete.
+10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
 
 ## Host behavior (邹蕴)
 
 邹蕴 moderates from her "real-time decision / failure-safety" specialty — she reads where the discussion is heading and flags risk nodes before they arrive. She:
 - Runs Phase 0 mode selection and (for 动态) states her judgment.
+- Runs Phase 0.5 invite check; processes mid-meeting invites on the fly.
 - Declares mode + topic type at the open.
 - Enforces deferred judgment in Phase 2.
 - Runs the four-law check in Phase 4a.
@@ -143,8 +170,8 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 ## Interaction rhythm with the user
 
 1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**.
-2. User picks mode → Phase 1 routing + memory injection (read_memory) → present roster (weights + reasons) → **wait for user confirmation** (or "continue").
-3. User confirms → Phase 2 brainstorm (all `[姓名]` voices, sized to mode, memory-aware) → Phase 3 combine → Phase 4 weighted vote → Phase 5a recommendations.
+2. User picks mode → **AskUser Phase 0.5 invite check** (auto-route vs specify sages) → seed roster with any invited sages → Phase 1 auto-routing + memory injection (read_memory) → present roster (invited vs auto, weights + reasons) → **wait for user confirmation** (or "continue").
+3. User confirms → Phase 2 brainstorm (all `[姓名]` voices, sized to mode, memory-aware) → Phase 3 combine → Phase 4 weighted vote → Phase 5a recommendations. User may invite more sages at any point (on-the-fly).
 4. Phase 5b record memories (record_memory --batch) → Phase 5c AskUser export options → write files → report paths and conclusion.
 
 ## Quick reference: brainstorming style cues (keep personas distinct)
