@@ -43,6 +43,48 @@ def memory_path(sage: str) -> Path:
     return MEM_DIR / f"{sage}.json"
 
 
+def _fresh_profile() -> dict:
+    """每次返回全新的默认画像（深拷贝，避免多圣人共享可变对象）。"""
+    return {
+        "total_meetings": 0,
+        "domains": {},
+        "stances": {"赞成": 0, "反对": 0, "弃权": 0},
+        "verdicts": {"通过": 0, "否决": 0},
+        "frequent_views": [],
+        "risk_tendency": "未知",
+        "specialty_focus": [],
+        "last_updated": "",
+    }
+
+
+def _normalize_profile(profile: dict) -> dict:
+    """对已存在文件做 schema 补全：确保所有期望键存在，缺则补默认。"""
+    base = {
+        "total_meetings": 0,
+        "domains": {},
+        "stances": {},
+        "verdicts": {},
+        "frequent_views": [],
+        "risk_tendency": "未知",
+        "specialty_focus": [],
+        "last_updated": "",
+    }
+    base.update(profile or {})
+    # stances / verdicts 子键补全
+    for k in ("赞成", "反对", "弃权"):
+        base["stances"][k] = int(base["stances"].get(k, 0))
+    for k in ("通过", "否决"):
+        base["verdicts"][k] = int(base["verdicts"].get(k, 0))
+    if not isinstance(base.get("frequent_views"), list):
+        base["frequent_views"] = []
+    if not isinstance(base.get("specialty_focus"), list):
+        base["specialty_focus"] = []
+    if not isinstance(base.get("domains"), dict):
+        base["domains"] = {}
+    base["total_meetings"] = int(base.get("total_meetings", 0) or 0)
+    return base
+
+
 def load_memory(sage: str) -> dict:
     p = memory_path(sage)
     if not p.exists():
@@ -50,22 +92,32 @@ def load_memory(sage: str) -> dict:
             "sage": sage,
             "created_at": datetime.now().strftime("%Y-%m-%d"),
             "experiences": [],
-            "profile": {
-                "total_meetings": 0,
-                "domains": {},
-                "stances": {"赞成": 0, "反对": 0, "弃权": 0},
-                "verdicts": {"通过": 0, "否决": 0},
-                "frequent_views": [],
-                "risk_tendency": "未知",
-                "specialty_focus": [],
-                "last_updated": "",
-            },
+            "profile": _fresh_profile(),
         }
-    return json.loads(p.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"⚠️  {sage} 记忆文件损坏，将重建：{e}", file=sys.stderr)
+        return {
+            "sage": sage,
+            "created_at": datetime.now().strftime("%Y-%m-%d"),
+            "experiences": [],
+            "profile": _fresh_profile(),
+        }
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("sage", sage)
+    data.setdefault("experiences", [])
+    if not isinstance(data.get("experiences"), list):
+        data["experiences"] = []
+    data["profile"] = _normalize_profile(data.get("profile", {}))
+    return data
 
 
 def infer_domain(topic: str) -> str:
     """从议题粗判领域，用于画像的 domains 计数。"""
+    if not topic:
+        return "其他"
     rules = [
         ("结构/专利", ["结构", "权利要求", "专利", "骨架", "边界"]),
         ("控制/流程", ["控制", "流程", "安全", "兜底", "监控", "审计"]),
@@ -89,34 +141,44 @@ def infer_domain(topic: str) -> str:
 
 def update_profile(profile: dict, exp: dict):
     """根据本次经历增量更新画像。"""
-    profile["total_meetings"] += 1
+    profile["total_meetings"] = profile.get("total_meetings", 0) + 1
 
-    domain = exp.get("domain", "其他")
+    domain = exp.get("domain") or "其他"
+    profile.setdefault("domains", {})
     profile["domains"][domain] = profile["domains"].get(domain, 0) + 1
 
-    stance = exp.get("stance", "弃权")
+    stance = exp.get("stance") or "弃权"
+    profile.setdefault("stances", {})
+    for k in ("赞成", "反对", "弃权"):
+        profile["stances"].setdefault(k, 0)
     if stance in profile["stances"]:
         profile["stances"][stance] += 1
 
-    verdict = exp.get("verdict", "")
+    verdict = exp.get("verdict") or ""
+    profile.setdefault("verdicts", {})
+    for k in ("通过", "否决"):
+        profile["verdicts"].setdefault(k, 0)
     if verdict in profile["verdicts"]:
         profile["verdicts"][verdict] += 1
 
-    # 常提观点：从 ideas / recommendation 提取关键词短句
+    # 常提观点：从 ideas / recommendation 提取关键词短句（兼容全角；和半角;）
     views = []
-    if exp.get("ideas"):
-        views = [s.strip() for s in exp["ideas"].split(";") if s.strip()][:3]
-    if exp.get("recommendation"):
-        views.append(exp["recommendation"])
+    ideas = exp.get("ideas") or ""
+    if ideas:
+        import re as _re
+        views = [s.strip() for s in _re.split(r"[;；]", ideas) if s.strip()][:3]
+    rec = exp.get("recommendation") or ""
+    if rec:
+        views.append(rec)
     freq = profile.get("frequent_views", [])
+    if not isinstance(freq, list):
+        freq = []
     for v in views:
-        # 简易去重：完全相同则计数，否则追加
         found = next((x for x in freq if x.get("text") == v), None)
         if found:
             found["count"] = found.get("count", 1) + 1
         else:
             freq.append({"text": v, "count": 1})
-    # 保留出现次数最多的前 12 条
     freq.sort(key=lambda x: x.get("count", 1), reverse=True)
     profile["frequent_views"] = freq[:12]
 
@@ -170,25 +232,41 @@ def main():
     ensure_dir()
 
     if args.batch:
-        data = json.loads(Path(args.batch).read_text(encoding="utf-8"))
-        # batch 文件格式: {"topic": "...", "meeting_id": "...", "mode": "...", "verdict": "...",
-        #                  "attendees": [{"sage": "王升", "stance": "赞成", "weight": "3.0",
-        #                                  "reason": "...", "ideas": "...", "recommendation": "..."}, ...]}
-        base = {k: data.get(k, "") for k in ("topic", "meeting_id", "mode", "verdict")}
-        for att in data.get("attendees", []):
+        try:
+            data = json.loads(Path(args.batch).read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"❌ 无法读取 batch 文件 {args.batch}：{e}", file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(data, dict):
+            print("❌ batch 文件根结构必须是 JSON 对象", file=sys.stderr)
+            sys.exit(1)
+        # null 值统一转空串（避免 .get(k,"") 在值为 null 时返回 None）
+        base = {k: (data.get(k) or "") for k in ("topic", "meeting_id", "mode", "verdict")}
+        attendees = data.get("attendees") or []
+        if not isinstance(attendees, list):
+            attendees = []
+        recorded = 0
+        for att in attendees:
+            if not isinstance(att, dict):
+                continue
+            sage = att.get("sage")
+            if not sage:
+                print("⚠️  跳过一条缺 sage 的记录", file=sys.stderr)
+                continue
             exp = {
                 "topic": base["topic"],
                 "meeting_id": base["meeting_id"],
                 "mode": base["mode"],
                 "verdict": base["verdict"],
-                "stance": att.get("stance", "弃权"),
-                "weight": att.get("weight", ""),
-                "reason": att.get("reason", ""),
-                "ideas": att.get("ideas", ""),
-                "recommendation": att.get("recommendation", ""),
+                "stance": att.get("stance") or "弃权",
+                "weight": att.get("weight") or "",
+                "reason": att.get("reason") or "",
+                "ideas": att.get("ideas") or "",
+                "recommendation": att.get("recommendation") or "",
             }
-            record_one(att["sage"], exp)
-        print(f"\n共记录 {len(data.get('attendees', []))} 位圣人。")
+            record_one(sage, exp)
+            recorded += 1
+        print(f"\n共记录 {recorded} 位圣人。")
         return
 
     if not args.sage:

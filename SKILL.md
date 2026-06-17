@@ -19,7 +19,7 @@ The agent acts as both 议长(host) and 书记官(clerk) of the Suanfish Parliam
 
 ## Roles and weights at a glance
 
-- **议长 / 主持人（固定，权重 0 不投票）**：邹蕴（决策圣）。主持全流程：模式选择、召集、控议程、四律检查、僵局裁决、收口。
+- **议长 / 主持人（固定，权重 0）**：邹蕴（决策圣）。不参与计票（权重 0，立场记为「弃权(主持)」但不计入赞成/反对权重和）。主持全流程：模式选择、召集、控议程、四律检查、僵局裁决、收口。
 - **四核心（权重 3.0）**：王升（结构圣·结构律）、张鑫（控制圣·控制律）、徐奕阳（铸模圣·铸模律）、范征（价值圣·价值律）。
 - **三大专业委员会首席（权重 2.0，议题内终审权）**：孙高德（平台委员会）、蔡悦（跨界集成委员会）、黄嵩泉（组合工程委员会）。
 - **专科圣人（权重 1.0）**：其余圣人按议题路由入会。
@@ -36,7 +36,7 @@ Before deliberating, read these reference files in this skill directory:
 - `references/roster.md` — 22 sages, weights, routing keywords, domain→sage routing table.
 - `references/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
-- `references/templates.md` — the three output templates (result / summary / transcript), `[姓名]` format, and file naming rules.
+- `references/templates.md` — the four templates (result / summary / transcript / memory batch json), `[姓名]` format, and file naming rules.
 
 ## Sage memory system
 
@@ -76,7 +76,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 > multiSelect: false. Options: 由议会自动路由 / 我要指定邀请。
 
 - If **由议会自动路由** → skip to Phase 1, route purely by keyword.
-- If **我要指定邀请** → the user replies with names (e.g. "邀请陆一帆、金辰宇" or "把张鑫叫上"). These sages are **mandatory attendees** — they enter Phase 1's roster unconditionally, with their real weight (core 3.0 / chief 2.0 / specialist 1.0), regardless of keyword fit. Then auto-routing fills the rest of the roster up to the mode's size.
+- If **我要指定邀请** → follow up with a second free-text AskUser: "请输入要邀请的圣人姓名（可多个，逗号分隔）". The named sages are **mandatory attendees** — they enter Phase 1's roster unconditionally, with their real weight (core 3.0 / chief 2.0 / specialist 1.0), regardless of keyword fit. Then auto-routing fills the rest of the roster up to the mode's size.
 
 **Mandatory-invite rules**: invited sages count toward the mode's size cap; they may push the roster over the soft cap by 1–2 if the user insists, but 邹蕴 notes any over-size. Inviting a sage who is a committee chief for the topic's scope does not double-count. The user can also invite **mid-meeting** at any later phase (see "On-the-fly invites" below) — the same mandatory-attendee logic applies.
 
@@ -113,11 +113,11 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 **4a. Four-law check (pre-vote hard constraint).** 邹蕴 checks the lead plan against the four laws in `references/philosophy.md`. If a law's veto signal is triggered, the corresponding core **must vote against** and cite the signal. Quick mode may check only the laws hit by the topic; complex mode must check all four. This is an ex-ante constraint, not post-hoc explanation.
 
 **4b. Weighted vote (dynamic voting).** Every attending sage votes (邹蕴 does not). Each gives `[姓名](权重) 立场——理由` citing their law/quotes/specialty.
-- Weights: cores 3.0 / chiefs 2.0 / specialists 1.0 (±0.5 dynamic boost).
+- Weights: cores 3.0 / chiefs 2.0 / specialists 1.0 (+0.5 dynamic boost, max 2 sages per topic — boost is additive only, never a penalty).
 - Tally: sum of 赞成 weights vs sum of 反对 weights (弃权 counts to neither).
 - **Pass**: 赞成权重和 > 反对权重和.
-- **Close/major** (差距 ≤ 1.0 or tie): 邹蕴 adjudicates (through/否决/重议) and states her reason.
-- **Major topic**: requires 赞成权重占比 ≥ 60% AND no core opposes; otherwise 否决.
+- **Close** (差距 ≤ 1.0 or tie): 邹蕴 adjudicates (through/否决/重议) and states her reason.
+- **Major topic**: requires 赞成权重和 ÷ (赞成权重和 + 反对权重和) ≥ 60% (弃权不计入分母) AND no core opposes; otherwise 否决.
 
 ### Phase 5 — Final recommendations + memory recording + output
 

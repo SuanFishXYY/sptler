@@ -34,14 +34,17 @@ def memory_path(sage: str) -> Path:
     return MEM_DIR / f"{sage}.json"
 
 
-def load_memory(sage: str) -> dict | None:
+def load_memory(sage: str):
     p = memory_path(sage)
     if not p.exists():
         return None
-    return json.loads(p.read_text(encoding="utf-8"))
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
-def all_memories() -> list[dict]:
+def all_memories() -> list:
     if not MEM_DIR.exists():
         return []
     out = []
@@ -49,16 +52,17 @@ def all_memories() -> list[dict]:
         try:
             out.append(json.loads(p.read_text(encoding="utf-8")))
         except Exception:
-            pass
+            print(f"⚠️  跳过损坏的记忆文件：{p.name}", file=sys.stderr)
     return out
 
 
 def stats_line(mem: dict) -> str:
-    p = mem.get("profile", {})
-    st = p.get("stances", {})
-    focus = "、".join(p.get("specialty_focus", [])) or "—"
+    sage = mem.get("sage", "未知")
+    p = mem.get("profile", {}) or {}
+    st = p.get("stances", {}) or {}
+    focus = "、".join(p.get("specialty_focus", []) or []) or "—"
     return (
-        f"  {mem['sage']:<6} | {p.get('total_meetings',0):>2}次 | "
+        f"  {sage:<6} | {p.get('total_meetings',0):>2}次 | "
         f"赞{st.get('赞成',0)} 反{st.get('反对',0)} 弃{st.get('弃权',0)} | "
         f"{p.get('risk_tendency','未知'):<6} | 焦点：{focus}"
     )
@@ -67,7 +71,7 @@ def stats_line(mem: dict) -> str:
 def main():
     ap = argparse.ArgumentParser(description="总览/查询圣人记忆")
     ap.add_argument("--sage", help="查看某圣人完整档案")
-    ap.add_argument("--stats", action="store_true", help="仅统计总览")
+    ap.add_argument("--stats", action="store_true", help="仅统计总览（不展开近期经历）")
     ap.add_argument("--json", action="store_true", help="JSON 输出")
     args = ap.parse_args()
 
@@ -80,15 +84,16 @@ def main():
             print(json.dumps(mem, ensure_ascii=False, indent=2))
         else:
             print(stats_line(mem))
-            print("  ——— 近期经历 ———")
-            for e in mem.get("experiences", [])[-10:]:
-                print(
-                    f"  [{e.get('recorded_at','')}] {e.get('topic','')} "
-                    f"（{e.get('mode','')}/{e.get('verdict','')}）"
-                )
-                print(f"      立场={e.get('stance','')}（权重{e.get('weight','')}）：{e.get('reason','')}")
-                if e.get("recommendation"):
-                    print(f"      建议：{e['recommendation']}")
+            if not args.stats:
+                print("  ——— 近期经历 ———")
+                for e in (mem.get("experiences", []) or [])[-10:]:
+                    print(
+                        f"  [{e.get('recorded_at') or ''}] {e.get('topic') or ''} "
+                        f"（{e.get('mode') or ''}/{e.get('verdict') or ''}）"
+                    )
+                    print(f"      立场={e.get('stance') or ''}（权重{e.get('weight') or ''}）：{e.get('reason') or ''}")
+                    if e.get("recommendation"):
+                        print(f"      建议：{e.get('recommendation') or ''}")
         return
 
     mems = all_memories()
@@ -98,7 +103,7 @@ def main():
 
     if args.json:
         print(json.dumps(
-            [{"sage": m["sage"], "profile": m.get("profile", {})} for m in mems],
+            [{"sage": m.get("sage", "未知"), "profile": m.get("profile", {}) or {}} for m in mems],
             ensure_ascii=False, indent=2
         ))
         return

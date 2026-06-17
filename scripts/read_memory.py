@@ -37,24 +37,44 @@ def memory_path(sage: str) -> Path:
     return MEM_DIR / f"{sage}.json"
 
 
-def load_memory(sage: str) -> dict | None:
+def load_memory(sage: str):
     p = memory_path(sage)
     if not p.exists():
         return None
-    return json.loads(p.read_text(encoding="utf-8"))
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"⚠️  {sage} 记忆文件损坏，按无记忆处理：{e}", file=sys.stderr)
+        return None
 
 
-def summarize(mem: dict, recent: int = 0) -> dict:
+def _empty_summary(sage: str) -> dict:
+    """无记忆圣人的完整默认结构（与有记忆结构对齐，含新晋标记）。"""
+    return {
+        "sage": sage,
+        "total_meetings": 0,
+        "specialty_focus": [],
+        "risk_tendency": "未知",
+        "stances": {"赞成": 0, "反对": 0, "弃权": 0},
+        "frequent_views": [],
+        "last_updated": "",
+        "note": "新晋圣人，暂无议会经历",
+    }
+
+
+def summarize(mem, recent: int = 0) -> dict:
     """把记忆压缩成摘要。"""
-    prof = mem.get("profile", {})
-    exps = mem.get("experiences", [])
+    if not mem:
+        return _empty_summary("")
+    prof = mem.get("profile", {}) or {}
+    exps = mem.get("experiences", []) or []
     summary = {
         "sage": mem.get("sage", ""),
         "total_meetings": prof.get("total_meetings", len(exps)),
-        "specialty_focus": prof.get("specialty_focus", []),
+        "specialty_focus": prof.get("specialty_focus", []) or [],
         "risk_tendency": prof.get("risk_tendency", "未知"),
-        "stances": prof.get("stances", {}),
-        "frequent_views": prof.get("frequent_views", [])[:5],
+        "stances": prof.get("stances", {}) or {},
+        "frequent_views": (prof.get("frequent_views", []) or [])[:5],
         "last_updated": prof.get("last_updated", ""),
     }
     if recent and recent > 0:
@@ -81,10 +101,11 @@ def inject_text(mem: dict, recent: int = 0) -> str:
     if recent and s.get("recent_experiences"):
         lines.append("· 近期经历：")
         for e in s["recent_experiences"]:
+            rec = e.get("recommendation") or ""
             lines.append(
-                f"    - [{e.get('recorded_at','')}] {e.get('topic','')}（{e.get('mode','')}/"
-                f"{e.get('verdict','')}）：立场={e.get('stance','')}，"
-                f"建议={e.get('recommendation','')[:40]}"
+                f"    - [{e.get('recorded_at') or ''}] {e.get('topic') or ''}（{e.get('mode') or ''}/"
+                f"{e.get('verdict') or ''}）：立场={e.get('stance') or ''}，"
+                f"建议={rec[:40]}"
             )
     return "\n".join(lines)
 
@@ -109,7 +130,11 @@ def main():
         out = []
         for n in names:
             mem = load_memory(n)
-            out.append(summarize(mem, recent=args.recent) if mem else {"sage": n, "total_meetings": 0})
+            if mem:
+                out.append(summarize(mem, recent=args.recent))
+            else:
+                es = _empty_summary(n)
+                out.append(es)
         print(json.dumps(out, ensure_ascii=False, indent=2))
         return
 
