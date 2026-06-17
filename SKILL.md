@@ -46,6 +46,9 @@ Every sage accumulates a memory of past deliberations in `memories/<姓名>.json
 
 - `scripts/generate_saints.py` — generate OpenClaw-style saint soul files and `saints.registry.json`.
 - `scripts/read_soul.py` — read a sage's SOUL/IDENTITY/BOUNDARY/SUMMON block for persona injection.
+- `scripts/summon_sage.py` — one-call full context: SOUL + IDENTITY + BOUNDARY + SUMMON + MEMORY + RELATIONS.
+- `scripts/update_growth.py` — generate/update each saint's GROWTH.md from memory.
+- `scripts/build_relations.py` — build RELATIONS.json from meeting co-attendance index.
 - `scripts/validate_saints.py` — validate every saint has soul/identity/boundary/summon/growth/relations and matches registry.
 - `scripts/route_sages.py` — deterministic routing helper: `--topic`, `--mode`, `--track`, `--invites`, optional `--json`; use it in Phase 1 to stabilize roster selection.
 - `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` or `--batch -` stdin to record all attendees of one meeting at once.
@@ -125,10 +128,10 @@ Right after mode selection, before routing, ask the user whether they want to in
 ### Phase 1 — Routing + memory injection
 
 1. **Seed with invites**: start from any user-invited sages (Phase 0.5). These are locked in.
-2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Use its track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
+2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Routing rules (track keywords, sizes, weights, domain→must-include, fallback order) are configurable in `references/routing_rules.json` — edit that file to tune routing without touching Python. Use the script's track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
 3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. **Inject soul + memory**: for each attendee, run `python scripts/read_soul.py --sage <name>` to load their SOUL/IDENTITY/BOUNDARY/SUMMON, and run `python scripts/read_memory.py --sages <comma-sep roster>` to load memory summaries. Feed both into that sage's speaking context in Phase 2. The SOUL file governs persona and boundaries; memory provides past experience. Sages with no memory yet are noted as 新晋圣人.
+5. **Inject full saint context**: for each attendee, prefer `python scripts/summon_sage.py --sage <name>` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS in one block. If unavailable, fall back to `read_soul.py` + `read_memory.py`. The SOUL file governs persona and boundaries; memory provides past experience; relations provide collaboration/friction context. Sages with no memory yet are noted as 新晋圣人.
 6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 
@@ -166,13 +169,13 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
 
-**5b. Record sage memories.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, or pipe JSON directly with `python scripts/record_memory.py --batch -`. The batch json contains topic/meeting_id/mode/verdict and an `attendees` array (each: sage, stance, weight, reason, ideas [semicolon-sep], recommendation); if meeting_id is missing, the script auto-generates one. This appends each attendee's experience and updates their evolving profile (specialty focus, stance tendencies, risk posture, recurring views). This is mandatory — it is how sages accumulate memory and grow.
+**5b. Record sage memories and growth.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, or pipe JSON directly with `python scripts/record_memory.py --batch -`. The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one. Then run `python scripts/update_growth.py` (or per attendee) so GROWTH.md reflects the latest memory profile. This is mandatory — it is how sages accumulate memory and grow.
 
 **5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
 **5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
 
-**5e. Index the meeting.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. This enables later `展开行动项3` across sessions.
+**5e. Index the meeting and update relations.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. Then run `python scripts/build_relations.py` so saint RELATIONS.json reflects co-attendance history. This enables later `展开行动项3` across sessions and lets saints remember collaboration patterns.
 
 **5f. Tell the user, then stop.** After indexing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
 

@@ -81,6 +81,7 @@ sptler/
 │       └── RELATIONS.json    关系网（预留）
 ├── references/
 │   ├── saints.registry.json  机器可读圣人注册表
+│   ├── routing_rules.json    路由规则配置（轨道关键词/规模/权重/领域必到/兜底）
 │   ├── roster.md             22 圣人名册 + 权重 + 路由关键词 + 路由速查表
 │   ├── philosophy.md         四律一核（结构/控制/铸模/价值）+ 否决信号
 │   ├── orglaw.md             三种会议模式 + 议事程序 + 加权投票规则
@@ -88,8 +89,11 @@ sptler/
 ├── scripts/
 │   ├── generate_saints.py    从内置数据生成 saints/ 与 saints.registry.json
 │   ├── read_soul.py          读取某圣人的SOUL/IDENTITY/BOUNDARY/SUMMON供注入
+│   ├── summon_sage.py        一次性召唤完整圣人上下文（灵魂+记忆+关系）
+│   ├── update_growth.py      根据记忆自动更新 GROWTH.md
+│   ├── build_relations.py    根据会议索引构建 RELATIONS.json 关系网
 │   ├── validate_saints.py    校验 saints/ 与 registry 一致性
-│   ├── route_sages.py        自动路由圣人名单（topic/mode/invites → roster+weights）
+│   ├── route_sages.py        自动路由圣人名单（topic/mode/track/invites → roster+weights）
 │   ├── record_memory.py      记录圣人经历 + 更新画像（支持 --batch 文件或 --batch - stdin、--mem-dir）
 │   ├── read_memory.py        读取圣人记忆摘要供入会发言注入（支持 --mem-dir）
 │   ├── list_memories.py      总览所有圣人记忆 / 查询某人完整档案（支持 --mem-dir）
@@ -122,6 +126,15 @@ python scripts/validate_saints.py
 
 # 读取某位圣人的灵魂注入块
 python scripts/read_soul.py --sage 徐奕阳
+
+# 一次性召唤完整圣人上下文（灵魂+记忆+关系）
+python scripts/summon_sage.py --sage 徐奕阳
+
+# 根据记忆更新成长日志
+python scripts/update_growth.py
+
+# 根据会议索引构建圣人关系网
+python scripts/build_relations.py
 
 # 自动路由（议题+模式+邀请名单 → 入会名单）
 python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --track auto --invites 陆一帆,金辰宇
