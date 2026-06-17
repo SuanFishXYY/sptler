@@ -34,6 +34,8 @@ Every sage utterance — in brainstorming, combination, voting, and recommendati
 Before deliberating, read these reference files in this skill directory:
 
 - `references/roster.md` — 22 sages, weights, routing keywords, domain→sage routing table.
+- `references/saints.registry.json` — machine-readable OpenClaw Saint OS registry.
+- `saints/<姓名>/SOUL.md`, `IDENTITY.md`, `BOUNDARY.md`, `SUMMON.md` — each sage's human-readable soul, identity, boundary, and summon rules.
 - `references/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
 - `references/templates.md` — the four templates (result / summary / transcript / memory batch json), `[姓名]` format, and file naming rules.
@@ -42,7 +44,10 @@ Before deliberating, read these reference files in this skill directory:
 
 Every sage accumulates a memory of past deliberations in `memories/<姓名>.json`, managed by three scripts in `scripts/`. This gives sages continuity — they can reference past experience, and their profile (specialty focus, stance tendencies, risk posture, recurring views) evolves over time.
 
-- `scripts/route_sages.py` — deterministic routing helper: `--topic`, `--mode`, `--invites`, optional `--json`; use it in Phase 1 to stabilize roster selection.
+- `scripts/generate_saints.py` — generate OpenClaw-style saint soul files and `saints.registry.json`.
+- `scripts/read_soul.py` — read a sage's SOUL/IDENTITY/BOUNDARY/SUMMON block for persona injection.
+- `scripts/validate_saints.py` — validate every saint has soul/identity/boundary/summon/growth/relations and matches registry.
+- `scripts/route_sages.py` — deterministic routing helper: `--topic`, `--mode`, `--track`, `--invites`, optional `--json`; use it in Phase 1 to stabilize roster selection.
 - `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` or `--batch -` stdin to record all attendees of one meeting at once.
 - `scripts/read_memory.py` — read a sage's memory summary for injection. Use `--sages a,b,c` for the whole roster.
 - `scripts/list_memories.py` — overview of all sages' memory stats, or `--sage <name>` for one sage's full archive.
@@ -123,7 +128,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Use its track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
 3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it. Sages with no memory yet are noted as 新晋圣人.
+5. **Inject soul + memory**: for each attendee, run `python scripts/read_soul.py --sage <name>` to load their SOUL/IDENTITY/BOUNDARY/SUMMON, and run `python scripts/read_memory.py --sages <comma-sep roster>` to load memory summaries. Feed both into that sage's speaking context in Phase 2. The SOUL file governs persona and boundaries; memory provides past experience. Sages with no memory yet are noted as 新晋圣人.
 6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 
@@ -206,7 +211,7 @@ After a parliament has closed, the user may ask for a focused continuation inste
 6. **Everyone gives a final recommendation** — after voting, each attending sage contributes one `[姓名] 建议`; 邹蕴 closes with a 收口.
 7. **Sages speak in character** — the four cores' idiosyncrasies must show in their speech, voting reasons, and recommendations.
 8. **Run all phases** — never skip mode selection, brainstorming, four-law check, or the final-recommendation round.
-9. **Memory is mandatory** — inject memories in Phase 1 (read_memory) and record in Phase 5 (record_memory --batch). Sages without memory recording cannot grow; a meeting that skips recording is incomplete.
+9. **Soul + memory are mandatory** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via read_soul and memories via read_memory in Phase 1; record memory in Phase 5 (record_memory --batch). A sage without soul injection speaks like a tool, not a saint; a meeting that skips memory recording is incomplete.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
 11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
 12. **No open-ended closers** — never end a turn with "还有什么需要帮助的吗 / 要不要我... / 还有其他问题吗" or similar. The parliament either ends at收口, or waits at a defined checkpoint. Nothing in between.
