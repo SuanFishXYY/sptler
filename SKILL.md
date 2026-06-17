@@ -1,6 +1,6 @@
 ---
 name: sptler
-description: 算鱼真人议会(Suanfish Parliament)多专家议事技能。用户提问后先选会议模式(快速/复杂/动态)，也支持 /sptler! 免提问简报模式；自动路由22位圣人专家入会，按头脑风暴四原则发散、组合改善、四律否决闸、加权投票，最终强制导出决议结果md。议长由邹蕴固定主持，委员会首席为孙高德、蔡悦、黄嵩泉。显式触发：/sptler、/sptler!、/算鱼议会、/议会、/开会、/议一议。适用于技术、专利、AI产品化、架构、流程治理、客户价值等多专家决策议题。
+description: 算鱼真人议会。把22位带灵魂与记忆的圣人专家班子运转起来，对技术/专利/AI/架构/流程等议题做结构化决策并产出可直接用的交付物。会按问题重量自动降级——日常单点问题1位圣人3句话裁决，复杂议题才开多专家加权投票议会；圣人记得历次经历，同类问题第二次会引用上次结论。适合需要多专家视角、可追溯决策、且想要积累团队经验的场景。触发：/sptler、/sptler!、/议会、/议会!、/算鱼议会、/开会、/议一议。
 license: MIT
 metadata:
   version: 1.2.0
@@ -73,13 +73,13 @@ Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, 
 
 The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
 
-1. **Only three AskUser checkpoints** — Phase 0 (mode), Phase 0.5 (invite), Phase 5c (export options). At every other phase the agent proceeds without stopping to ask the user anything. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` uses zero AskUser checkpoints**: auto-route, write result md, stop.
+1. **Only three AskUser phases** — Phase 0 (mode), Phase 0.5 (invite; may issue one follow-up free-text AskUser if user chooses to specify sages), Phase 5c (export options). Phase 1 ends on a roster confirmation (not an AskUser, but a turn-ending wait). At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
 2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 + 0.5 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits.
 3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
 
 Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one sentence; final recommendation = one sentence. A full quick-meeting should fit in a short response; a full complex-meeting should be thorough but not bloated.
 
-## Track system (双轨制)
+## Track system (四轨制)
 
 sptler auto-sizes the deliberation to the question. Four tracks, lightest first:
 
@@ -88,19 +88,21 @@ sptler auto-sizes the deliberation to the question. Four tracks, lightest first:
 - **Formal track (正式轨)** — for strategic/cross-domain/irreversible decisions. 7–9 sages, full six-stage deliberation, complete four-law check, formal resolution, meeting index, memories.
 - **Follow-up track (续议轨)** — after a meeting closes. Minimal召集, ≤8 bullets, uses `continue_meeting.py`, exports followup/amendment/revote only when needed.
 
-Use `route_sages.py --track auto` to make the track decision deterministic. The lighter the track, the lower the ceremony tax — this is how sptler stays productive for daily work instead of only suiting big decisions.
+Use `route_sages.py --topic "<topic>" --track auto` to make the track decision deterministic (the `--topic` flag is always required). The lighter the track, the lower the ceremony tax — this is how sptler stays productive for daily work instead of only suiting big decisions.
 
-## The six deliberation phases (run all, in order)
+## The deliberation phases
+
+> Six core phases: Phase 0 (mode, with 0.5 invite as its sub-step) → 1 routing → 2 brainstorm → 3 combine → 4 vote → 5 output. Phase 0.5 is a sub-step of Phase 0, not a seventh phase. The verdict and briefing special paths below shortcut this flow.
 
 ### Special lightest path — Verdict mode (auto, single-sage)
 
 If `route_sages.py --track auto` returns `verdict` (single clear single-domain question), skip the full ceremony:
 
 1. No Phase 0 AskUser, no Phase 0.5 invite (unless user named a sage).
-2. Summon the 1 matched sage (`summon_sage.py --sage <name> --topic`) + 邹蕴 hosts.
+2. Summon the 1 matched sage (`summon_sage.py --sage <name> --topic "<topic>"`) + 邹蕴 hosts.
 3. The sage gives a **3-sentence judgment**: the call / why / one risk. `[姓名]` prefix, cite memory if relevant.
 4. No brainstorm, no four-law gate, no weighted vote. 邹蕴 closes in 1 line.
-5. Produce the deliverable (Template 7) if applicable + record memory + index. No result md ceremony needed — the deliverable IS the output.
+5. Produce the deliverable (Template 7) if applicable + write a minimal result md (topic / single-sage judgment / conclusion only) + record memory + index. The result md is always mandatory even in verdict mode; the deliverable is the headline, the result md is the decision record.
 6. End with `议会到此结束。`
 
 This is the mode most daily questions should hit — it's what makes sptler faster than plain Claude for "just give me the expert take".
@@ -236,11 +238,11 @@ After a parliament has closed, the user may ask for a focused continuation inste
 5. **Weighted voting is mandatory** — every attendee votes with their weight; do not silently revert to simple head-count.
 6. **Everyone gives a final recommendation** — after voting, each attending sage contributes one `[姓名] 建议`; 邹蕴 closes with a 收口.
 7. **Sages speak in character** — the four cores' idiosyncrasies must show in their speech, voting reasons, and recommendations.
-8. **Run all phases** — never skip mode selection, brainstorming, four-law check, or the final-recommendation round.
+8. **Run all phases** in the standard fast/formal flow — never skip mode selection, brainstorming, four-law check, or the final-recommendation round. Verdict and briefing special paths (see above) are the only sanctioned exceptions.
 9. **Soul + memory are mandatory** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via read_soul and memories via read_memory in Phase 1; record memory in Phase 5 (record_memory --batch). A sage without soul injection speaks like a tool, not a saint; a meeting that skips memory recording is incomplete.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
 11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
-12. **No open-ended closers** — never end a turn with "还有什么需要帮助的吗 / 要不要我... / 还有其他问题吗" or similar. The parliament either ends at收口, or waits at a defined checkpoint. Nothing in between.
+12. **Close with paths, not questions** — after收口 the only allowed final content is: exported file paths + `议会到此结束。`. No "还有什么需要帮助的吗 / 要不要我..." closers; the parliament either ends at收口 or waits at a defined checkpoint.
 13. **Cite memory on entry (magic moment)** — any sage with relevant past experience (from `summon_sage --topic`) must open Phase 2 by referencing it; this is the single most important behavior for making users feel the system has accumulated value. A sage that ignores its own memory is just a fresh Claude — defeats the purpose.
 
 ## Host behavior (邹蕴)
