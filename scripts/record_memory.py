@@ -231,6 +231,10 @@ def main():
     ap.add_argument("--reason", default="", help="投票理由")
     ap.add_argument("--ideas", default="", help="本次设想（分号分隔）")
     ap.add_argument("--recommendation", default="", help="最终建议")
+    ap.add_argument("--meeting-type", default="regular", help="regular/followup")
+    ap.add_argument("--parent-meeting-id", default="", help="续议对应的原会议ID")
+    ap.add_argument("--followup-type", default="", help="解释型/行动项型/风险复核型/修正型/重投票型")
+    ap.add_argument("--followup-target", default="", help="续议对象：行动项/圣人/风险点/方案/投票")
     ap.add_argument("--batch", help="批量 JSON 文件路径（覆盖单条参数）；传 - 表示从 stdin 读取")
     ap.add_argument("--mem-dir", help="覆盖记忆目录（默认：技能目录/memories）")
     args = ap.parse_args()
@@ -256,9 +260,13 @@ def main():
             print("❌ batch 文件根结构必须是 JSON 对象", file=sys.stderr)
             sys.exit(1)
         # null 值统一转空串（避免 .get(k,"") 在值为 null 时返回 None）
-        base = {k: (data.get(k) or "") for k in ("topic", "meeting_id", "mode", "verdict")}
+        base = {k: (data.get(k) or "") for k in (
+            "topic", "meeting_id", "mode", "verdict",
+            "meeting_type", "parent_meeting_id", "followup_type", "followup_target",
+        )}
         if not base["meeting_id"]:
-            base["meeting_id"] = auto_meeting_id()
+            prefix = "SPTLER-FOLLOWUP-" if base.get("meeting_type") == "followup" else "SPTLER-"
+            base["meeting_id"] = prefix + datetime.now().strftime("%Y%m%d%H%M%S")
         attendees = data.get("attendees") or []
         if not isinstance(attendees, list):
             attendees = []
@@ -275,6 +283,10 @@ def main():
                 "meeting_id": base["meeting_id"],
                 "mode": base["mode"],
                 "verdict": base["verdict"],
+                "meeting_type": base.get("meeting_type") or "regular",
+                "parent_meeting_id": base.get("parent_meeting_id") or "",
+                "followup_type": base.get("followup_type") or "",
+                "followup_target": base.get("followup_target") or "",
                 "stance": att.get("stance") or "弃权",
                 "weight": att.get("weight") or "",
                 "reason": att.get("reason") or "",
@@ -294,6 +306,10 @@ def main():
         "meeting_id": args.meeting_id or auto_meeting_id(),
         "mode": args.mode,
         "verdict": args.verdict,
+        "meeting_type": args.meeting_type or "regular",
+        "parent_meeting_id": args.parent_meeting_id or "",
+        "followup_type": args.followup_type or "",
+        "followup_target": args.followup_target or "",
         "stance": args.stance,
         "weight": args.weight,
         "reason": args.reason,

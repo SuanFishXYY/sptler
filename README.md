@@ -79,6 +79,8 @@ sptler/
 │   ├── record_memory.py      记录圣人经历 + 更新画像（支持 --batch 文件或 --batch - stdin、--mem-dir）
 │   ├── read_memory.py        读取圣人记忆摘要供入会发言注入（支持 --mem-dir）
 │   ├── list_memories.py      总览所有圣人记忆 / 查询某人完整档案（支持 --mem-dir）
+│   ├── index_meeting.py      登记会议/续议索引到 sptler-meetings/index.json
+│   ├── continue_meeting.py   读取上次会议/行动项上下文，支持续议
 │   ├── compact_memories.py   压缩记忆档案，保留profile+最近N次经历
 │   └── validate_sptler.py    一键自检技能结构、引用、脚本语法、旧规则残留
 └── memories/                 运行时生成：每位圣人一个 <姓名>.json（默认不入库）
@@ -108,6 +110,12 @@ cat batch.json | python scripts/record_memory.py --batch -
 
 # 指定记忆目录（测试/多项目隔离）
 python scripts/read_memory.py --sage 王升 --mem-dir /tmp/sptler-mem
+
+# 登记会议索引（供续议使用）
+python scripts/index_meeting.py --meeting-id SPTLER-xxx --topic "..." --result-file result.md --attendees 王升,张鑫
+
+# 读取上一次会议的行动项3，进入续议
+python scripts/continue_meeting.py --last --item 3
 
 # 压缩记忆，只保留最近20次经历
 python scripts/compact_memories.py --keep 20

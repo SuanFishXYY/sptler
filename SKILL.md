@@ -46,6 +46,8 @@ Every sage accumulates a memory of past deliberations in `memories/<姓名>.json
 - `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` or `--batch -` stdin to record all attendees of one meeting at once.
 - `scripts/read_memory.py` — read a sage's memory summary for injection. Use `--sages a,b,c` for the whole roster.
 - `scripts/list_memories.py` — overview of all sages' memory stats, or `--sage <name>` for one sage's full archive.
+- `scripts/index_meeting.py` — register result files/action items into `sptler-meetings/index.json`, enabling cross-session follow-up.
+- `scripts/continue_meeting.py` — load prior meeting/action-item context for 续议 (`--last`, `--meeting-id`, `--item`, `--sage`).
 - `scripts/compact_memories.py` — compact long memory files, keeping profile + recent N experiences.
 - `scripts/validate_sptler.py` — self-check skill structure, references, syntax, and obsolete-rule residue.
 
@@ -155,7 +157,9 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
 
-**5e. Tell the user, then stop.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
+**5e. Index the meeting.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. This enables later `展开行动项3` across sessions.
+
+**5f. Tell the user, then stop.** After indexing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
 
 ## On-the-fly invites (mid-meeting, any phase)
 
@@ -174,11 +178,13 @@ At any point after the roster is set — during brainstorming, combination, or e
 After a parliament has closed, the user may ask for a focused continuation instead of starting a new full meeting: `展开`, `重议`, `行动项3深入`, `徐奕阳再讲讲`, `让陆一帆评估数据层`. Treat these as **续议**:
 
 1. Do not re-run Phase 0/0.5, do not ask for mode again.
-2. Infer the target: a phase/plan/action item/sage named by the user. If ambiguous, ask one concise clarification; otherwise proceed.
-3.召集 only the minimum relevant people: named sage(s) + 邹蕴, or 1–3 experts; read their memory via `read_memory.py`.
-4. Output ≤ 8 bullets total, all `[姓名]` prefixed. No full brainstorm, no full vote unless the user explicitly says `重投票` or `重议表决`.
-5. If the continuation changes the decision, run a mini weighted vote among the affected attendees and record memory. If it merely explains/expands, record a lightweight memory note only for the speaking sage(s).
-6. End with `续议到此结束。` and stop — no open-ended follow-up.
+2. Load context first: use `python scripts/continue_meeting.py --last` (or `--meeting-id <id>`) and add `--item N`, `--sage <name>`, or `--target <text>` when the user names a target. If no index exists and the target is ambiguous, ask one concise clarification.
+3. Classify follow-up type: 解释型 / 行动项型 / 风险复核型 / 修正型 / 重投票型.
+4.召集 only the minimum relevant people: named sage(s) + 邹蕴, or 1–3 experts; read their memory via `read_memory.py`.
+5. Output ≤ 8 bullets total, all `[姓名]` prefixed. No full brainstorm, no full vote unless the user explicitly says `重投票` or `重议表决`.
+6. If the continuation changes the decision, run a mini weighted vote among affected attendees and export `sptler-amendment-*.md` or `sptler-revote-*.md`; otherwise just produce a concise follow-up answer.
+7. Record follow-up memory with `meeting_type=followup`, `parent_meeting_id`, `followup_type`, and `followup_target`; index the follow-up with `index_meeting.py`.
+8. End with `续议到此结束。` and stop — no open-ended follow-up.
 
 ## Discipline (non-negotiable)
 

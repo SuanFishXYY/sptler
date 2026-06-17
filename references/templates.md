@@ -11,6 +11,8 @@
 - **会议纪要**（可选）：`sptler-summary-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议过程**（可选）：`sptler-transcript-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/record_memory.py --batch <该json路径>` 写入圣人记忆；也可直接 `python scripts/record_memory.py --batch -` 从 stdin 读取 JSON（更适合免临时文件）。若 batch 缺 `meeting_id`，脚本会自动生成 `SPTLER-YYYYMMDDHHMMSS`。
+- **会议索引 json**（强制）：写入/更新 `sptler-meetings/index.json`，用 `python scripts/index_meeting.py --batch -` 登记 meeting_id、结果文件、行动项、与会者，供续议读取。
+- **续议 md**（按类型导出）：解释型默认不导出；行动项/风险复核建议导出 `sptler-followup-*`；修正型必须导出 `sptler-amendment-*`；重投票型必须导出 `sptler-revote-*`。
 - 主题 slug：取议题前 8 个汉字或关键英文词，去标点。
 - 所有文件 UTF-8 编码。
 - 写盘后，在对话中**明确告知用户每个文件的绝对路径**。
@@ -305,3 +307,106 @@
 - 鲁棒性：脚本对缺 `sage` 的条目会跳过并告警，对 null 值会按空串处理，对损坏的记忆文件会按无记忆重建——不会因单条异常中断整批记录。
 
 **记录后**：每位圣人的 `memories/<姓名>.json` 会追加本次经历，并增量更新画像（总议事数、专长焦点、立场倾向、风险偏好、常提观点）。下次该圣人入会时，`read_memory.py` 会读出这些画像供其发言引用。
+
+---
+
+## 模板五：会议索引 batch json（强制 · 写入 sptler-meetings/index.json）
+
+> Phase 5e 强制登记，供后续 `continue_meeting.py --last --item 3` 读取真实上下文。
+
+```json
+{
+  "meeting_id": "SPTLER-202606171430",
+  "meeting_type": "regular",
+  "topic": "把OA审查意见答复做成AI辅助流水线",
+  "mode": "复杂会议",
+  "verdict": "通过",
+  "result_file": "C:/path/sptler-meetings/sptler-result-OA流水线-20260617-1430.md",
+  "summary_file": "",
+  "transcript_file": "",
+  "attendees": ["邹蕴", "王升", "张鑫", "徐奕阳", "陆一帆"],
+  "action_items": [
+    {
+      "id": 1,
+      "title": "制作3个高频OA种子模板",
+      "owner": "徐奕阳",
+      "collaborators": ["王升", "卢若雨"],
+      "acceptance": "3个模板均含输入、输出、修改标记、评估标准",
+      "priority": "P0"
+    }
+  ]
+}
+```
+
+登记命令：
+
+```bash
+python scripts/index_meeting.py --batch sptler-index-xxx.json
+# 或：cat sptler-index-xxx.json | python scripts/index_meeting.py --batch -
+```
+
+---
+
+## 模板六：续议 md（解释/行动项/风险复核/修正/重投票）
+
+```markdown
+# 算鱼议会续议 · {原议题}
+
+> 原会议：{parent_meeting_id}
+> 续议类型：解释型 / 行动项型 / 风险复核型 / 修正型 / 重投票型
+> 主持：邹蕴
+> 续议对象：{行动项/圣人/风险点/方案/投票}
+
+## 一、续议原因
+[邹蕴] {为什么进入续议；续议边界是什么；是否需要重投票。}
+
+## 二、最小召集
+| 圣人 | 角色 | 权重 | 入会理由 |
+|---|---|---|---|
+| 邹蕴 | 主持 | 0 | 控制续议边界 |
+| {名} | {圣号} | {权重} | {用户点名/行动项责任/风险相关} |
+
+## 三、续议发言（≤8条）
+[陆一帆] {一句话或一条要点}
+[徐奕阳] {一句话或一条要点}
+[邹蕴] {必要的风险/边界提示}
+
+## 四、对原决议影响
+[邹蕴] 本次续议对原决议的影响为：不影响 / 小修 / 中修 / 大修。
+
+## 五、续议结论
+- {结论1}
+- {结论2}
+
+## 六、是否重投票
+需要 / 不需要。若需要，列出小范围加权投票明细。
+
+## 七、记忆与索引
+本次续议写入相关圣人记忆，meeting_type=followup，并登记到会议索引。
+
+> 续议到此结束。
+```
+
+### 续议导出规则
+
+| 类型 | 导出 |
+|---|---|
+| 解释型 | 默认不导出，除非用户要求 |
+| 行动项型 | 建议导出 `sptler-followup-*` |
+| 风险复核型 | 建议导出 `sptler-followup-*` |
+| 修正型 | 必须导出 `sptler-amendment-*` |
+| 重投票型 | 必须导出 `sptler-revote-*` |
+
+### 续议记忆 batch 额外字段
+
+续议写入记忆时，在模板四基础上增加：
+
+```json
+{
+  "meeting_type": "followup",
+  "parent_meeting_id": "SPTLER-202606171430",
+  "followup_type": "风险复核型",
+  "followup_target": "行动项3 / 权限风险 / 徐奕阳观点",
+  "mode": "续议"
+}
+```

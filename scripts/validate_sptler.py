@@ -32,6 +32,8 @@ REQUIRED = [
     "scripts/read_memory.py",
     "scripts/list_memories.py",
     "scripts/route_sages.py",
+    "scripts/index_meeting.py",
+    "scripts/continue_meeting.py",
     "scripts/compact_memories.py",
 ]
 
@@ -43,6 +45,9 @@ KEYWORDS = [
     "record_memory",
     "read_memory",
     "route_sages",
+    "index_meeting",
+    "continue_meeting",
+    "meeting_type=followup",
     "议会到此结束",
     "续议到此结束",
 ]
