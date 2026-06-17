@@ -42,9 +42,12 @@ Before deliberating, read these reference files in this skill directory:
 
 Every sage accumulates a memory of past deliberations in `memories/<姓名>.json`, managed by three scripts in `scripts/`. This gives sages continuity — they can reference past experience, and their profile (specialty focus, stance tendencies, risk posture, recurring views) evolves over time.
 
-- `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` to record all attendees of one meeting at once.
+- `scripts/route_sages.py` — deterministic routing helper: `--topic`, `--mode`, `--invites`, optional `--json`; use it in Phase 1 to stabilize roster selection.
+- `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` or `--batch -` stdin to record all attendees of one meeting at once.
 - `scripts/read_memory.py` — read a sage's memory summary for injection. Use `--sages a,b,c` for the whole roster.
 - `scripts/list_memories.py` — overview of all sages' memory stats, or `--sage <name>` for one sage's full archive.
+- `scripts/compact_memories.py` — compact long memory files, keeping profile + recent N experiences.
+- `scripts/validate_sptler.py` — self-check skill structure, references, syntax, and obsolete-rule residue.
 
 Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, so sages learn from every parliament.
 
@@ -104,14 +107,13 @@ Right after mode selection, before routing, ask the user whether they want to in
 
 ### Phase 1 — Routing + memory injection
 
-1. **Seed with invites**: start the roster from any user-invited sages (Phase 0.5). These are locked in.
-2. Analyze the topic for domain keywords (结构/控制/AI/价值/机械/数据/接口/流水线/整车/跨界/生命/材料/可靠性/度量/平台).
-3. Consult the routing table in `references/roster.md`. Auto-select additional sages by keyword hit count, sized to the chosen mode: 快速 3–4 / 复杂 7–9 / 动态 per judgment (3–9). Include **at least 1 core** (复杂/动态-strategic ≥ 2 cores) — unless the user's invites already cover this.
-4. If the topic falls within a committee's scope, that committee chief **must attend** and holds intra-topic final-say.
-5. The host is always 邹蕴 (权重 0, not a routed seat).
-6. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it (e.g. "上次我们议过类似OA流水线，这次我建议……"). Sages with no memory yet are noted as 新晋圣人.
-7. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
-8. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
+1. **Seed with invites**: start from any user-invited sages (Phase 0.5). These are locked in.
+2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --invites "<comma names>" --json`. Use its attendee list, weights, dynamic boosts, and reasons as the roster baseline.
+3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
+4. The host is always 邹蕴 (权重 0, not a routed seat).
+5. **Inject memory**: run `python scripts/read_memory.py --sages <comma-sep roster>` to load each attendee's memory summary (past meetings, stance tendencies, recurring views, risk posture). Feed each sage's summary into that sage's speaking context in Phase 2 — so a sage with prior experience on similar topics can reference it. Sages with no memory yet are noted as 新晋圣人.
+6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
+7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 
 ### Phase 2 — Brainstorming (the four principles)
 

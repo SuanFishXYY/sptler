@@ -75,9 +75,12 @@ sptler/
 │   ├── orglaw.md             三种会议模式 + 议事程序 + 加权投票规则
 │   └── templates.md          四类输出模板 + [姓名] 格式 + 记忆 batch json 格式
 ├── scripts/
+│   ├── route_sages.py        自动路由圣人名单（topic/mode/invites → roster+weights）
 │   ├── record_memory.py      记录圣人经历 + 更新画像（支持 --batch 文件或 --batch - stdin、--mem-dir）
 │   ├── read_memory.py        读取圣人记忆摘要供入会发言注入（支持 --mem-dir）
-│   └── list_memories.py      总览所有圣人记忆 / 查询某人完整档案（支持 --mem-dir）
+│   ├── list_memories.py      总览所有圣人记忆 / 查询某人完整档案（支持 --mem-dir）
+│   ├── compact_memories.py   压缩记忆档案，保留profile+最近N次经历
+│   └── validate_sptler.py    一键自检技能结构、引用、脚本语法、旧规则残留
 └── memories/                 运行时生成：每位圣人一个 <姓名>.json（默认不入库）
 ```
 
@@ -93,6 +96,26 @@ sptler/
 2. **Phase 5 议事后**：生成 batch json 并 `python scripts/record_memory.py --batch <json>`，把每位与会者的经历写入档案并更新画像
 
 圣人由此随时间积累、成长——议得越多，画像越清晰，发言越有积淀。可用 `python scripts/list_memories.py` 查看所有圣人的记忆统计。
+
+## 脚本示例
+
+```bash
+# 自动路由（议题+模式+邀请名单 → 入会名单）
+python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --invites 陆一帆,金辰宇
+
+# 从 stdin 记录记忆（免临时文件）
+cat batch.json | python scripts/record_memory.py --batch -
+
+# 指定记忆目录（测试/多项目隔离）
+python scripts/read_memory.py --sage 王升 --mem-dir /tmp/sptler-mem
+
+# 压缩记忆，只保留最近20次经历
+python scripts/compact_memories.py --keep 20
+
+# 技能自检
+python scripts/validate_sptler.py
+```
+
 
 > 记忆档案含真实议事记录，默认被 `.gitignore` 排除不入库。如需备份/共享，手动 force-add 或建私有仓库。
 
