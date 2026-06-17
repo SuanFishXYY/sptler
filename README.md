@@ -1,20 +1,67 @@
-# 算鱼真人议会 · sptler
+# 🏛️ 算鱼真人议会 · sptler
 
-> **立骨 · 铸模 · 以界为器 · 以值为尺** —— 先立骨，再铸模；以界为器，以值为尺。
+> **先立骨，再铸模；以界为器，以值为尺。**
 
-一个 Claude Code 技能（skill），把 **22 位圣人专家班子**正式运转成一套议会决策系统。用户提问后，自动路由匹配专家入会，按头脑风暴四原则发散、组合改善、四律否决闸、**加权投票**，最终强制导出决议结果。
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Skill](https://img.shields.io/badge/Claude%20Code-Skill-orange)
+![Sages](https://img.shields.io/badge/圣人-22位-green)
+![Tracks](https://img.shields.io/badge/轨道-4轨自动降级-purple)
+
+**22 位带灵魂与记忆的圣人专家班子，按问题重量自动开议会。**
+
+不是又一个 prompt 模板——这是一套会**记住你所有决定**的专家系统：日常小问题让最相关的 1 位圣人 3 句话裁决，复杂议题才召集多位圣人做加权投票；而当你第二次问同类问题，圣人开口第一句就引用上次的结论。
+
+## 30 秒看懂
+
+| 你问的 | sptler 怎么做 | 为什么比裸 Claude 强 |
+|---|---|---|
+| "权利要求边界怎么收" | 1 位圣人 3 句话裁决 | 秒级出专家判断，带人格不用铺垫 |
+| "OA流水线怎么落地" | 6 圣人快速议会+加权投票 | 多视角+四律否决，结构化收敛 |
+| 第二次问同类问题 | 圣人引用上次结论接续 | **有积累，不重复论证** |
+
+## ✨ 三个让人眼前一亮的特性
+
+### 🧠 记忆魔法时刻
+圣人记得自己历次议事的立场和建议。同类问题第二次问，开口就引用上次：
+> [徐奕阳] 上次我们议过 OA 流水线(06-15)，当时定的是"三段式Prompt模具+半自动起步"。这次我直接按那个骨架展开……
+
+这是裸 Claude 做不到的——它每次从零开始，而你的圣人班子越用越懂你。
+
+### 🪶 四轨自动降级
+按问题重量自动选最轻的轨道，**小问题不走大流程**：
+```
+单圣人裁决(1人,3句) → 快速轨(3-5人) → 正式轨(7-9人) → 续议轨
+```
+
+### 📄 产出真实交付物
+议会是手段，交付物是目的。专利→权利要求骨架，架构→ADR，流程→SOP——直接给你本来就要写的文件，不只是"关于会议的文档"。
 
 ## 触发
 
 ```bash
-/sptler {问题}        # 标准议会：先选择模式、邀请、名单确认
+/sptler {问题}        # 标准议会：先选模式、邀请、名单确认
 /sptler! {问题}       # 简报模式：免提问，自动动态路由，单轮给结论+结果md
 /算鱼议会 {问题}
 /议会 {问题}
+/议会! {问题}        # 同 /sptler!
 /开会 {问题}
 /议一议 {问题}
 /sptler 记忆 王升     # 快捷查看某位圣人的记忆档案
 ```
+
+## 🚀 快速开始
+
+```bash
+git clone https://github.com/SuanFishXYY/sptler.git ~/.claude/skills/sptler
+```
+
+重启 Claude Code，然后：
+
+```text
+/sptler! 我们要把OA审查意见答复做成AI辅助流水线，怎么落地
+```
+
+或先看真实案例感受效果 👉 [examples/](examples/README.md)
 
 ## 议会结构
 
@@ -177,19 +224,23 @@ python scripts/validate_sptler.py
 > 记忆档案含真实议事记录，默认被 `.gitignore` 排除不入库。如需备份/共享，手动 force-add 或建私有仓库。
 
 
-## 安装
+## 安装（多平台）
 
-### 方式一：克隆到 Claude skills 目录
+| 平台 | 安装路径 |
+|---|---|
+| Claude Code | `~/.claude/skills/sptler/` |
+| Codex | `~/.codex/skills/sptler/` |
+| Copilot CLI | `.github/skills/sptler/` |
 
 ```bash
 git clone https://github.com/SuanFishXYY/sptler.git ~/.claude/skills/sptler
 ```
 
-重启 Claude Code 后即可用 `/sptler` 触发。
+首次使用建议跑一次自检：
 
-### 方式二：手动复制
-
-将本仓库内容放入 `~/.claude/skills/sptler/`（Claude Code）、`~/.codex/skills/sptler/`（Codex）或 `.github/skills/sptler/`（Copilot CLI）。
+```bash
+cd ~/.claude/skills/sptler && python scripts/validate_sptler.py
+```
 
 ## 技能规范
 
