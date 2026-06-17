@@ -54,6 +54,16 @@ Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, 
 - If the user invokes `/sptler` with no question, use AskUser to ask what the parliament should deliberate.
 - Topics may be: technology selection, patent drafting strategy, AI productization path, system architecture, process governance, customer value judgment — any decision needing multiple expert perspectives.
 
+## Output length & termination (anti-drag — read first)
+
+The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
+
+1. **Only three AskUser checkpoints** — Phase 0 (mode), Phase 0.5 (invite), Phase 5c (export options). At every other phase the agent proceeds without stopping to ask the user anything. Never invent extra AskUser prompts mid-flow.
+2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 + 0.5 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits.
+3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
+
+Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one sentence; final recommendation = one sentence. A full quick-meeting should fit in a short response; a full complex-meeting should be thorough but not bloated.
+
 ## The six deliberation phases (run all, in order)
 
 ### Phase 0 — Mode selection (AskUser)
@@ -95,14 +105,16 @@ Right after mode selection, before routing, ask the user whether they want to in
 
 > **Absolutely no negation, criticism, or judgment of any idea in this phase.** All judgment is deferred to voting.
 
-Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3+ ideas**, the wilder the better. Strictly follow:
+Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3 ideas**, the wilder the better. Strictly follow:
 
 1. **自由思考** — liberated thinking; even absurd ideas recorded as-is.
 2. **延迟评判** — no one may negate another's idea. If 邹蕴 detects premature judging, she intervenes and logs "judgment deferred."
 3. **注重数量而非质量** — as many ideas as possible (complex mode).
 4. **组合改善** — building on others' ideas encouraged, but only as addition/fusion, never negation.
 
-Each sage's voice must match their persona (see `references/roster.md` signature quotes): 王升 opens with structure/skeleton; 张鑫 with fallback/monitoring; 徐奕阳 with molding/reuse; 范征 with value landing-point; 喻学兵 with who-connects-to-whom; 卢若雨 with boundary precision; 顾峻峰 with "go back to the site"; 蔡悦 with "another domain already solved this"; 黄嵩泉 with "single-point failure, redundancy to the rescue"; etc. Record all ideas verbatim, unfiltered.
+**Brevity is mandatory (anti-drag):** each idea is ONE sentence — no rationale paragraphs, no elaboration, no examples in this phase. Quick mode: a sage's whole turn ≤ 2 sentences. Complex mode: ≤ 4 sentences total (3 one-line ideas + optional 1-line bridge). Voting reasons (Phase 4b) and final recommendations (Phase 5a) are also one sentence each. The parliament's value is the structured convergence, not verbose monologues.
+
+Each sage's voice must match their persona (see `references/roster.md` signature quotes): 王升 opens with structure/skeleton; 张鑫 with fallback/monitoring; 徐奕阳 with molding/reuse; 范征 with value landing-point; 喻学兵 with who-connects-to-whom; 卢若雨 with boundary precision; 顾峻峰 with "go back to the site"; 蔡悦 with "another domain already solved this"; 黄嵩泉 with "single-point failure, redundancy to the rescue"; etc. Record ideas verbatim but trimmed to one line each.
 
 ### Phase 3 — Combine & improve
 
@@ -129,7 +141,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
 
-**5e. Tell the user.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) a paragraph on action items and owners.
+**5e. Tell the user, then stop.** After writing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
 
 ## On-the-fly invites (mid-meeting, any phase)
 
@@ -155,6 +167,8 @@ At any point after the roster is set — during brainstorming, combination, or e
 8. **Run all phases** — never skip mode selection, brainstorming, four-law check, or the final-recommendation round.
 9. **Memory is mandatory** — inject memories in Phase 1 (read_memory) and record in Phase 5 (record_memory --batch). Sages without memory recording cannot grow; a meeting that skips recording is incomplete.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
+11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
+12. **No open-ended closers** — never end a turn with "还有什么需要帮助的吗 / 要不要我... / 还有其他问题吗" or similar. The parliament either ends at收口, or waits at a defined checkpoint. Nothing in between.
 
 ## Host behavior (邹蕴)
 
@@ -167,12 +181,14 @@ At any point after the roster is set — during brainstorming, combination, or e
 - Adjudicates close/tied weighted votes in Phase 4b.
 - Synthesizes the 收口 in Phase 5a.
 
-## Interaction rhythm with the user
+## Interaction rhythm with the user (turn-minimal)
 
-1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**.
-2. User picks mode → **AskUser Phase 0.5 invite check** (auto-route vs specify sages) → seed roster with any invited sages → Phase 1 auto-routing + memory injection (read_memory) → present roster (invited vs auto, weights + reasons) → **wait for user confirmation** (or "continue").
-3. User confirms → Phase 2 brainstorm (all `[姓名]` voices, sized to mode, memory-aware) → Phase 3 combine → Phase 4 weighted vote → Phase 5a recommendations. User may invite more sages at any point (on-the-fly).
-4. Phase 5b record memories (record_memory --batch) → Phase 5c AskUser export options → write files → report paths and conclusion.
+1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**. *(turn ends here)*
+2. User picks mode → **AskUser Phase 0.5 invite check** → seed roster with invites → Phase 1 routing + memory injection → present roster → **wait for confirmation**. *(turn ends here)*
+3. User confirms → **Phase 2 → 3 → 4 → 5a in ONE continuous response** (brainstorm, combine, vote, recommendations — do not stop between them, do not ask "继续"). Mid-meeting invites are honored inline only if the user explicitly named a sage in their confirmation; otherwise proceed. *(one big turn)*
+4. **Phase 5b record memories → Phase 5c AskUser export options** → write files → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
+
+Total: ideally **3–4 turns** end to end (mode → invite/roster → deliberation → export/close). Never more than necessary. After close, do not speak again until the user gives a new instruction.
 
 ## Quick reference: brainstorming style cues (keep personas distinct)
 
