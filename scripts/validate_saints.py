@@ -6,13 +6,13 @@ from pathlib import Path
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8'); sys.stderr.reconfigure(encoding='utf-8')
 ROOT=Path(__file__).resolve().parent.parent
-REG=ROOT/'references'/'saints.registry.json'
+REG=ROOT/'references'/'saints'/'saints.registry.json'
 REQ=['SOUL.md','IDENTITY.md','BOUNDARY.md','SUMMON.md','GROWTH.md','RELATIONS.json']
 
 def main():
     failed=0
     if not REG.exists():
-        print('❌ 缺 references/saints.registry.json'); sys.exit(1)
+        print('❌ 缺 references/saints/saints.registry.json'); sys.exit(1)
     reg=json.loads(REG.read_text(encoding='utf-8'))
     print(f'== 圣人OS校验：{len(reg)} 位 ==')
     for name, meta in reg.items():

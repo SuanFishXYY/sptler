@@ -4,7 +4,7 @@
 OpenClaw 圣人操作系统 · 生成器 (generate_saints.py)
 
 从内置圣人数据生成 saints/<姓名>/ 下的 SOUL.md / IDENTITY.md / BOUNDARY.md / SUMMON.md / GROWTH.md / RELATIONS.json，
-并生成 references/saints.registry.json。
+并生成 references/saints/saints.registry.json。
 
 用法:
   python scripts/generate_saints.py
@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 ROOT = Path(__file__).resolve().parent.parent
 SAINTS_DIR = ROOT / "saints"
-REF_DIR = ROOT / "references"
+REF_DIR = ROOT / "references" / "saints"
 
 SAINTS = {
   "王升": {"title":"结构圣","office":"丞相","role":"四核心","weight":3.0,"sanguo":"曹操·魏","law":"结构律","soul":"任何复杂问题，必须先有骨架，再谈血肉。","style":"冷静、结构化、先分层后判断。","must":"无结构先动工;边界条件推迟处理;单一指标独断","ask":"这个方案的骨架是什么？;边界在哪里？;有没有中间层？","summon":"结构;骨架;边界;权利要求;系统架构;复杂专利"},

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """完整召唤圣人上下文：SOUL + IDENTITY + BOUNDARY + SUMMON + MEMORY + RELATIONS。
 
-遵循 references/memory_philosophy.md：
+遵循 references/memory/memory_philosophy.md：
 - 命中相关记忆时 citation_count += 1 并回写（用过即重要）
 - relevant 排序按 价值分 × 时效衰减（近期优先，旧记忆降权）
 - 输出双画像（长期 profile + 短期 profile_recent），圣人能表达"骨子 vs 近况"

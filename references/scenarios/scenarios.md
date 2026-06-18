@@ -1,7 +1,7 @@
 # 专利专属场景流程指引
 
 > sptler 除通用决策外，内置六个专利/IP 高频场景。route_sages 自动识别场景并路由专属圣人、产出专属交付物。
-> 场景配置见 `references/routing_rules.json` §scenarios。
+> 场景配置见 `references/scenarios/routing_rules.json` §scenarios。
 
 ## 场景识别
 
@@ -18,7 +18,7 @@
 - 邹蕴（议长）——主持 + 检索完备性自检
 - 顾峻峰（现场组合圣·建议）——现场技术还原
 
-**流程要点（按 `references/feature_analysis.md` 框架，圣人不固定，由 route_sages 动态路由）**：
+**流程要点（按 `references/scenarios/feature_analysis.md` 框架，圣人不固定，由 route_sages 动态路由）**：
 1. **三要素拆解（特征拆解角色）**：技术问题→技术方案（逐特征A/B/C/D，标注类型+必要性）→技术效果
 2. **特征语义扩展（语义扩展角色）**：每个必要特征展开同义词/近义词/上下位/英文对照/IPC-CPC分类号/功能表达→形成语义矩阵
 3. **检索式构建（语义扩展角色）**：核心检索式（特征A同义词 AND 特征B同义词 AND 分类号）+ 扩展检索式（上位概念 AND 功能表达）+ 补充策略（引文/同族/发明人追踪）

@@ -24,15 +24,15 @@ ROOT = Path(__file__).resolve().parent.parent
 
 REQUIRED = [
     "SKILL.md",
-    "references/roster.md",
-    "references/philosophy.md",
-    "references/orglaw.md",
-    "references/templates.md",
-    "references/saints.registry.json",
-    "references/routing_rules.json",
-    "references/runtime.md",
-    "references/memory_philosophy.md",
-    "references/scenarios.md",
+    "references/saints/roster.md",
+    "references/core/philosophy.md",
+    "references/core/orglaw.md",
+    "references/templates/templates.md",
+    "references/saints/saints.registry.json",
+    "references/scenarios/routing_rules.json",
+    "references/core/runtime.md",
+    "references/memory/memory_philosophy.md",
+    "references/scenarios/scenarios.md",
     "scripts/generate_saints.py",
     "scripts/read_soul.py",
     "scripts/summon_sage.py",
@@ -132,7 +132,7 @@ def main():
         else: bad(f"body过长 ({len(body.split())})"); failed += 1
 
     print("\n== 关键能力关键词 ==")
-    all_text = "\n".join((ROOT / f).read_text(encoding="utf-8") for f in ["SKILL.md", "references/orglaw.md", "references/templates.md"])
+    all_text = "\n".join((ROOT / f).read_text(encoding="utf-8") for f in ["SKILL.md", "references/core/orglaw.md", "references/templates/templates.md"])
     for k in KEYWORDS:
         if k in all_text: ok(k)
         else: bad(k); failed += 1

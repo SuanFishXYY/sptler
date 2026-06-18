@@ -4,7 +4,7 @@
 
 ## 记忆系统运行时
 
-记忆遵循 `references/memory_philosophy.md`。运行时调用：
+记忆遵循 `references/memory/memory_philosophy.md`。运行时调用：
 
 - **Phase 1 注入**：`python scripts/summon_sage.py --sage <name> --topic "<topic>"` 一次加载灵魂+记忆+关系+相关历史记忆。命中记忆自动 citation+1 回写。
 - **Phase 5b 记录（用户确认后）**：先 AskUser 问是否写入记忆（写入记忆/不留痕）。选"写入记忆"才运行 `python scripts/record_memory.py --batch -`（stdin）或 `--batch <file>`。batch 可带 `supersedes: [旧meeting_id]` 标记推翻旧结论。选"不留痕"则跳过，仅保留结果 md。
@@ -48,7 +48,7 @@
 
 ## 四律否决闸（投票前置硬约束）
 
-投票前邹蕴组织对照 `references/philosophy.md` 四律检查方案。触发某律否决信号→对应核心必须投反对并引用信号。快速轨只查命中律，正式轨四律全查。这是事前约束，非事后解释。
+投票前邹蕴组织对照 `references/core/philosophy.md` 四律检查方案。触发某律否决信号→对应核心必须投反对并引用信号。快速轨只查命中律，正式轨四律全查。这是事前约束，非事后解释。
 
 ## 加权投票规则
 

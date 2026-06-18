@@ -518,7 +518,7 @@ python scripts/index_meeting.py --batch sptler-index-xxx.json
 
 ### 8-A. 查新检索报告（deliverable-search）
 
-> 特征分析方法见 `references/feature_analysis.md`。方法论不绑定圣人，具体由 route_sages 动态路由的入会圣人按角色能力承担。
+> 特征分析方法见 `references/scenarios/feature_analysis.md`。方法论不绑定圣人，具体由 route_sages 动态路由的入会圣人按角色能力承担。
 
 ```markdown
 # 查新检索报告 · {技术方案}

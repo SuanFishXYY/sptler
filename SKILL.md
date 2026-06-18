@@ -33,20 +33,20 @@ Every sage utterance — in brainstorming, combination, voting, and recommendati
 
 Before deliberating, read these reference files in this skill directory:
 
-- `references/roster.md` — 22 sages, weights, routing keywords, domain→sage routing table.
-- `references/saints.registry.json` — machine-readable OpenClaw Saint OS registry.
+- `references/saints/roster.md` — 22 sages, weights, routing keywords, domain→sage routing table.
+- `references/saints/saints.registry.json` — machine-readable OpenClaw Saint OS registry.
 - `saints/<姓名>/SOUL.md`, `IDENTITY.md`, `BOUNDARY.md`, `SUMMON.md` — each sage's human-readable soul, identity, boundary, and summon rules.
-- `references/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
-- `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
-- `references/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
-- `references/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): routing, must-attend sages, deliverables.
-- `references/feature_analysis.md` — professional feature decomposition (问题-方案-效果三要素拆解 + 语义扩展 + 检索式构建). Used by 查新/FTO/无效 scenes.
+- `references/core/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
+- `references/core/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
+- `references/templates/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
+- `references/scenarios/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): routing, must-attend sages, deliverables.
+- `references/scenarios/feature_analysis.md` — professional feature decomposition (问题-方案-效果三要素拆解 + 语义扩展 + 检索式构建). Used by 查新/FTO/无效 scenes.
 
 ## Sage memory system
 
-Sages accumulate value-driven memory (`memories/<姓名>.json`) governed by `references/memory_philosophy.md`: layered (recent detail / long-term skeleton), value-scored (passed × cited), supersedeable (改主意全留但旧不引用), dual-profile (long-term底色 + recent近况). Memory is read on entry (Phase 1) and written after the vote (Phase 5), so sages learn and grow.
+Sages accumulate value-driven memory (`memories/<姓名>.json`) governed by `references/memory/memory_philosophy.md`: layered (recent detail / long-term skeleton), value-scored (passed × cited), supersedeable (改主意全留但旧不引用), dual-profile (long-term底色 + recent近况). Memory is read on entry (Phase 1) and written after the vote (Phase 5), so sages learn and grow.
 
-Key scripts: `summon_sage.py` (one-call context + memory citation), `read_soul.py` (soul block injection), `record_memory.py` (batch record + value/supersede), `update_growth.py`, `index_meeting.py`, `build_relations.py`, `compact_memories.py` (value-driven cleanup), `route_sages.py` (config-driven routing). Full runtime details and script params: `references/runtime.md`.
+Key scripts: `summon_sage.py` (one-call context + memory citation), `read_soul.py` (soul block injection), `record_memory.py` (batch record + value/supersede), `update_growth.py`, `index_meeting.py`, `build_relations.py`, `compact_memories.py` (value-driven cleanup), `route_sages.py` (config-driven routing). Full runtime details and script params: `references/core/runtime.md`.
 
 ## Trigger and input
 
@@ -79,7 +79,7 @@ Use `route_sages.py --topic "<topic>" --track auto` to make the track decision d
 
 ## The deliberation phases
 
-> Core flow: Phase 0 (mode) → 0.5 (roster) → 1 (routing+injection) → 2 (brainstorm) → 3 (combine) → 4 (vote) → 5 (output). Verdict/briefing/scenario shortcut this flow. **All Phase detailed steps are in `references/runtime.md` §Phase 详细步骤 — read it when executing.**
+> Core flow: Phase 0 (mode) → 0.5 (roster) → 1 (routing+injection) → 2 (brainstorm) → 3 (combine) → 4 (vote) → 5 (output). Verdict/briefing/scenario shortcut this flow. **All Phase detailed steps are in `references/core/runtime.md` §Phase 详细步骤 — read it when executing.**
 
 ### Special paths (shortcut the full flow)
 - **Verdict** (auto, 1 sage): 3-sentence judgment, zero-trace, no vote. See runtime.md §Verdict.
@@ -108,8 +108,8 @@ Quick → 1 plan. Complex → 2-3. No negation. Detail: runtime.md §Phase 3.
 
 ## On-the-fly invites & Follow-up (续议)
 
-- **Mid-meeting invites**: at any phase the user may say "邀请陆一帆加入"/"让黄嵩泉评估可靠性". 邹蕴 immediately adds the sage (mandatory, real weight), injects memory, lets them contribute; if it changes the vote, re-tally. Never silently ignore — acknowledge aloud. Full rules: `references/runtime.md` §用户指定邀请.
-- **Follow-up (续议)**: after收口, "展开"/"重议"/"行动项3深入"/"徐奕阳再讲讲" → lightweight continuation, NOT a new full meeting. Load context via `continue_meeting.py`, classify type (解释/行动项/风险复核/修正/重投票), minimal召集, ≤8 bullets, record followup memory, `续议到此结束。`. Full rules: `references/runtime.md` §续议制度.
+- **Mid-meeting invites**: at any phase the user may say "邀请陆一帆加入"/"让黄嵩泉评估可靠性". 邹蕴 immediately adds the sage (mandatory, real weight), injects memory, lets them contribute; if it changes the vote, re-tally. Never silently ignore — acknowledge aloud. Full rules: `references/core/runtime.md` §用户指定邀请.
+- **Follow-up (续议)**: after收口, "展开"/"重议"/"行动项3深入"/"徐奕阳再讲讲" → lightweight continuation, NOT a new full meeting. Load context via `continue_meeting.py`, classify type (解释/行动项/风险复核/修正/重投票), minimal召集, ≤8 bullets, record followup memory, `续议到此结束。`. Full rules: `references/core/runtime.md` §续议制度.
 
 ## Discipline (non-negotiable)
 
@@ -131,7 +131,7 @@ Quick → 1 plan. Complex → 2-3. No negation. Detail: runtime.md §Phase 3.
 
 ## Host behavior (邹蕴)
 
-邹蕴 moderates from her "real-time decision / failure-safety" specialty — flags risk nodes before they arrive, enforces deferred judgment, runs four-law gate, adjudicates close votes, synthesizes收口. She does not vote (weight 0). Full behavior: `references/runtime.md` §议长行为.
+邹蕴 moderates from her "real-time decision / failure-safety" specialty — flags risk nodes before they arrive, enforces deferred judgment, runs four-law gate, adjudicates close votes, synthesizes收口. She does not vote (weight 0). Full behavior: `references/core/runtime.md` §议长行为.
 
 ## Interaction rhythm with the user (turn-minimal)
 
@@ -153,7 +153,7 @@ Total: ideally **3–4 turns** end to end (mode → invite/roster → deliberati
 - **孙高德（平台圣·鲁肃）**: service-connector, platform reuse. "能不能沉淀为可复用的平台资产?"
 - **蔡悦（跨界圣·陆逊）**: cross-domain combiner. "别的领域已经有答案了."
 - **黄嵩泉（组合圣·马钧）**: redundancy engineer. "单点不可靠，组合才稳."
-- **喻学兵/卢若雨/顾峻峰** and the rest: 演绎 per `references/roster.md` specialty and quotes — keep voices distinct, never blend.
+- **喻学兵/卢若雨/顾峻峰** and the rest: 演绎 per `references/saints/roster.md` specialty and quotes — keep voices distinct, never blend.
 
 ---
 
