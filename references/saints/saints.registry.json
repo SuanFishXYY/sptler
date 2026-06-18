@@ -284,5 +284,83 @@
     "boundary_path": "saints/陆诗杰/BOUNDARY.md",
     "summon_path": "saints/陆诗杰/SUMMON.md",
     "memory_path": "memories/陆诗杰.json"
+  },
+  "周全": {
+    "title": "通域圣",
+    "office": "双通桥·涉外专利协调人",
+    "role": "专科",
+    "weight": 1.0,
+    "sanguo": "陈群·魏",
+    "law": "涉外桥接",
+    "soul_path": "saints/周全/SOUL.md",
+    "identity_path": "saints/周全/IDENTITY.md",
+    "boundary_path": "saints/周全/BOUNDARY.md",
+    "summon_path": "saints/周全/SUMMON.md",
+    "memory_path": "memories/周全.json"
+  },
+  "吴畏": {
+    "title": "商标圣",
+    "office": "品牌门神·商标边境守护者",
+    "role": "专科",
+    "weight": 1.0,
+    "sanguo": "于禁·魏",
+    "law": "商标守护",
+    "soul_path": "saints/吴畏/SOUL.md",
+    "identity_path": "saints/吴畏/IDENTITY.md",
+    "boundary_path": "saints/吴畏/BOUNDARY.md",
+    "summon_path": "saints/吴畏/SUMMON.md",
+    "memory_path": "memories/吴畏.json"
+  },
+  "钱孟清": {
+    "title": "策护圣",
+    "office": "策护战将·诉讼与政策影响",
+    "role": "专科",
+    "weight": 1.0,
+    "sanguo": "法正·蜀",
+    "law": "诉讼策护",
+    "soul_path": "saints/钱孟清/SOUL.md",
+    "identity_path": "saints/钱孟清/IDENTITY.md",
+    "boundary_path": "saints/钱孟清/BOUNDARY.md",
+    "summon_path": "saints/钱孟清/SUMMON.md",
+    "memory_path": "memories/钱孟清.json"
+  },
+  "叶诚": {
+    "title": "导航圣",
+    "office": "导航罗盘·知产战略分析师",
+    "role": "专科",
+    "weight": 1.0,
+    "sanguo": "徐庶·蜀",
+    "law": "导航分析",
+    "soul_path": "saints/叶诚/SOUL.md",
+    "identity_path": "saints/叶诚/IDENTITY.md",
+    "boundary_path": "saints/叶诚/BOUNDARY.md",
+    "summon_path": "saints/叶诚/SUMMON.md",
+    "memory_path": "memories/叶诚.json"
+  },
+  "须一平": {
+    "title": "开埠圣",
+    "office": "开埠者·审查制度奠基人",
+    "role": "顾问",
+    "weight": 1.0,
+    "sanguo": "荀攸·魏",
+    "law": "制度开荒",
+    "soul_path": "saints/须一平/SOUL.md",
+    "identity_path": "saints/须一平/IDENTITY.md",
+    "boundary_path": "saints/须一平/BOUNDARY.md",
+    "summon_path": "saints/须一平/SUMMON.md",
+    "memory_path": "memories/须一平.json"
+  },
+  "朱立鸣": {
+    "title": "机巧圣",
+    "office": "匠作监",
+    "role": "专科",
+    "weight": 1.0,
+    "sanguo": "马钧·群",
+    "law": "工艺落地",
+    "soul_path": "saints/朱立鸣/SOUL.md",
+    "identity_path": "saints/朱立鸣/IDENTITY.md",
+    "boundary_path": "saints/朱立鸣/BOUNDARY.md",
+    "summon_path": "saints/朱立鸣/SUMMON.md",
+    "memory_path": "memories/朱立鸣.json"
   }
 }
