@@ -177,9 +177,13 @@ def detect_scenario(topic: str) -> tuple[str, dict]:
 
 def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto") -> dict:
     scenario_name, scenario_rule = detect_scenario(topic)
-    # 专利专属场景强制 formal 轨道
+    # 专利专属场景：用户未显式指定 track 时默认 formal；但用户选"快速会议"则尊重用户，走场景快评轨(必到圣人保留,规模缩到fast)
     if scenario_name and track == "auto":
-        track = scenario_rule.get("track", "formal")
+        if mode in ("fast", "quick", "快速", "快速会议"):
+            track = "fast"  # 场景快评：必到圣人在,但不升8人全会
+            scenario_rule = {**scenario_rule, "track": "fast"}
+        else:
+            track = scenario_rule.get("track", "formal")
     target_size, resolved_mode, resolved_track, track_reason = mode_size(mode, topic, track)
     invited = normalize_invites(invites)
     roster = []

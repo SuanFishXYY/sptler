@@ -39,7 +39,7 @@ Before deliberating, read these reference files in this skill directory:
 - `references/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
 - `references/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
-- `references/scenarios.md` — three patent-specific scenarios (查新检索 / FTO / 价值评估): routing, must-attend sages, deliverables.
+- `references/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): routing, must-attend sages, deliverables.
 
 ## Sage memory system
 
@@ -85,10 +85,10 @@ Use `route_sages.py --topic "<topic>" --track auto` to make the track decision d
 If `route_sages.py --track auto` returns `verdict` (single clear single-domain question), skip the full ceremony:
 
 1. No Phase 0 AskUser, no Phase 0.5 invite (unless user named a sage).
-2. Summon the 1 matched sage (`summon_sage.py --sage <name> --topic "<topic>"`) + 邹蕴 hosts.
-3. The sage gives a **3-sentence judgment**: the call / why / one risk. `[姓名]` prefix, cite memory if relevant.
-4. No brainstorm, no four-law gate, no weighted vote. 邹蕴 closes in 1 line.
-5. Produce the deliverable (Template 7) if applicable + write a minimal result md (topic / single-sage judgment / conclusion only) + record memory + index. The result md is always mandatory even in verdict mode; the deliverable is the headline, the result md is the decision record.
+2. Summon the 1 matched sage (`summon_sage.py --sage <name> --topic "<topic>" --dry-run`) + 邹蕴 hosts. **--dry-run is mandatory**: verdict does NOT write memory or citation — it's a zero-trace quick judgment.
+3. The sage gives a **3-sentence judgment**: the call / why / one risk. `[姓名]` prefix, cite memory if relevant (from dry-run output).
+4. No brainstorm, no four-law gate, no weighted vote. 邹蕴 closes in 1 line (this 1 line IS the conclusion — verdict is exempt from Discipline #14's full 总结).
+5. Produce the deliverable (Template 7) if applicable + write a minimal result md (topic / single-sage judgment / conclusion only) + index. **No record_memory, no citation commit, no update_growth** — verdict is zero-trace by default. The result md is mandatory even in verdict mode; the deliverable is the headline, the result md is the decision record.
 6. End with `议会到此结束。`
 
 This is the mode most daily questions should hit — it's what makes sptler faster than plain Claude for "just give me the expert take".
@@ -141,6 +141,8 @@ Instead of a separate invite AskUser, route first (Phase 1 step 1-4), then prese
 ### Phase 2 — Brainstorming (the four principles)
 
 > **Absolutely no negation, criticism, or judgment of any idea in this phase.** All judgment is deferred to voting.
+>
+> **Priority: 零评判 > 人格表达 (within Phase 2).** A sage's persona "hates" (e.g. 张鑫 hates 全自动) must be expressed as a **positive alternative or self-preference** ("我的本能是先加一个人工接管节点"), NEVER as negation of another's idea ("全自动就是定时炸弹"). Full否决/judgment waits for Phase 4 vote reasons and Phase 5a recommendations.
 
 Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3 ideas**, the wilder the better.
 
@@ -167,10 +169,10 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 ### Phase 5 — Final recommendations + memory recording + output
 
-**5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
+**5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. Record all into the result md's "最终建议" section. (邹蕴 does NOT synthesize here — that's 5f's job, to avoid double-收口.)
 
 **5b. AskUser: enter memory? + Record if yes.** Memory recording is opt-in. Use AskUser: "本次议会是否写入圣人记忆？" Options: 写入记忆 / 不留痕.
-- If **写入记忆** → (1) commit the pending citations from Phase 1 by re-running `summon_sage.py --sage <name> --topic "<topic>"` WITHOUT `--dry-run` for each sage that had relevant hits (this writes the citation_count+1); (2) run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>` to record this meeting's experiences; (3) run `python scripts/update_growth.py`.
+- If **写入记忆** → (1) commit the pending citations in ONE batch: `python scripts/commit_citations.py --sages <comma-sep sages that had hits> --topic "<topic>"` (or `--batch -` with stdin JSON array); (2) run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>` to record this meeting's experiences; (3) run `python scripts/update_growth.py`.
 - If **不留痕** → skip ALL memory writes entirely (no citation commit, no record_memory, no update_growth). The 不留痕 choice means truly no trace — Phase 1 used --dry-run so nothing was written yet, and nothing is written now.
 The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one.
 

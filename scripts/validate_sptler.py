@@ -44,6 +44,7 @@ REQUIRED = [
     "scripts/briefing.py",
     "scripts/action_board.py",
     "scripts/memory_io.py",
+    "scripts/commit_citations.py",
     "scripts/watch_memory.py",
     "scripts/record_memory.py",
     "scripts/read_memory.py",
