@@ -136,6 +136,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 5. **Inject full saint context**: for each attendee, prefer `python scripts/summon_sage.py --sage <name> --topic "<topic>"` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS, plus relevant past experiences matched to the current topic (the "magic moment" material). If unavailable, fall back to `read_soul.py` + `read_memory.py`. The SOUL file governs persona and boundaries; memory provides past experience; relations provide collaboration/friction context. Sages with no memory yet are noted as 新晋圣人.
 6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
+8. **Active memory watch (主动提醒)**: after routing, run `python scripts/watch_memory.py --topic "<topic>" --roster <comma-sep roster>`. If it reports sages NOT in the roster but with strongly relevant past memory, 邹蕴 mentions it aloud (`[邹蕴] 提醒：王升虽未入会，但上次议过X——可考虑邀请或引用`), and offers to invite them. This turns memory from passive injection into active reminder.
 
 ### Phase 2 — Brainstorming (the four principles)
 
@@ -179,6 +180,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 - 架构/选型/技术方案/是否用X → ADR `deliverable-adr-*`
 - 流程/SOP/规范/操作步骤 → SOP `deliverable-sop-*`
 - 无明确交付物类型 → skip (result md 即交付物)
+**Deliverable direct-deposit (交付物直投)**: write the deliverable to its project directory, NOT the sptler-meetings/ dump. Use `route_sages`'s `deliver_dir` (场景默认: 查新→patents/search-reports, FTO→patents/fto-reports, 价值评估→patents/valuations; 通用→patents/claims, docs/adr, docs/sop; see `references/routing_rules.json` §deliver_dirs). Create the dir if missing. Only the result md (decision record) stays in sptler-meetings/. Register the deliverable path in `index_meeting.py` via `deliverable_file`/`deliver_dir`.
 The deliverable is the headline output; the result md is the decision record behind it.
 
 **5e. Index the meeting and update relations.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. Then run `python scripts/build_relations.py` so saint RELATIONS.json reflects co-attendance history. This enables later `展开行动项3` across sessions and lets saints remember collaboration patterns.

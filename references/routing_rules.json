@@ -23,6 +23,7 @@
       "must_attend": ["王升", "卢若雨", "陆一帆"],
       "suggested_extra": ["邹蕴", "顾峻峰"],
       "deliverable": "deliverable-search-{slug}-{ts}.md",
+      "deliver_dir": "patents/search-reports",
       "track": "formal"
     },
     "FTO检索": {
@@ -30,6 +31,7 @@
       "must_attend": ["卢若雨", "王升", "陈方移"],
       "suggested_extra": ["邹蕴", "蔡悦"],
       "deliverable": "deliverable-fto-{slug}-{ts}.md",
+      "deliver_dir": "patents/fto-reports",
       "track": "formal"
     },
     "专利价值评估": {
@@ -37,8 +39,15 @@
       "must_attend": ["范征", "陆诗杰", "王升"],
       "suggested_extra": ["邹蕴", "卢若雨"],
       "deliverable": "deliverable-valuation-{slug}-{ts}.md",
+      "deliver_dir": "patents/valuations",
       "track": "formal"
     }
+  },
+  "deliver_dirs": {
+    "权利要求骨架": "patents/claims",
+    "ADR": "docs/adr",
+    "SOP": "docs/sop",
+    "默认": "sptler-meetings"
   },
   "must_include_by_domain": {
     "AI/铸模": ["徐奕阳"],

@@ -57,6 +57,8 @@ def normalize_entry(data: dict) -> dict:
         "mode": data.get("mode") or "",
         "verdict": data.get("verdict") or "",
         "result_file": data.get("result_file") or "",
+        "deliverable_file": data.get("deliverable_file") or "",
+        "deliver_dir": data.get("deliver_dir") or "",
         "summary_file": data.get("summary_file") or "",
         "transcript_file": data.get("transcript_file") or "",
         "attendees": data.get("attendees") or [],

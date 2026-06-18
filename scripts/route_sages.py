@@ -288,6 +288,7 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         "host": HOST,
         "scenario": scenario_name,
         "scenario_deliverable": scenario_rule.get("deliverable", "") if scenario_name else "",
+        "deliver_dir": scenario_rule.get("deliver_dir", "") if scenario_name else "",
         "attendees": attendees,
     }
 
