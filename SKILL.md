@@ -59,8 +59,8 @@ Key scripts: `summon_sage.py` (one-call context + memory citation), `record_memo
 
 The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
 
-1. **Four AskUser phases** — Phase 0 (mode), Phase 0.5 (invite; may issue one follow-up free-text AskUser if user chooses to specify sages), Phase 5b (memory: write or 不留痕), Phase 5c (export options). Phase 1 ends on a roster confirmation. At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
-2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 + 0.5 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits.
+1. **Three AskUser phases** — Phase 0 (mode), Phase 5b (memory: write or 不留痕), Phase 5c (export options). Phase 0.5 invite is merged into the Phase 1 roster confirmation (one turn, not a separate AskUser). At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
+2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits — in that case, split the FILE-WRITING (Phase 5d-5f) across turns (result md in one turn, deliverable in next), but never split the deliberation (Phase 2-5a). Never silently truncate a deliverable's sections — if too long, write it in a follow-up turn.
 3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
 
 Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one sentence; final recommendation = one sentence. A full quick-meeting should fit in a short response; a full complex-meeting should be thorough but not bloated.
@@ -115,17 +115,17 @@ Right after the user sends the question, before routing, use AskUser to choose t
 
 For 动态分辨, 邹蕴 first states her judgment in one line (e.g. `[邹蕴] 本议题跨机械与AI两域、涉及平台建设，判为复杂会议规格`), then proceeds at that spec.
 
-### Phase 0.5 — Invite sages (AskUser, optional)
+### Phase 0.5 — Invite + roster confirmation (merged, one user turn)
 
-Right after mode selection, before routing, ask the user whether they want to invite specific sages:
+Instead of a separate invite AskUser, route first (Phase 1 step 1-4), then present the roster AND invite prompt together in one confirmation:
 
-> Question: "是否要指定邀请某几位圣人入会？（可填姓名或选'由议会自动路由'）"
-> multiSelect: false. Options: 由议会自动路由 / 我要指定邀请。
+> 邹蕴 presents: "本次议会模式/轨道/入会名单如下：{roster with weights + reasons}。确认开议，或指定邀请某几位圣人（如'邀请陆一帆'）？"
 
-- If **由议会自动路由** → skip to Phase 1, route purely by keyword.
-- If **我要指定邀请** → follow up with a second free-text AskUser: "请输入要邀请的圣人姓名（可多个，逗号分隔）". The named sages are **mandatory attendees** — they enter Phase 1's roster unconditionally, with their real weight (core 3.0 / chief 2.0 / specialist 1.0), regardless of keyword fit. Then auto-routing fills the rest of the roster up to the mode's size.
+- If user says "确认/继续/开议" → proceed to Phase 2.
+- If user names sages ("邀请陆一帆、金辰宇") → add them as mandatory attendees (real weight), re-route to fill, re-present once, then proceed.
+- This merges the old Phase 0.5 invite AskUser + Phase 1 roster confirmation into ONE user turn, reducing AskUser count.
 
-**Mandatory-invite rules**: invited sages count toward the mode's size cap; they may push the roster over the soft cap by 1–2 if the user insists, but 邹蕴 notes any over-size. Inviting a sage who is a committee chief for the topic's scope does not double-count. The user can also invite **mid-meeting** at any later phase (see "On-the-fly invites" below) — the same mandatory-attendee logic applies.
+**Mandatory-invite rules**: invited sages count toward the mode's size cap; they may push the roster over the soft cap by 1–2 if the user insists. Mid-meeting invites at any later phase still work (see "On-the-fly invites").
 
 ### Phase 1 — Routing + memory injection
 
@@ -133,7 +133,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 2. Prefer deterministic routing: run `python scripts/route_sages.py --topic "<topic>" --mode <fast|complex|dynamic> --track auto --invites "<comma names>" --json`. Routing rules (track keywords, sizes, weights, domain→must-include, fallback order) are configurable in `references/routing_rules.json` — edit that file to tune routing without touching Python. Use the script's track/mode, attendee list, weights, dynamic boosts, and reasons as the roster baseline.
 3. If the script is unavailable, fall back to manual routing from `references/roster.md`: keyword hit count, mode size, at least 1 core (complex/strategic ≥ 2 cores), and matching committee chief must attend.
 4. The host is always 邹蕴 (权重 0, not a routed seat).
-5. **Inject full saint context**: for each attendee, prefer `python scripts/summon_sage.py --sage <name> --topic "<topic>"` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS, plus relevant past experiences matched to the current topic (the "magic moment" material). If unavailable, fall back to `read_soul.py` + `read_memory.py`. The SOUL file governs persona and boundaries; memory provides past experience; relations provide collaboration/friction context. Sages with no memory yet are noted as 新晋圣人.
+5. **Inject full saint context (dry-run, no memory write yet)**: for each attendee, prefer `python scripts/summon_sage.py --sage <name> --topic "<topic>" --dry-run` to load SOUL/IDENTITY/BOUNDARY/SUMMON + MEMORY + RELATIONS, plus relevant past experiences. **`--dry-run` is mandatory in Phase 1**: it returns relevant memory + a `pending_citations` list but does NOT write citation_count yet — citations are only committed if the user later chooses "写入记忆" in Phase 5b. This protects the 不留痕 privacy promise. If unavailable, fall back to `read_soul.py` + `read_memory.py`. Sages with no memory yet are noted as 新晋圣人.
 6. Classify topic type: strategic direction / resource allocation / irreversible change / org policy → **major**; else **ordinary**. 邹蕴 declares mode + type at the opening.
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 8. **Active memory watch (主动提醒)**: after routing, run `python scripts/watch_memory.py --topic "<topic>" --roster <comma-sep roster>`. If it reports sages NOT in the roster but with strongly relevant past memory, 邹蕴 mentions it aloud (`[邹蕴] 提醒：王升虽未入会，但上次议过X——可考虑邀请或引用`), and offers to invite them. This turns memory from passive injection into active reminder.
@@ -144,7 +144,7 @@ Right after mode selection, before routing, ask the user whether they want to in
 
 Each attending sage speaks in turn, in character, with the `[姓名]` prefix. Quick mode: each gives **1–2 concise core points**. Complex mode: each gives **3 ideas**, the wilder the better.
 
-**Memory citation is mandatory (the magic moment):** if `summon_sage --topic` returned 相关记忆 for a sage, that sage's FIRST utterance must explicitly reference the prior experience — e.g. `[王升] 上次我们议过类似的 OA 流水线(2026-06-15),当时张鑫否决了全自动方案,这次我建议直接从半自动起步……`. This is what makes the parliament visibly smarter than a fresh Claude session. Sages with no relevant memory speak as 新晋圣人. Strictly follow:
+**Memory citation is mandatory (the magic moment):** if `summon_sage --topic` returned 相关记忆 for a sage, that sage's FIRST utterance must explicitly reference the prior experience — e.g. `[王升] 上次我们议过类似的 OA 流水线(2026-06-15),当时张鑫否决了全自动方案,这次我建议直接从半自动起步……`. **Anti-hallucination rule**: the date/meeting_id/topic in the citation MUST come from the actual `summon_sage` output — never fabricate a memory date or meeting ID. If a sage had no relevant memory (新晋圣人 or no match), they must NOT pretend to remember anything — speak as new. This is what makes the parliament visibly smarter than a fresh Claude session; a hallucinated memory is worse than no memory.
 
 1. **自由思考** — liberated thinking; even absurd ideas recorded as-is.
 2. **延迟评判** — no one may negate another's idea. If 邹蕴 detects premature judging, she intervenes and logs "judgment deferred."
@@ -169,7 +169,10 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
 
-**5b. AskUser: enter memory? + Record if yes.** Memory recording is now opt-in, not mandatory. Use AskUser: "本次议会是否写入圣人记忆？（写入后圣人会积累经验，下次同类议题可引用）" Options: 写入记忆 / 不留痕. If 写入记忆 → run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>`, then `python scripts/update_growth.py`. If 不留痕 → skip recording entirely (some meetings are exploratory/private). The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one.
+**5b. AskUser: enter memory? + Record if yes.** Memory recording is opt-in. Use AskUser: "本次议会是否写入圣人记忆？" Options: 写入记忆 / 不留痕.
+- If **写入记忆** → (1) commit the pending citations from Phase 1 by re-running `summon_sage.py --sage <name> --topic "<topic>"` WITHOUT `--dry-run` for each sage that had relevant hits (this writes the citation_count+1); (2) run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>` to record this meeting's experiences; (3) run `python scripts/update_growth.py`.
+- If **不留痕** → skip ALL memory writes entirely (no citation commit, no record_memory, no update_growth). The 不留痕 choice means truly no trace — Phase 1 used --dry-run so nothing was written yet, and nothing is written now.
+The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one.
 
 **5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
@@ -180,7 +183,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 - 架构/选型/技术方案/是否用X → ADR `deliverable-adr-*`
 - 流程/SOP/规范/操作步骤 → SOP `deliverable-sop-*`
 - 无明确交付物类型 → skip (result md 即交付物)
-**Deliverable direct-deposit (交付物直投)**: write the deliverable to its project directory, NOT the sptler-meetings/ dump. Use `route_sages`'s `deliver_dir` (场景默认: 查新→patents/search-reports, FTO→patents/fto-reports, 价值评估→patents/valuations; 通用→patents/claims, docs/adr, docs/sop; see `references/routing_rules.json` §deliver_dirs). Create the dir if missing. Only the result md (decision record) stays in sptler-meetings/. Register the deliverable path in `index_meeting.py` via `deliverable_file`/`deliver_dir`.
+**Deliverable direct-deposit (交付物直投, default safe)**: by default write the deliverable into `sptler-meetings/` (same as result md) — this NEVER pollutes the user's project directories. Only if the user explicitly says "直投项目目录" or runs with a project root context, use `route_sages`'s `deliver_dir` (场景: 查新→patents/search-reports, FTO→patents/fto-reports, etc.; 通用: see `references/routing_rules.json` §deliver_dirs) and create that dir. Never mkdir patents/ or docs/ in the user's cwd without explicit user consent. Register the deliverable path in `index_meeting.py` via `deliverable_file`/`deliver_dir`.
 The deliverable is the headline output; the result md is the decision record behind it.
 
 **5e. Index the meeting and update relations.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. Then run `python scripts/build_relations.py` so saint RELATIONS.json reflects co-attendance history. This enables later `展开行动项3` across sessions and lets saints remember collaboration patterns.
@@ -206,9 +209,9 @@ This is the bottom line the user came for. After the conclusion: (1) absolute pa
 8. **Run all phases** in the standard fast/formal flow — never skip mode selection, brainstorming, four-law check, or the final-recommendation round. Verdict and briefing special paths (see above) are the only sanctioned exceptions.
 9. **Soul mandatory, memory opt-in** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via summon_soul/read_soul in Phase 1 (always). Memory recording in Phase 5 is opt-in via AskUser — respect 不留痕; sages still speak with soul even if the meeting isn't recorded.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
-11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
+11. **Anti-drag: deliver and stop** — only 3 AskUser phases (Phase 0/5b/5c) + 1 roster confirmation; Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops.
 12. **Close with paths, not questions** — after收口 the only allowed final content is: exported file paths + `议会到此结束。`. No "还有什么需要帮助的吗 / 要不要我..." closers; the parliament either ends at收口 or waits at a defined checkpoint.
-13. **Cite memory on entry (magic moment)** — any sage with relevant past experience (from `summon_sage --topic`) must open Phase 2 by referencing it; this is the single most important behavior for making users feel the system has accumulated value. A sage that ignores its own memory is just a fresh Claude — defeats the purpose.
+13. **Cite memory on entry (magic moment, no hallucination)** — EVERY attendee must be summoned via `summon_sage --dry-run` in Phase 1 (not just cores); any sage with relevant past experience must open Phase 2 by referencing it using the REAL date/topic from the script output; a sage with no match must speak as 新晋圣人, never fabricate. A hallucinated memory citation is the worst failure mode — worse than skipping the citation.
 14. **邹蕴 must conclude (实质性总结)** — Phase 5f 邹蕴 must deliver a substantive conclusion answering the user's original question (decision + key reason + risk), not a procedural recap of "we did X then Y". If the user can't tell what was decided from 邹蕴's close, the parliament failed.
 
 ## Host behavior (邹蕴)
@@ -217,10 +220,12 @@ This is the bottom line the user came for. After the conclusion: (1) absolute pa
 
 ## Interaction rhythm with the user (turn-minimal)
 
-1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**. *(turn ends here)*
-2. User picks mode → **AskUser Phase 0.5 invite check** → seed roster with invites → Phase 1 routing + memory injection → present roster → **wait for confirmation**. *(turn ends here)*
-3. User confirms → **Phase 2 → 3 → 4 → 5a in ONE continuous response** (brainstorm, combine, vote, recommendations — do not stop between them, do not ask "继续"). Mid-meeting invites are honored inline only if the user explicitly named a sage in their confirmation; otherwise proceed. *(one big turn)*
-4. **Phase 5b AskUser (memory?) → if yes record → Phase 5c AskUser (export options)** → write files → 邹蕴总结结论 → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
+1. `/sptler {question}` → read reference files → **AskUser Phase 0 mode selection**. *(turn ends)*
+2. User picks mode → Phase 1 routing + memory injection(dry-run) → present roster + invite prompt → **wait for confirmation** (user confirms or names sages to invite). *(turn ends)*
+3. User confirms → **Phase 2 → 3 → 4 → 5a in ONE continuous response** (do not ask "继续"). *(one big turn)*
+4. **Phase 5b AskUser (memory?) → if yes record+citation commit → Phase 5c AskUser (export options)** → write files → 邹蕴总结结论 → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
+
+Total: **3 AskUser + 1 roster confirmation = 4 turns** end to end (verdict/briefing: 1 turn).
 
 Total: ideally **3–4 turns** end to end (mode → invite/roster → deliberation → export/close). Never more than necessary. After close, do not speak again until the user gives a new instruction.
 

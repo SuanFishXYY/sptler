@@ -162,10 +162,12 @@ def normalize_invites(invites: str) -> list[str]:
 
 
 def detect_scenario(topic: str) -> tuple[str, dict]:
-    """识别专利专属场景（查新/FTO/价值评估）。返回 (scenario_name, rule) 或 ('', {})。"""
+    """识别专利专属场景。按 priority 降序检查，返回 (scenario_name, rule) 或 ('', {})。"""
     scenarios = RULES.get("scenarios", {}) or {}
     t = (topic or "").lower()
-    for name, rule in scenarios.items():
+    # 按 priority 降序（查新>FTO>OA>价值>布局>无效），高优先级场景先命中
+    ordered = sorted(scenarios.items(), key=lambda x: x[1].get("priority", 0), reverse=True)
+    for name, rule in ordered:
         kws = rule.get("keywords", []) or []
         hits = [k for k in kws if k.lower() in t]
         if hits:

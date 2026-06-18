@@ -86,6 +86,19 @@ def bump_citations(mem, mem_file, hits):
         except Exception:
             pass
 
+
+def pending_citations(mem, hits):
+    """dry-run 模式：记录待回写的 citation（不立即写盘），返回可序列化的待提交清单。"""
+    pending = []
+    for e, _, _ in hits:
+        if not e.get('superseded'):
+            pending.append({
+                'meeting_id': e.get('meeting_id', ''),
+                'topic': e.get('topic', ''),
+                'recorded_at': e.get('recorded_at', ''),
+            })
+    return pending
+
 def profile_block(prof):
     if not prof: return None
     return {
@@ -118,14 +131,18 @@ def turning_points(mem):
     """superseded=true 的旧立场（转折点），供提示"曾主张X后改Y"。"""
     return [e for e in (mem.get('experiences',[]) or []) if e.get('is_turning_point') and e.get('superseded')]
 
-def summon(sage, mem_dir=None, topic=None):
+def summon(sage, mem_dir=None, topic=None, dry_run=False):
     d = ROOT/'saints'/sage
     msum = memory_summary(sage, mem_dir)
     mem = msum.pop('_mem', {})
     mem_file = msum.pop('_mem_file', None)
     if topic:
         hits = relevant_experiences(mem, topic)
-        bump_citations(mem, mem_file, hits)  # 用过即重要：引用计数+1回写
+        if dry_run:
+            # 延迟回写：只返回 pending 清单，不立即改 citation（等用户确认写入记忆）
+            msum['pending_citations'] = pending_citations(mem, hits)
+        else:
+            bump_citations(mem, mem_file, hits)  # 用过即重要：引用计数+1回写
         msum['relevant'] = [(e, sc, d_) for e, sc, d_ in hits]
         msum['turning_points'] = turning_points(mem)
     return {
@@ -157,9 +174,10 @@ def main():
     ap.add_argument('--sage', required=True)
     ap.add_argument('--topic', default='', help='当前议题；传入时返回相关记忆并+1引用计数')
     ap.add_argument('--mem-dir', default='')
+    ap.add_argument('--dry-run', action='store_true', help='延迟回写模式：不立即改citation，返回pending清单，等用户确认写入记忆后再回写')
     ap.add_argument('--json', action='store_true')
     args=ap.parse_args()
-    data=summon(args.sage, args.mem_dir or None, args.topic or None)
+    data=summon(args.sage, args.mem_dir or None, args.topic or None, dry_run=args.dry_run)
     if args.json:
         # relevant 里的 tuple 转成可序列化
         m=data['memory']
