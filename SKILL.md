@@ -40,6 +40,7 @@ Before deliberating, read these reference files in this skill directory:
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
 - `references/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
 - `references/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): routing, must-attend sages, deliverables.
+- `references/feature_analysis.md` — professional feature decomposition (问题-方案-效果三要素拆解 + 语义扩展 + 检索式构建). Used by 查新/FTO/无效 scenes.
 
 ## Sage memory system
 
