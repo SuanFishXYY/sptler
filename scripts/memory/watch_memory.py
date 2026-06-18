@@ -9,8 +9,8 @@
 用于 Phase 1 路由后：检查是否漏了"有相关经验但没入会"的圣人。
 
 用法:
-  python scripts/watch_memory.py --topic "OA答复AI流水线" --roster 王升,张鑫,徐奕阳
-  python scripts/watch_memory.py --topic "权利要求边界" --json
+  python scripts/memory/watch_memory.py --topic "OA答复AI流水线" --roster 王升,张鑫,徐奕阳
+  python scripts/memory/watch_memory.py --topic "权利要求边界" --json
 """
 import argparse, json, re, sys
 from pathlib import Path
@@ -18,7 +18,7 @@ from datetime import datetime
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 MEM_DIR_DEFAULT = ROOT / "memories"
 
 

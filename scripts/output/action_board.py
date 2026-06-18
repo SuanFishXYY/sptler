@@ -7,10 +7,10 @@
 让议会产出的行动项不再写完就丢。
 
 用法:
-  python scripts/action_board.py                      # 看所有未完成行动项
-  python scripts/action_board.py --by-owner           # 按责任人分组
-  python scripts/action_board.py --done 3             # 标记行动项3完成（meeting_id:序号）
-  python scripts/action_board.py --meeting-id SPTLER-xxx --item 2 --done
+  python scripts/output/action_board.py                      # 看所有未完成行动项
+  python scripts/output/action_board.py --by-owner           # 按责任人分组
+  python scripts/output/action_board.py --done 3             # 标记行动项3完成（meeting_id:序号）
+  python scripts/output/action_board.py --meeting-id SPTLER-xxx --item 2 --done
 """
 import argparse, json, sys
 from pathlib import Path

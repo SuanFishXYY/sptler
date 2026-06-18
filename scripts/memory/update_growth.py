@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 if hasattr(sys.stdout,'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8'); sys.stderr.reconfigure(encoding='utf-8')
-ROOT=Path(__file__).resolve().parent.parent
+ROOT=Path(__file__).resolve().parent.parent.parent
 
 def load(path):
     try: return json.loads(path.read_text(encoding='utf-8'))

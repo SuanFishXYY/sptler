@@ -9,13 +9,13 @@
 
 用法:
   # 导入：从文本文件补充王升记忆
-  python scripts/memory_io.py import --sage 王升 --file notes.txt --topic "外部会议" --verdict 通过
+  python scripts/memory/memory_io.py import --sage 王升 --file notes.txt --topic "外部会议" --verdict 通过
 
   # 导入：从 stdin
-  echo "议题:X | 立场:赞成 | 建议:做Y" | python scripts/memory_io.py import --sage 王升 --topic "外部" --verdict 通过
+  echo "议题:X | 立场:赞成 | 建议:做Y" | python scripts/memory/memory_io.py import --sage 王升 --topic "外部" --verdict 通过
 
   # 导出：王升记忆画像 md
-  python scripts/memory_io.py export --sage 王升 --out 王升记忆.md
+  python scripts/memory/memory_io.py export --sage 王升 --out 王升记忆.md
 """
 import argparse, json, sys, re
 from pathlib import Path

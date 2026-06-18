@@ -19,17 +19,6 @@
 | "OA流水线怎么落地" | 6 圣人快速议会+加权投票 | 多视角+四律否决，结构化收敛 |
 | 第二次问同类问题 | 圣人引用上次结论接续 | **有积累，不重复论证** |
 
-## 🔧 专利代理人？3 个场景直接照抄
-
-```bash
-/sptler 帮我做这个蓝牙模组的FTO自由实施分析        # → FTO分析报告（侵权比对+规避设计+合规留痕）
-/sptler 这件OA审查意见怎么答复                      # → OA答复策略（区别特征+修改方案+答复口径）
-/sptler 这批专利做价值评估分级                      # → 价值评估报告（五维打分+SABC分级+运营建议）
-```
-
-> ⚠️ sptler 不自行检索专利库。查新/FTO 需你提供风险专利清单，sptler 做结构化分析。
-> ⚠️ sptler 不撰写专利申请全文/诉讼文书。超出能力会诚实说不。
-
 ## ✨ 三个让人眼前一亮的特性
 
 ### 🧠 记忆魔法时刻
@@ -191,44 +180,44 @@ sptler/
 - **演化画像**：总议事数、专长焦点、立场倾向（赞/反/弃）、风险偏好（审慎保守/平衡中立/积极进取）、常提观点
 
 **工作流**：
-1. **Phase 1 入会时**：`python scripts/read_memory.py --sages <名单>` 读取每位与会者的记忆摘要，注入发言上下文——圣人能引用过往经验（"上次我们议过类似议题……"）
-2. **Phase 5 议事后**：生成 batch json 并 `python scripts/record_memory.py --batch <json>`，把每位与会者的经历写入档案并更新画像
+1. **Phase 1 入会时**：`python scripts/memory/read_memory.py --sages <名单>` 读取每位与会者的记忆摘要，注入发言上下文——圣人能引用过往经验（"上次我们议过类似议题……"）
+2. **Phase 5 议事后**：生成 batch json 并 `python scripts/memory/record_memory.py --batch <json>`，把每位与会者的经历写入档案并更新画像
 
-圣人由此随时间积累、成长——议得越多，画像越清晰，发言越有积淀。可用 `python scripts/list_memories.py` 查看所有圣人的记忆统计。
+圣人由此随时间积累、成长——议得越多，画像越清晰，发言越有积淀。可用 `python scripts/saints/list_memories.py` 查看所有圣人的记忆统计。
 
 ## 脚本示例
 
 ```bash
 # 生成/校验 OpenClaw 圣人灵魂文件
-python scripts/generate_saints.py --force
-python scripts/validate_saints.py
+python scripts/saints/generate_saints.py --force
+python scripts/validate/validate_saints.py
 
 # 读取某位圣人的灵魂注入块
-python scripts/read_soul.py --sage 徐奕阳
+python scripts/memory/read_soul.py --sage 徐奕阳
 
 # 一次性召唤完整圣人上下文（灵魂+记忆+关系+相关历史记忆）
-python scripts/summon_sage.py --sage 徐奕阳 --topic "OA答复流水线"
+python scripts/memory/summon_sage.py --sage 徐奕阳 --topic "OA答复流水线"
 
 # 自动路由（议题+模式+邀请名单 → 入会名单）
-python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --track auto --invites 陆一帆,金辰宇
+python scripts/routing/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic --track auto --invites 陆一帆,金辰宇
 
 # 从 stdin 记录记忆（免临时文件）
-cat batch.json | python scripts/record_memory.py --batch -
+cat batch.json | python scripts/memory/record_memory.py --batch -
 
 # 指定记忆目录（测试/多项目隔离）
-python scripts/read_memory.py --sage 王升 --mem-dir /tmp/sptler-mem
+python scripts/memory/read_memory.py --sage 王升 --mem-dir /tmp/sptler-mem
 
 # 登记会议索引（供续议使用）
-python scripts/index_meeting.py --meeting-id SPTLER-xxx --topic "..." --result-file result.md --attendees 王升,张鑫
+python scripts/output/index_meeting.py --meeting-id SPTLER-xxx --topic "..." --result-file result.md --attendees 王升,张鑫
 
 # 读取上一次会议的行动项3，进入续议
-python scripts/continue_meeting.py --last --item 3
+python scripts/output/continue_meeting.py --last --item 3
 
 # 压缩记忆，只保留最近20次经历
-python scripts/compact_memories.py --keep 20
+python scripts/memory/compact_memories.py --keep 20
 
 # 技能自检
-python scripts/validate_sptler.py
+python scripts/validate/validate_sptler.py
 ```
 
 
@@ -250,7 +239,7 @@ git clone https://github.com/SuanFishXYY/sptler.git ~/.claude/skills/sptler
 首次使用建议跑一次自检：
 
 ```bash
-cd ~/.claude/skills/sptler && python scripts/validate_sptler.py
+cd ~/.claude/skills/sptler && python scripts/validate/validate_sptler.py
 ```
 
 ## 技能规范

@@ -7,9 +7,9 @@
 不用翻 md 文件。
 
 用法:
-  python scripts/briefing.py                    # 上次会议
-  python scripts/briefing.py --meeting-id SPTLER-xxx
-  python scripts/briefing.py --last 3           # 最近3次概览
+  python scripts/output/briefing.py                    # 上次会议
+  python scripts/output/briefing.py --meeting-id SPTLER-xxx
+  python scripts/output/briefing.py --last 3           # 最近3次概览
 """
 import argparse, json, sys
 from pathlib import Path

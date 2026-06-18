@@ -27,7 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent.parent / "memories"
 MEM_DIR = DEFAULT_MEM_DIR
 
 

@@ -10,13 +10,13 @@
 
 用法:
   # 1. 路由 + 召唤预览（Phase 1）
-  python scripts/sptler_run.py --topic "OA审查意见答复AI流水线" --track auto --invites 陆一帆
+  python scripts/routing/sptler_run.py --topic "OA审查意见答复AI流水线" --track auto --invites 陆一帆
 
   # 2. 议事后：记录记忆 + 成长 + 索引 + 关系（Phase 5b/5e），batch 从 stdin
-  cat batch.json | python scripts/sptler_run.py --record --batch - --index-batch - --meetings-dir ./sptler-meetings
+  cat batch.json | python scripts/routing/sptler_run.py --record --batch - --index-batch - --meetings-dir ./sptler-meetings
 
   # 3. 自检
-  python scripts/sptler_run.py --check
+  python scripts/routing/sptler_run.py --check
 """
 import argparse
 import json
@@ -28,7 +28,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 PY = sys.executable
 
 
@@ -44,7 +44,7 @@ def run(cmd: list, stdin_data: bytes = None) -> tuple[int, str]:
 def cmd_phase1(args):
     """Phase 1：路由 + 对每位入会圣人召唤预览。"""
     print("═══ Phase 1：路由 + 召唤 ═══")
-    route_cmd = [PY, str(ROOT / "scripts/route_sages.py"), "--topic", args.topic,
+    route_cmd = [PY, str(ROOT / "scripts/routing/route_sages.py"), "--topic", args.topic,
                  "--track", args.track, "--mode", args.mode, "--json"]
     if args.invites:
         route_cmd += ["--invites", args.invites]
@@ -57,7 +57,7 @@ def cmd_phase1(args):
     # 召唤预览（不回写引用计数，仅预览；实际引用计数在模型调用 summon_sage 时发生）
     print("\n═══ 召唤预览（灵魂+记忆+关系） ═══")
     for a in attendees:
-        sc, sout = run([PY, str(ROOT / "scripts/summon_sage.py"), "--sage", a["name"], "--topic", args.topic, "--json"])
+        sc, sout = run([PY, str(ROOT / "scripts/memory/summon_sage.py"), "--sage", a["name"], "--topic", args.topic, "--json"])
         if sc == 0:
             summ = json.loads(sout)
             mem = summ.get("memory", {})
@@ -82,13 +82,13 @@ def cmd_record(args):
         data = sys.stdin.buffer.read()
     else:
         data = Path(args.batch).read_bytes()
-    rc, out = run([PY, str(ROOT / "scripts/record_memory.py"), "--batch", "-"], stdin_data=data)
+    rc, out = run([PY, str(ROOT / "scripts/memory/record_memory.py"), "--batch", "-"], stdin_data=data)
     print(out.strip())
     if rc != 0:
         print(f"❌ 记录记忆失败", file=sys.stderr); sys.exit(1)
 
     print("\n═══ Phase 5b：更新成长日志 ═══")
-    rc, out = run([PY, str(ROOT / "scripts/update_growth.py")])
+    rc, out = run([PY, str(ROOT / "scripts/memory/update_growth.py")])
     print(out.strip())
 
     if args.index_batch:
@@ -99,14 +99,14 @@ def cmd_record(args):
                 idata = data  # fallback
         else:
             idata = Path(args.index_batch).read_bytes()
-        idx_cmd = [PY, str(ROOT / "scripts/index_meeting.py"), "--batch", "-"]
+        idx_cmd = [PY, str(ROOT / "scripts/output/index_meeting.py"), "--batch", "-"]
         if args.meetings_dir:
             idx_cmd += ["--meetings-dir", args.meetings_dir]
         rc, out = run(idx_cmd, stdin_data=idata)
         print(out.strip())
 
         print("\n═══ Phase 5e：构建关系网 ═══")
-        rel_cmd = [PY, str(ROOT / "scripts/build_relations.py")]
+        rel_cmd = [PY, str(ROOT / "scripts/memory/build_relations.py")]
         if args.meetings_dir:
             rel_cmd += ["--meetings-dir", args.meetings_dir]
         rc, out = run(rel_cmd)
@@ -118,12 +118,12 @@ def cmd_record(args):
 def cmd_check(args):
     """全系统自检。"""
     print("═══ 全系统自检 ═══")
-    rc, out = run([PY, str(ROOT / "scripts/validate_sptler.py")])
+    rc, out = run([PY, str(ROOT / "scripts/validate/validate_sptler.py")])
     print(out.strip())
     if rc != 0:
         sys.exit(1)
     print()
-    rc, out = run([PY, str(ROOT / "scripts/validate_saints.py")])
+    rc, out = run([PY, str(ROOT / "scripts/validate/validate_saints.py")])
     print(out.strip())
 
 

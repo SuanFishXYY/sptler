@@ -7,8 +7,8 @@ OpenClaw 圣人操作系统 · 生成器 (generate_saints.py)
 并生成 references/saints/saints.registry.json。
 
 用法:
-  python scripts/generate_saints.py
-  python scripts/generate_saints.py --force
+  python scripts/saints/generate_saints.py
+  python scripts/saints/generate_saints.py --force
 """
 import argparse
 import json
@@ -20,7 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 SAINTS_DIR = ROOT / "saints"
 REF_DIR = ROOT / "references" / "saints"
 

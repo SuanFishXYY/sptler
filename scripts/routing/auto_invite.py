@@ -7,8 +7,8 @@
 自动建议邀请具备该能力的圣人。邹蕴据此口头确认拉入。
 
 用法:
-  python scripts/auto_invite.py --topic "蓝牙模组FTO检索" --roster 卢若雨,王升
-  python scripts/auto_invite.py --topic "OA答复特征分析" --roster 王升,卢若雨 --json
+  python scripts/routing/auto_invite.py --topic "蓝牙模组FTO检索" --roster 卢若雨,王升
+  python scripts/routing/auto_invite.py --topic "OA答复特征分析" --roster 王升,卢若雨 --json
 """
 import argparse, json, sys
 from pathlib import Path

@@ -8,8 +8,8 @@
 值得 → 输出建议轨道 + 预期规模 + 预计耗时，让用户决定。
 
 用法:
-  python scripts/sptler_prelude.py --topic "这个权利要求边界怎么收"
-  python scripts/sptler_prelude.py --topic "今天天气" --json
+  python scripts/routing/sptler_prelude.py --topic "这个权利要求边界怎么收"
+  python scripts/routing/sptler_prelude.py --topic "今天天气" --json
 """
 import argparse, json, sys
 from pathlib import Path

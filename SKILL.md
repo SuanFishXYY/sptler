@@ -52,7 +52,7 @@ Key scripts: `summon_sage.py` (one-call context + memory citation), `read_soul.p
 
 - Standard triggers: `/sptler {question}`, `/算鱼议会 {question}`, `/议会 {question}`, `/开会 {question}`, `/议一议 {question}`.
 - **Briefing trigger**: `/sptler! {question}` or `/议会! {question}` means **免提问简报模式** — skip Phase 0 mode selection, Phase 0.5 invite check, roster confirmation, and export-option AskUser. 邹蕴自动判定为动态简报规格（3–5人），single-turn deliver, write only the mandatory result md, and stop.
-- Memory query trigger: `/sptler 记忆 {圣人名}` or `/sptler memory {圣人名}` means do not convene a parliament; run/read `scripts/list_memories.py --sage <name>` (or `read_memory.py --sage <name>`) and answer with that sage's memory summary.
+- Memory query trigger: `/sptler 记忆 {圣人名}` or `/sptler memory {圣人名}` means do not convene a parliament; run/read `scripts/saints/list_memories.py --sage <name>` (or `read_memory.py --sage <name>`) and answer with that sage's memory summary.
 - If the user invokes `/sptler` with no question, use AskUser to ask what the parliament should deliberate.
 - Topics may be: technology selection, patent drafting strategy, AI productization path, system architecture, process governance, customer value judgment — any decision needing multiple expert perspectives.
 

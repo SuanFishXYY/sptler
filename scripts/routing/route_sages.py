@@ -7,9 +7,9 @@
 用于 Phase 1，减少模型手动路由不稳定。
 
 用法:
-  python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic
-  python scripts/route_sages.py --topic "数据平台" --mode fast --invites 陆一帆,孙高德
-  python scripts/route_sages.py --topic "整车传感器冗余" --mode complex --json
+  python scripts/routing/route_sages.py --topic "OA审查意见答复AI流水线" --mode dynamic
+  python scripts/routing/route_sages.py --topic "数据平台" --mode fast --invites 陆一帆,孙高德
+  python scripts/routing/route_sages.py --topic "整车传感器冗余" --mode complex --json
 """
 import argparse
 import json
@@ -55,7 +55,7 @@ for n in SAGES:
 
 
 def load_rules() -> dict:
-    path = Path(__file__).resolve().parent.parent / "references" / "routing_rules.json"
+    path = Path(__file__).resolve().parent.parent.parent / "references" / "routing_rules.json"
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:

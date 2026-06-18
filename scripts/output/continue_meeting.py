@@ -7,9 +7,9 @@
 原议题、结果文件、行动项、与会者、续议目标。
 
 用法:
-  python scripts/continue_meeting.py --last --item 3
-  python scripts/continue_meeting.py --meeting-id SPTLER-xxx --sage 徐奕阳
-  python scripts/continue_meeting.py --last --target "权限风险"
+  python scripts/output/continue_meeting.py --last --item 3
+  python scripts/output/continue_meeting.py --meeting-id SPTLER-xxx --sage 徐奕阳
+  python scripts/output/continue_meeting.py --last --target "权限风险"
 """
 import argparse
 import json

@@ -32,7 +32,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 # 记忆目录：默认技能根目录下的 memories/；可用 --mem-dir 覆盖
-DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent / "memories"
+DEFAULT_MEM_DIR = Path(__file__).resolve().parent.parent.parent / "memories"
 MEM_DIR = DEFAULT_MEM_DIR
 
 

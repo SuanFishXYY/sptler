@@ -6,9 +6,9 @@
 把正式会议/续议登记到 sptler-meetings/index.json，供后续续议读取。
 
 用法:
-  python scripts/index_meeting.py --meeting-id SPTLER-xxx --topic "..." --result-file path.md --attendees 王升,张鑫 --action-items actions.json
-  python scripts/index_meeting.py --batch meeting_index.json
-  python scripts/index_meeting.py --list
+  python scripts/output/index_meeting.py --meeting-id SPTLER-xxx --topic "..." --result-file path.md --attendees 王升,张鑫 --action-items actions.json
+  python scripts/output/index_meeting.py --batch meeting_index.json
+  python scripts/output/index_meeting.py --list
 """
 import argparse
 import json

@@ -8,8 +8,8 @@ Phase 5b 选"写入记忆"后，一次性提交所有圣人的 pending citations
 
 用法:
   # stdin: [{"sage":"王升","topic":"OA流水线"},{"sage":"卢若雨","topic":"OA流水线"}]
-  echo '[{"sage":"王升","topic":"OA流水线"}]' | python scripts/commit_citations.py --batch -
-  python scripts/commit_citations.py --sages 王升,卢若雨 --topic "OA流水线"
+  echo '[{"sage":"王升","topic":"OA流水线"}]' | python scripts/memory/commit_citations.py --batch -
+  python scripts/memory/commit_citations.py --sages 王升,卢若雨 --topic "OA流水线"
 """
 import argparse, json, sys
 from pathlib import Path

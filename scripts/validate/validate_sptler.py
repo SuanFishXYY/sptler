@@ -4,7 +4,7 @@
 算鱼议会技能自检 (validate_sptler.py)
 
 检查 frontmatter、引用文件、脚本语法和关键规则残留。
-用法: python scripts/validate_sptler.py
+用法: python scripts/validate/validate_sptler.py
 """
 import py_compile
 import re
@@ -20,7 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 REQUIRED = [
     "SKILL.md",
@@ -33,27 +33,27 @@ REQUIRED = [
     "references/core/runtime.md",
     "references/memory/memory_philosophy.md",
     "references/scenarios/scenarios.md",
-    "scripts/generate_saints.py",
-    "scripts/read_soul.py",
-    "scripts/summon_sage.py",
-    "scripts/update_growth.py",
-    "scripts/build_relations.py",
-    "scripts/validate_saints.py",
-    "scripts/sptler_run.py",
-    "scripts/sptler_prelude.py",
-    "scripts/briefing.py",
-    "scripts/action_board.py",
-    "scripts/memory_io.py",
-    "scripts/commit_citations.py",
-    "scripts/auto_invite.py",
-    "scripts/watch_memory.py",
-    "scripts/record_memory.py",
-    "scripts/read_memory.py",
-    "scripts/list_memories.py",
-    "scripts/route_sages.py",
-    "scripts/index_meeting.py",
-    "scripts/continue_meeting.py",
-    "scripts/compact_memories.py",
+    "scripts/saints/generate_saints.py",
+    "scripts/memory/read_soul.py",
+    "scripts/memory/summon_sage.py",
+    "scripts/memory/update_growth.py",
+    "scripts/memory/build_relations.py",
+    "scripts/validate/validate_saints.py",
+    "scripts/routing/sptler_run.py",
+    "scripts/routing/sptler_prelude.py",
+    "scripts/output/briefing.py",
+    "scripts/output/action_board.py",
+    "scripts/memory/memory_io.py",
+    "scripts/memory/commit_citations.py",
+    "scripts/routing/auto_invite.py",
+    "scripts/memory/watch_memory.py",
+    "scripts/memory/record_memory.py",
+    "scripts/memory/read_memory.py",
+    "scripts/saints/list_memories.py",
+    "scripts/routing/route_sages.py",
+    "scripts/output/index_meeting.py",
+    "scripts/output/continue_meeting.py",
+    "scripts/memory/compact_memories.py",
 ]
 
 KEYWORDS = [
