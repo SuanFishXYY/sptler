@@ -135,6 +135,7 @@ Instead of a separate invite AskUser, route first (Phase 1 step 1-4), then prese
 7. Present the roster (mark invited vs auto-routed, with each sage's weight + admission reason) and let the user confirm or adjust.
 8. **Active memory watch (主动提醒)**: after routing, run `python scripts/watch_memory.py --topic "<topic>" --roster <comma-sep roster>`. If it reports sages NOT in the roster but with strongly relevant past memory, 邹蕴 mentions it aloud (`[邹蕴] 提醒：王升虽未入会，但上次议过X——可考虑邀请或引用`), and offers to invite them.
 9. **Scenario data collection (查新/FTO/无效攻防)**: if route_sages identified a scenario that requires external data (查新检索/FTO检索/无效宣告攻防), 邹蕴 asks the user to provide the data before deliberation: `[邹蕴] FTO场景需要风险专利清单（专利号+权利人+有效状态）。请提供，或说"暂无清单"——暂无则本次只出规避设计框架，FTO结论待检索完成后复核。` This prevents producing a report with empty [待用户提供] cells. For 查新: ask for known prior art; for 无效攻防: ask for target patent claims + known evidence.
+10. **Smart auto-invite (智能动态补人)**: after routing + data collection, run `python scripts/auto_invite.py --topic "<topic>" --roster <comma-sep roster>`. If it reports missing capabilities (e.g. 议题涉及检索语义但名单无陆一帆), 邹蕴 auto-invites: `[邹蕴] 议题涉及检索语义，现邀请陆一帆入会。` and adds them to the roster. This is system-initiated (not user-initiated) — sptler proactively fills capability gaps.
 
 ### Phase 2 — Brainstorming (the four principles)
 

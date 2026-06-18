@@ -45,6 +45,7 @@ REQUIRED = [
     "scripts/action_board.py",
     "scripts/memory_io.py",
     "scripts/commit_citations.py",
+    "scripts/auto_invite.py",
     "scripts/watch_memory.py",
     "scripts/record_memory.py",
     "scripts/read_memory.py",
