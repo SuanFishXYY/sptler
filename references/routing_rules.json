@@ -17,6 +17,29 @@
     "max_boosted_sages": 2
   },
   "fallback_order": ["徐奕阳", "王升", "孙高德", "张鑫", "范征"],
+  "scenarios": {
+    "查新检索": {
+      "keywords": ["查新", "检索", "新颖性", "现有技术", "对比文件", "prior art", "新颖性检索"],
+      "must_attend": ["王升", "卢若雨", "陆一帆"],
+      "suggested_extra": ["邹蕴", "顾峻峰"],
+      "deliverable": "deliverable-search-{slug}-{ts}.md",
+      "track": "formal"
+    },
+    "FTO检索": {
+      "keywords": ["fto", "自由实施", "侵权风险", "规避设计", "侵权分析", "freedom to operate", "防侵权"],
+      "must_attend": ["卢若雨", "王升", "陈方移"],
+      "suggested_extra": ["邹蕴", "蔡悦"],
+      "deliverable": "deliverable-fto-{slug}-{ts}.md",
+      "track": "formal"
+    },
+    "专利价值评估": {
+      "keywords": ["价值评估", "专利价值", "资产评估", "价值分级", "高价值专利", "专利评级", "价值盘点"],
+      "must_attend": ["范征", "陆诗杰", "王升"],
+      "suggested_extra": ["邹蕴", "卢若雨"],
+      "deliverable": "deliverable-valuation-{slug}-{ts}.md",
+      "track": "formal"
+    }
+  },
   "must_include_by_domain": {
     "AI/铸模": ["徐奕阳"],
     "平台/复用": ["孙高德"],

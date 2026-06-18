@@ -38,7 +38,8 @@ Before deliberating, read these reference files in this skill directory:
 - `saints/<姓名>/SOUL.md`, `IDENTITY.md`, `BOUNDARY.md`, `SUMMON.md` — each sage's human-readable soul, identity, boundary, and summon rules.
 - `references/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
-- `references/templates.md` — the four templates (result / summary / transcript / memory batch json), `[姓名]` format, and file naming rules.
+- `references/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
+- `references/scenarios.md` — three patent-specific scenarios (查新检索 / FTO / 价值评估): routing, must-attend sages, deliverables.
 
 ## Sage memory system
 
@@ -173,7 +174,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
 
-**5d-bis. Produce the deliverable (parliament is the means, the deliverable is the end).** Classify the topic and write an additional deliverable file per `references/templates.md` Template 7, so the user gets the actual artifact they would have written anyway — not just a document about the meeting:
+**5d-bis. Produce the deliverable (parliament is the means, the deliverable is the end).** If `route_sages` identified a patent scenario (查新检索/FTO/价值评估), produce the scenario deliverable per `references/templates.md` Template 8 and `references/scenarios.md` — these are the headline output for patent work. Otherwise classify the generic topic and write a Template 7 deliverable:
 - 权利要求/claim/专利撰写 → 权利要求骨架 `deliverable-claim-*` (主笔王升, 卢若雨精修)
 - 架构/选型/技术方案/是否用X → ADR `deliverable-adr-*`
 - 流程/SOP/规范/操作步骤 → SOP `deliverable-sop-*`

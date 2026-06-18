@@ -161,7 +161,23 @@ def normalize_invites(invites: str) -> list[str]:
     return out
 
 
+def detect_scenario(topic: str) -> tuple[str, dict]:
+    """识别专利专属场景（查新/FTO/价值评估）。返回 (scenario_name, rule) 或 ('', {})。"""
+    scenarios = RULES.get("scenarios", {}) or {}
+    t = (topic or "").lower()
+    for name, rule in scenarios.items():
+        kws = rule.get("keywords", []) or []
+        hits = [k for k in kws if k.lower() in t]
+        if hits:
+            return name, {**rule, "matched_keywords": hits}
+    return "", {}
+
+
 def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto") -> dict:
+    scenario_name, scenario_rule = detect_scenario(topic)
+    # 专利专属场景强制 formal 轨道
+    if scenario_name and track == "auto":
+        track = scenario_rule.get("track", "formal")
     target_size, resolved_mode, resolved_track, track_reason = mode_size(mode, topic, track)
     invited = normalize_invites(invites)
     roster = []
@@ -174,6 +190,12 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
 
     for n in invited:
         add(n, "用户指定邀请", 999, [])
+
+    # 专利专属场景：必到圣人（配置化）
+    if scenario_name:
+        for n in scenario_rule.get("must_attend", []):
+            if n in SAGES:
+                add(n, f"【{scenario_name}】场景必到", 100, scenario_rule.get("matched_keywords", []))
 
     # 委员会首席：匹配即必到
     for chief in CHIEFS:
@@ -264,6 +286,8 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         "track_reason": track_reason,
         "target_size": target_size,
         "host": HOST,
+        "scenario": scenario_name,
+        "scenario_deliverable": scenario_rule.get("deliverable", "") if scenario_name else "",
         "attendees": attendees,
     }
 
@@ -281,6 +305,8 @@ def main():
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
     print(f"[邹蕴] 路由判定：{result['mode']}（{result['track']}轨：{result['track_reason']}），目标 {result['target_size']} 人，主持=邹蕴")
+    if result.get("scenario"):
+        print(f"[邹蕴] 识别专利场景：{result['scenario']}（交付物：{result['scenario_deliverable']}）")
     for a in result["attendees"]:
         flag = "邀请" if a.get("invited") else "自动"
         print(f"- [{a['name']}] {a['title']}｜{a['role']}｜权重 {a['weight']}｜{flag}｜{a['reason']}")
