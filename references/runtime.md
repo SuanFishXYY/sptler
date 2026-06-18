@@ -69,3 +69,60 @@
 - 会议索引：`index.json`（累计）
 
 主题 slug：议题前8汉字或关键英文词，去标点。UTF-8 编码。写盘后告知用户绝对路径。
+
+## Phase 详细步骤（从 SKILL.md 沉降）
+
+### Verdict 模式（单圣人裁决）
+1. No Phase 0 AskUser, no Phase 0.5 invite (unless user named a sage).
+2. Summon 1 matched sage (`summon_sage.py --sage <name> --topic "<topic>" --dry-run`). **--dry-run mandatory**: verdict does NOT write memory/citation — zero-trace.
+3. Sage gives 3-sentence judgment (call/why/risk). `[姓名]` prefix, cite memory if relevant.
+4. No brainstorm/four-law/vote. 邹蕴 closes in 1 line (this IS the conclusion — verdict exempt from Discipline #14).
+5. Produce deliverable (Template 7) if applicable + minimal result md + index. **No record_memory/citation/growth.**
+6. End `议会到此结束。`
+
+### Briefing 模式（/sptler!）
+1. No AskUser at all.
+2. 邹蕴 auto-selects 3-5 attendees, ≥1 core.
+3. Concise: each 1 idea, 1 combined plan, 1 vote line, 1 recommendation.
+4. Record memories + mandatory result md only.
+5. End `议会到此结束。`
+
+### Phase 0 — Mode selection
+Run `route_sages.py --track auto`. If scenario identified → skip AskUser, 邹蕴 declares track+size. If no scenario → AskUser: 快速/复杂/动态.
+
+### Phase 0.5 — Roster presentation
+First-time/no memory: auto-proceed (`[邹蕴] 召集{N}人，主笔{X}。3秒后开议，如需调整说停。`). Experienced: present roster + invite prompt, wait for confirmation.
+
+### Phase 1 — Routing + injection (10 steps)
+1. Seed with user invites.
+2. `route_sages.py --topic --mode --track auto --invites --json`.
+3. Fallback: manual routing from roster.md.
+4. Host = 邹蕴 (weight 0).
+5. `summon_sage.py --sage <name> --topic --dry-run` per attendee (mandatory dry-run).
+6. Classify major/ordinary.
+7. Present roster (auto-proceed or confirm).
+8. `watch_memory.py --topic --roster` → active memory reminder.
+9. Scenario data collection (查新/FTO/无效: AskUser for prior art/patent list/evidence).
+10. `auto_invite.py --topic --roster` → smart capability-gap fill.
+
+### Phase 2 — Brainstorming
+- Zero negation (Priority: 零评判 > 人格表达; hates → positive alternative only).
+- `[姓名]` prefix. Quick: 1-2 points. Complex: 3 ideas.
+- Memory citation mandatory for score≥4; anti-hallucination (real dates only); vary phrasing by persona; no-match sages speak naturally without announcing "新晋".
+- Brevity: 1 idea = 1 sentence. Quick ≤2 sentences/sage. Complex ≤4.
+- Formal-track compression: conversation = executive summary (1 idea/sage); full brainstorm → files.
+
+### Phase 3 — Combine
+Quick → 1 plan. Complex → 2-3 plans. No negation, only convergence.
+
+### Phase 4 — Four-law + vote
+4a. Four-law check (`philosophy.md`). Triggered veto signal → core must oppose. Quick: hit laws only. Complex: all four.
+4b. Weighted vote `[姓名](权重) 立场——理由`. Rules: see §加权投票规则 above.
+
+### Phase 5 — Output
+5a. Final recommendations: each sage `[姓名] 建议：xxx`. (邹蕴 does NOT synthesize here.)
+5b. Memory (default write) + export merged AskUser: "默认写入记忆+结果md。需加纪要/过程？或说不留痕。" If write → `commit_citations.py` + `record_memory.py --batch -` + `update_growth.py`. If 不留痕 → skip all.
+5d. Write result md (Template 1, patent scenario = 瘦版).
+5d-bis. Write deliverable (Template 7/8). Default `sptler-meetings/`; user says "直投" → `deliver_dir`. Register in index.
+5e. `index_meeting.py` + `build_relations.py`.
+5f. 邹蕴 substantive conclusion (decision + reason + risk). File paths. Action items. `议会到此结束。` STOP.
