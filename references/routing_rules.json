@@ -41,6 +41,30 @@
       "deliverable": "deliverable-valuation-{slug}-{ts}.md",
       "deliver_dir": "patents/valuations",
       "track": "formal"
+    },
+    "OA答复策略": {
+      "keywords": ["oa答复", "审查意见", "答复", "区别技术特征", "oa response", "驳回答复", "审查意见通知书", "如何答复"],
+      "must_attend": ["卢若雨", "王升", "徐奕阳"],
+      "suggested_extra": ["邹蕴", "陈彤"],
+      "deliverable": "deliverable-oa-response-{slug}-{ts}.md",
+      "deliver_dir": "patents/oa-responses",
+      "track": "formal"
+    },
+    "专利布局选型": {
+      "keywords": ["布局选型", "申请哪个", "优先申请", "专利布局", "选哪个方案", "申请优先级", "布局策略", "哪个申请", "申请专利"],
+      "must_attend": ["王升", "范征", "陆诗杰"],
+      "suggested_extra": ["邹蕴", "卢若雨", "蔡悦"],
+      "deliverable": "deliverable-portfolio-{slug}-{ts}.md",
+      "deliver_dir": "patents/portfolio",
+      "track": "formal"
+    },
+    "无效宣告攻防": {
+      "keywords": ["无效宣告", "无效请求", "无效理由", "无效证据", "专利无效", "无效攻防", "invalidation"],
+      "must_attend": ["卢若雨", "陈方移", "王升"],
+      "suggested_extra": ["邹蕴", "徐伟"],
+      "deliverable": "deliverable-invalidation-{slug}-{ts}.md",
+      "deliver_dir": "patents/invalidation",
+      "track": "formal"
     }
   },
   "deliver_dirs": {

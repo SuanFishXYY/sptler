@@ -59,7 +59,7 @@ Key scripts: `summon_sage.py` (one-call context + memory citation), `record_memo
 
 The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
 
-1. **Only three AskUser phases** — Phase 0 (mode), Phase 0.5 (invite; may issue one follow-up free-text AskUser if user chooses to specify sages), Phase 5c (export options). Phase 1 ends on a roster confirmation (not an AskUser, but a turn-ending wait). At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
+1. **Four AskUser phases** — Phase 0 (mode), Phase 0.5 (invite; may issue one follow-up free-text AskUser if user chooses to specify sages), Phase 5b (memory: write or 不留痕), Phase 5c (export options). Phase 1 ends on a roster confirmation. At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
 2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 + 0.5 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits.
 3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
 
@@ -169,7 +169,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. 邹蕴 then gives `[邹蕴] 收口：xxx` synthesizing them. Record all into the result md's "最终建议" section.
 
-**5b. Record sage memories and growth.** Run `python scripts/record_memory.py --batch <json_file>` once per meeting, or pipe JSON directly with `python scripts/record_memory.py --batch -`. The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one. Then run `python scripts/update_growth.py` (or per attendee) so GROWTH.md reflects the latest memory profile. This is mandatory — it is how sages accumulate memory and grow.
+**5b. AskUser: enter memory? + Record if yes.** Memory recording is now opt-in, not mandatory. Use AskUser: "本次议会是否写入圣人记忆？（写入后圣人会积累经验，下次同类议题可引用）" Options: 写入记忆 / 不留痕. If 写入记忆 → run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>`, then `python scripts/update_growth.py`. If 不留痕 → skip recording entirely (some meetings are exploratory/private). The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one.
 
 **5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
 
@@ -185,7 +185,9 @@ The deliverable is the headline output; the result md is the decision record beh
 
 **5e. Index the meeting and update relations.** After writing files, run `python scripts/index_meeting.py` (or `--batch -`) to register meeting_id, topic, result_file, optional summary/transcript, attendees, and action_items into `{cwd}/sptler-meetings/index.json`. Then run `python scripts/build_relations.py` so saint RELATIONS.json reflects co-attendance history. This enables later `展开行动项3` across sessions and lets saints remember collaboration patterns.
 
-**5f. Tell the user, then stop.** After indexing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
+**5f. 邹蕴总结结论, then stop.** Before closing, 邹蕴 must give a substantive conclusion — NOT a procedural recap. The conclusion synthesizes the vote + four-law check + final recommendations into the actual answer to the user's original question:
+- `[邹蕴] 总结：本次议会就{议题}形成决议——{一句话核心结论：议会决定/建议什么}。{关键理由1-2句，引用触发的四律或关键分歧}。{风险或前置条件1句}。`
+This is the bottom line the user came for. After the conclusion: (1) absolute path of every exported file; (2) one short paragraph on action items and owners; (3) a single closing line `议会到此结束。` Then STOP.
 
 ## On-the-fly invites & Follow-up (续议)
 
@@ -202,11 +204,12 @@ The deliverable is the headline output; the result md is the decision record beh
 6. **Everyone gives a final recommendation** — after voting, each attending sage contributes one `[姓名] 建议`; 邹蕴 closes with a 收口.
 7. **Sages speak in character** — the four cores' idiosyncrasies must show in their speech, voting reasons, and recommendations.
 8. **Run all phases** in the standard fast/formal flow — never skip mode selection, brainstorming, four-law check, or the final-recommendation round. Verdict and briefing special paths (see above) are the only sanctioned exceptions.
-9. **Soul + memory are mandatory** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via read_soul and memories via read_memory in Phase 1; record memory in Phase 5 (record_memory --batch). A sage without soul injection speaks like a tool, not a saint; a meeting that skips memory recording is incomplete.
+9. **Soul mandatory, memory opt-in** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via summon_soul/read_soul in Phase 1 (always). Memory recording in Phase 5 is opt-in via AskUser — respect 不留痕; sages still speak with soul even if the meeting isn't recorded.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
 11. **Anti-drag: deliver and stop** — only 3 AskUser checkpoints (Phase 0/0.5/5c); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops — no follow-up questions, no offered next steps, no continued chat.
 12. **Close with paths, not questions** — after收口 the only allowed final content is: exported file paths + `议会到此结束。`. No "还有什么需要帮助的吗 / 要不要我..." closers; the parliament either ends at收口 or waits at a defined checkpoint.
 13. **Cite memory on entry (magic moment)** — any sage with relevant past experience (from `summon_sage --topic`) must open Phase 2 by referencing it; this is the single most important behavior for making users feel the system has accumulated value. A sage that ignores its own memory is just a fresh Claude — defeats the purpose.
+14. **邹蕴 must conclude (实质性总结)** — Phase 5f 邹蕴 must deliver a substantive conclusion answering the user's original question (decision + key reason + risk), not a procedural recap of "we did X then Y". If the user can't tell what was decided from 邹蕴's close, the parliament failed.
 
 ## Host behavior (邹蕴)
 
@@ -217,7 +220,7 @@ The deliverable is the headline output; the result md is the decision record beh
 1. `/sptler {question}` → read the four reference files → **AskUser Phase 0 mode selection**. *(turn ends here)*
 2. User picks mode → **AskUser Phase 0.5 invite check** → seed roster with invites → Phase 1 routing + memory injection → present roster → **wait for confirmation**. *(turn ends here)*
 3. User confirms → **Phase 2 → 3 → 4 → 5a in ONE continuous response** (brainstorm, combine, vote, recommendations — do not stop between them, do not ask "继续"). Mid-meeting invites are honored inline only if the user explicitly named a sage in their confirmation; otherwise proceed. *(one big turn)*
-4. **Phase 5b record memories → Phase 5c AskUser export options** → write files → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
+4. **Phase 5b AskUser (memory?) → if yes record → Phase 5c AskUser (export options)** → write files → 邹蕴总结结论 → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
 
 Total: ideally **3–4 turns** end to end (mode → invite/roster → deliberation → export/close). Never more than necessary. After close, do not speak again until the user gives a new instruction.
 
