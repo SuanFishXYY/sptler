@@ -42,24 +42,9 @@ Before deliberating, read these reference files in this skill directory:
 
 ## Sage memory system
 
-Every sage accumulates a memory of past deliberations in `memories/<姓名>.json`, managed by three scripts in `scripts/`. This gives sages continuity — they can reference past experience, and their profile (specialty focus, stance tendencies, risk posture, recurring views) evolves over time.
+Sages accumulate value-driven memory (`memories/<姓名>.json`) governed by `references/memory_philosophy.md`: layered (recent detail / long-term skeleton), value-scored (passed × cited), supersedeable (改主意全留但旧不引用), dual-profile (long-term底色 + recent近况). Memory is read on entry (Phase 1) and written after the vote (Phase 5), so sages learn and grow.
 
-- `scripts/generate_saints.py` — generate OpenClaw-style saint soul files and `saints.registry.json`.
-- `scripts/read_soul.py` — read a sage's SOUL/IDENTITY/BOUNDARY/SUMMON block for persona injection.
-- `scripts/summon_sage.py` — one-call full context: SOUL + IDENTITY + BOUNDARY + SUMMON + MEMORY + RELATIONS.
-- `scripts/update_growth.py` — generate/update each saint's GROWTH.md from memory.
-- `scripts/build_relations.py` — build RELATIONS.json from meeting co-attendance index.
-- `scripts/validate_saints.py` — validate every saint has soul/identity/boundary/summon/growth/relations and matches registry.
-- `scripts/route_sages.py` — deterministic routing helper: `--topic`, `--mode`, `--track`, `--invites`, optional `--json`; use it in Phase 1 to stabilize roster selection.
-- `scripts/record_memory.py` — append one sage's experience + update profile. Supports `--batch <json>` or `--batch -` stdin to record all attendees of one meeting at once.
-- `scripts/read_memory.py` — read a sage's memory summary for injection. Use `--sages a,b,c` for the whole roster.
-- `scripts/list_memories.py` — overview of all sages' memory stats, or `--sage <name>` for one sage's full archive.
-- `scripts/index_meeting.py` — register result files/action items into `sptler-meetings/index.json`, enabling cross-session follow-up.
-- `scripts/continue_meeting.py` — load prior meeting/action-item context for 续议 (`--last`, `--meeting-id`, `--item`, `--sage`).
-- `scripts/compact_memories.py` — compact long memory files, keeping profile + recent N experiences.
-- `scripts/validate_sptler.py` — self-check skill structure, references, syntax, and obsolete-rule residue.
-
-Memory is **read on entry (Phase 1)** and **written after the vote (Phase 5)**, so sages learn from every parliament.
+Key scripts: `summon_sage.py` (one-call context + memory citation), `record_memory.py` (batch record + value/supersede), `update_growth.py`, `index_meeting.py`, `build_relations.py`, `compact_memories.py` (value-driven cleanup), `route_sages.py` (config-driven routing). Full runtime details and script params: `references/runtime.md`.
 
 ## Trigger and input
 
@@ -176,12 +161,7 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **4a. Four-law check (pre-vote hard constraint).** 邹蕴 checks the lead plan against the four laws in `references/philosophy.md`. If a law's veto signal is triggered, the corresponding core **must vote against** and cite the signal. Quick mode may check only the laws hit by the topic; complex mode must check all four. This is an ex-ante constraint, not post-hoc explanation.
 
-**4b. Weighted vote (dynamic voting).** Every attending sage votes (邹蕴 does not). Each gives `[姓名](权重) 立场——理由` citing their law/quotes/specialty.
-- Weights: cores 3.0 / chiefs 2.0 / specialists 1.0 (+0.5 dynamic boost, max 2 sages per topic — boost is additive only, never a penalty).
-- Tally: sum of 赞成 weights vs sum of 反对 weights (弃权 counts to neither).
-- **Pass**: 赞成权重和 > 反对权重和.
-- **Close** (差距 ≤ 1.0 or tie): 邹蕴 adjudicates (through/否决/重议) and states her reason.
-- **Major topic**: requires 赞成权重和 ÷ (赞成权重和 + 反对权重和) ≥ 60% (弃权不计入分母) AND no core opposes; otherwise 否决.
+**4b. Weighted vote (dynamic voting).** Every attending sage votes (邹蕴 does not), `[姓名](权重) 立场——理由`. Weights/pass/close/major thresholds and adjudication rules: see `references/runtime.md` §加权投票规则.
 
 ### Phase 5 — Final recommendations + memory recording + output
 
@@ -204,30 +184,10 @@ The deliverable is the headline output; the result md is the decision record beh
 
 **5f. Tell the user, then stop.** After indexing: (1) one-sentence resolution summary; (2) absolute path of every exported file; (3) one short paragraph on action items and owners; (4) a single closing line `议会到此结束。` Then STOP — do not ask follow-up questions, do not offer next steps, do not continue the conversation. The parliament is finished; control returns to the user.
 
-## On-the-fly invites (mid-meeting, any phase)
+## On-the-fly invites & Follow-up (续议)
 
-At any point after the roster is set — during brainstorming, combination, or even right before the vote — the user may invite additional sages in natural language: "邀请陆一帆加入会议", "把张鑫也叫上", "让黄嵩泉来评估下可靠性". Treat these the same as Phase 0.5 invites:
-
-1. Add the named sage as a **mandatory attendee** with their real weight.
-2. Run `python scripts/read_memory.py --sages <new sage>` to inject their memory so they can speak with continuity.
-3. Let the new sage contribute: in brainstorming/combination they give their ideas/reactions; if added at/after the vote, they still cast a weighted vote and give a final recommendation.
-4. Re-tally the weighted vote if the addition could change the outcome; 邹蕴 announces any changed result.
-5. The new sage is included in the memory batch (Phase 5b) so their attendance is recorded.
-
-邹蕴 acknowledges each invite aloud (`[邹蕴] 现邀请陆一帆入会——`). Never silently ignore an invite.
-
-## Follow-up / continuation mode (lightweight, no full re-convene)
-
-After a parliament has closed, the user may ask for a focused continuation instead of starting a new full meeting: `展开`, `重议`, `行动项3深入`, `徐奕阳再讲讲`, `让陆一帆评估数据层`. Treat these as **续议**:
-
-1. Do not re-run Phase 0/0.5, do not ask for mode again.
-2. Load context first: use `python scripts/continue_meeting.py --last` (or `--meeting-id <id>`) and add `--item N`, `--sage <name>`, or `--target <text>` when the user names a target. If no index exists and the target is ambiguous, ask one concise clarification.
-3. Classify follow-up type: 解释型 / 行动项型 / 风险复核型 / 修正型 / 重投票型.
-4.召集 only the minimum relevant people: named sage(s) + 邹蕴, or 1–3 experts; read their memory via `read_memory.py`.
-5. Output ≤ 8 bullets total, all `[姓名]` prefixed. No full brainstorm, no full vote unless the user explicitly says `重投票` or `重议表决`.
-6. If the continuation changes the decision, run a mini weighted vote among affected attendees and export `sptler-amendment-*.md` or `sptler-revote-*.md`; otherwise just produce a concise follow-up answer.
-7. Record follow-up memory with `meeting_type=followup`, `parent_meeting_id`, `followup_type`, and `followup_target`; index the follow-up with `index_meeting.py`.
-8. End with `续议到此结束。` and stop — no open-ended follow-up.
+- **Mid-meeting invites**: at any phase the user may say "邀请陆一帆加入"/"让黄嵩泉评估可靠性". 邹蕴 immediately adds the sage (mandatory, real weight), injects memory, lets them contribute; if it changes the vote, re-tally. Never silently ignore — acknowledge aloud. Full rules: `references/runtime.md` §用户指定邀请.
+- **Follow-up (续议)**: after收口, "展开"/"重议"/"行动项3深入"/"徐奕阳再讲讲" → lightweight continuation, NOT a new full meeting. Load context via `continue_meeting.py`, classify type (解释/行动项/风险复核/修正/重投票), minimal召集, ≤8 bullets, record followup memory, `续议到此结束。`. Full rules: `references/runtime.md` §续议制度.
 
 ## Discipline (non-negotiable)
 
@@ -247,14 +207,7 @@ After a parliament has closed, the user may ask for a focused continuation inste
 
 ## Host behavior (邹蕴)
 
-邹蕴 moderates from her "real-time decision / failure-safety" specialty — she reads where the discussion is heading and flags risk nodes before they arrive. She:
-- Runs Phase 0 mode selection and (for 动态) states her judgment.
-- Runs Phase 0.5 invite check; processes mid-meeting invites on the fly.
-- Declares mode + topic type at the open.
-- Enforces deferred judgment in Phase 2.
-- Runs the four-law check in Phase 4a.
-- Adjudicates close/tied weighted votes in Phase 4b.
-- Synthesizes the 收口 in Phase 5a.
+邹蕴 moderates from her "real-time decision / failure-safety" specialty — flags risk nodes before they arrive, enforces deferred judgment, runs four-law gate, adjudicates close votes, synthesizes收口. She does not vote (weight 0). Full behavior: `references/runtime.md` §议长行为.
 
 ## Interaction rhythm with the user (turn-minimal)
 

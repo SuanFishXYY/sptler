@@ -82,7 +82,7 @@ def tokens(text: str) -> set[str]:
     return parts
 
 
-def score_sage(topic: str, sage: str) -> tuple[float, list[str]]:
+def score_sage(topic: str, sage: str, ignore_core_bias: bool = False) -> tuple[float, list[str]]:
     info = SAGES[sage]
     t = topic.lower()
     score = 0.0
@@ -92,10 +92,12 @@ def score_sage(topic: str, sage: str) -> tuple[float, list[str]]:
             score += 3 if len(kw) >= 2 else 1
             hits.append(kw)
     # 四核心/首席由 min_core 和委员会必到规则保障；这里只给轻微基础分，避免无关核心压过命中关键词的专科。
-    if sage in CORE:
-        score += 1.0
-    if sage in CHIEFS:
-        score += 0.5
+    # verdict 单圣人裁决时关闭核心偏袒，纯按专业匹配度——让专科（如卢若雨边界精修）有机会胜出。
+    if not ignore_core_bias:
+        if sage in CORE:
+            score += 1.0
+        if sage in CHIEFS:
+            score += 0.5
     return score, hits[:5]
 
 
@@ -204,13 +206,23 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         add(c, f"核心席位保障：{'、'.join(hits) if hits else SAGES[c]['title']}", sc, hits)
         current_core += 1
 
-    # 其余按分数补齐
+    # 其余按分数补齐（verdict 时关闭核心偏袒，纯专业匹配）
+    ignore_bias = (resolved_track == "verdict")
     scored = []
     for n in SAGES:
-        sc, hits = score_sage(topic, n)
+        sc, hits = score_sage(topic, n, ignore_core_bias=ignore_bias)
         if sc > 0:
             scored.append((sc, n, hits))
-    scored.sort(key=lambda x: (x[0], WEIGHTS[x[1]]), reverse=True)
+    # verdict 单圣人裁决：同分时专科优先（找最专业匹配者，而非最高权重者）
+    if ignore_bias:
+        # 专科(1.0) > 首席(2.0) > 核心(3.0)：专业优先，权重作降序的次要键需反转
+        def verdict_key(x):
+            sc, n, _ = x
+            role_rank = 0 if n not in CORE and n not in CHIEFS else (1 if n in CHIEFS else 2)
+            return (sc, -role_rank)
+        scored.sort(key=verdict_key, reverse=True)
+    else:
+        scored.sort(key=lambda x: (x[0], WEIGHTS[x[1]]), reverse=True)
     for sc, n, hits in scored:
         if len(roster) >= target_size:
             break
