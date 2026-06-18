@@ -59,7 +59,7 @@ Key scripts: `summon_sage.py` (one-call context + memory citation), `record_memo
 
 The parliament must **deliver in as few turns as possible and stop when done.** Three rules govern this:
 
-1. **Three AskUser phases** — Phase 0 (mode), Phase 5b (memory: write or 不留痕), Phase 5c (export options). Phase 0.5 invite is merged into the Phase 1 roster confirmation (one turn, not a separate AskUser). At every other point the agent proceeds without stopping. Never invent extra AskUser prompts mid-flow. **Briefing trigger `/sptler!` and verdict mode use zero AskUser phases**: auto-route, write result md, stop.
+1. **Two AskUser phases max** — Phase 0 (mode, skipped for scenarios) and Phase 5b (memory+export merged). Phase 0.5 roster is auto-proceed for new users. **Briefing/verdict/scenario: zero or one AskUser**. At every other point the agent proceeds without stopping. Never invent extra AskUser prompts.
 2. **One-shot delivery after the checkpoints** — once the user has answered Phase 0 and confirmed the roster, run Phase 2 → 3 → 4 → 5a in a **single continuous response** (brainstorm → combine → vote → recommendations, all in one turn). Do not pause between phases to ask "继续吗". The only reason to split is if the response would genuinely exceed output limits — in that case, split the FILE-WRITING (Phase 5d-5f) across turns (result md in one turn, deliverable in next), but never split the deliberation (Phase 2-5a). Never silently truncate a deliverable's sections — if too long, write it in a follow-up turn.
 3. **Stop at收口** — after Phase 5e (files written, paths reported), the parliament is **over**. End with a one-line close like `议会到此结束。` and stop. Do NOT ask open-ended follow-ups ("还有什么需要帮助的吗"), do NOT offer to run another parliament, do NOT keep chatting. If the user wants to展开/重议/invite more sages, they will say so — wait for explicit instruction.
 
@@ -103,9 +103,11 @@ If the trigger contains `!` (`/sptler!` or `/议会!`), bypass the normal checkp
 4. Record memories and write only the mandatory result md (no optional summary/transcript unless user explicitly asked in the initial prompt).
 5. End with `议会到此结束。` and stop.
 
-### Phase 0 — Mode selection (AskUser)
+### Phase 0 — Mode selection (AskUser, skipped for scenarios)
 
-Right after the user sends the question, before routing, use AskUser to choose the meeting mode:
+First run `route_sages.py --topic "<topic>" --track auto --json`. If it identified a patent scenario (查新/FTO/价值评估/OA答复/布局选型/无效攻防), **skip the mode AskUser** — 邹蕴 declares: `[邹蕴] 识别为{scenario}场景，自动走{formal/fast}轨{N}人。如需快评轨说"快评"。` and proceed to Phase 0.5. This saves one user turn for the most common patent use cases.
+
+If no scenario identified, use AskUser to choose the meeting mode:
 
 > Question: "请选择本次议会模式。"
 > Options:
@@ -115,15 +117,9 @@ Right after the user sends the question, before routing, use AskUser to choose t
 
 For 动态分辨, 邹蕴 first states her judgment in one line (e.g. `[邹蕴] 本议题跨机械与AI两域、涉及平台建设，判为复杂会议规格`), then proceeds at that spec.
 
-### Phase 0.5 — Invite + roster confirmation (merged, one user turn)
+### Phase 0.5 — Roster presentation + invite (one user turn, or auto-proceed)
 
-Instead of a separate invite AskUser, route first (Phase 1 step 1-4), then present the roster AND invite prompt together in one confirmation:
-
-> 邹蕴 presents: "本次议会模式/轨道/入会名单如下：{roster with weights + reasons}。确认开议，或指定邀请某几位圣人（如'邀请陆一帆'）？"
-
-- If user says "确认/继续/开议" → proceed to Phase 2.
-- If user names sages ("邀请陆一帆、金辰宇") → add them as mandatory attendees (real weight), re-route to fill, re-present once, then proceed.
-- This merges the old Phase 0.5 invite AskUser + Phase 1 roster confirmation into ONE user turn, reducing AskUser count.
+Instead of a separate invite AskUser, route first (Phase 1 step 1-4), then present the roster. **For first-time users or when no memory exists**: present as information, not a blocking question — `[邹蕴] 本次按{scenario/track}召集{N}人，主笔{主笔圣人}。3秒后开议，如需调整说"停"。` and auto-proceed unless user interrupts. **For experienced users**: present roster + invite prompt, wait for confirmation. This removes a friction turn for new users who can't evaluate the roster anyway.
 
 **Mandatory-invite rules**: invited sages count toward the mode's size cap; they may push the roster over the soft cap by 1–2 if the user insists. Mid-meeting invites at any later phase still work (see "On-the-fly invites").
 
@@ -174,14 +170,12 @@ Each sage's voice must match their persona (see `references/roster.md` signature
 
 **5a. Final recommendations.** After the vote, every attending sage gives one concrete recommendation on the final plan: `[姓名] 建议：xxx`. Record all into the result md's "最终建议" section. (邹蕴 does NOT synthesize here — that's 5f's job, to avoid double-收口.)
 
-**5b. AskUser: enter memory? + Record if yes.** Memory recording is opt-in. Use AskUser: "本次议会是否写入圣人记忆？" Options: 写入记忆 / 不留痕.
-- If **写入记忆** → (1) commit the pending citations in ONE batch: `python scripts/commit_citations.py --sages <comma-sep sages that had hits> --topic "<topic>"` (or `--batch -` with stdin JSON array); (2) run `python scripts/record_memory.py --batch -` (stdin) or `--batch <file>` to record this meeting's experiences; (3) run `python scripts/update_growth.py`.
-- If **不留痕** → skip ALL memory writes entirely (no citation commit, no record_memory, no update_growth). The 不留痕 choice means truly no trace — Phase 1 used --dry-run so nothing was written yet, and nothing is written now.
+**5b. Memory recording (default write, merge with 5c).** Memory recording defaults to **写入** (patent professionals want留痕 by default). Skip the memory AskUser — only ask if the user explicitly says "不留痕" or "私密". Combine the export question into one AskUser: "议会完成。默认写入记忆+导出结果md。是否需要额外导出会议纪要/会议过程？" Options: 仅结果md / 加纪要 / 加过程 / 不留痕. This merges 5b+5c into ONE AskUser, reducing friction.
+- If user doesn't select 不留痕 → commit citations (`commit_citations.py`), record memory (`record_memory.py --batch -`), update growth (`update_growth.py`).
+- If user selects 不留痕 → skip ALL memory writes (Phase 1 used --dry-run so nothing was written).
 The batch json contains topic/meeting_id/mode/verdict and an `attendees` array; if meeting_id is missing, the script auto-generates one.
 
-**5c. AskUser for export options.** Use AskUser (multiSelect): "除结果md（强制导出）外，是否需要导出会议纪要和会议过程？" Options: 会议纪要 / 会议过程. User may select neither.
-
-**5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected, write those per Templates 2/3.
+**5d. Mandatorily export the result md.** Regardless of choice, write the result md per `references/templates.md` Template 1 to `{cwd}/sptler-meetings/sptler-result-{slug}-{YYYYMMDD-HHMM}.md` (create dir if missing), UTF-8. If summary/transcript selected in 5b, write those per Templates 2/3.
 
 **5d-bis. Produce the deliverable (parliament is the means, the deliverable is the end).** If `route_sages` identified a patent scenario (查新检索/FTO/价值评估), produce the scenario deliverable per `references/templates.md` Template 8 and `references/scenarios.md` — these are the headline output for patent work. Otherwise classify the generic topic and write a Template 7 deliverable:
 - 权利要求/claim/专利撰写 → 权利要求骨架 `deliverable-claim-*` (主笔王升, 卢若雨精修)
@@ -214,7 +208,7 @@ This is the bottom line the user came for. After the conclusion: (1) absolute pa
 8. **Run all phases** in the standard fast/formal flow — never skip mode selection, brainstorming, four-law check, or the final-recommendation round. Verdict and briefing special paths (see above) are the only sanctioned exceptions.
 9. **Soul mandatory, memory opt-in** — inject SOUL/IDENTITY/BOUNDARY/SUMMON via summon_soul/read_soul in Phase 1 (always). Memory recording in Phase 5 is opt-in via AskUser — respect 不留痕; sages still speak with soul even if the meeting isn't recorded.
 10. **Honor user invites** — whether invited in Phase 0.5 or mid-meeting, a user-named sage is a mandatory attendee with full speaking + voting rights. Never silently drop an invite; 邹蕴 acknowledges each one aloud.
-11. **Anti-drag: deliver and stop** — only 3 AskUser phases (Phase 0/5b/5c) + 1 roster confirmation; Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops.
+11. **Anti-drag: deliver and stop** — max 2 AskUser (Phase 0 if no scenario / Phase 5b merged memory+export); Phase 2→5a runs in one continuous turn; one idea = one sentence; after收口 the parliament ends with `议会到此结束。` and the agent stops.
 12. **Close with paths, not questions** — after收口 the only allowed final content is: exported file paths + `议会到此结束。`. No "还有什么需要帮助的吗 / 要不要我..." closers; the parliament either ends at收口 or waits at a defined checkpoint.
 13. **Cite memory on entry (magic moment, no hallucination)** — EVERY attendee must be summoned via `summon_sage --dry-run` in Phase 1 (not just cores); any sage with relevant past experience must open Phase 2 by referencing it using the REAL date/topic from the script output; a sage with no match must speak as 新晋圣人, never fabricate. A hallucinated memory citation is the worst failure mode — worse than skipping the citation.
 14. **邹蕴 must conclude (实质性总结)** — Phase 5f 邹蕴 must deliver a substantive conclusion answering the user's original question (decision + key reason + risk), not a procedural recap of "we did X then Y". If the user can't tell what was decided from 邹蕴's close, the parliament failed.
@@ -226,12 +220,11 @@ This is the bottom line the user came for. After the conclusion: (1) absolute pa
 
 ## Interaction rhythm with the user (turn-minimal)
 
-1. `/sptler {question}` → read reference files → **AskUser Phase 0 mode selection**. *(turn ends)*
-2. User picks mode → Phase 1 routing + memory injection(dry-run) → present roster + invite prompt → **wait for confirmation** (user confirms or names sages to invite). *(turn ends)*
-3. User confirms → **Phase 2 → 3 → 4 → 5a in ONE continuous response** (do not ask "继续"). *(one big turn)*
-4. **Phase 5b AskUser (memory?) → if yes record+citation commit → Phase 5c AskUser (export options)** → write files → 邹蕴总结结论 → report paths → `议会到此结束。` → STOP. *(turn ends, parliament over)*
+1. `/sptler {question}` → run route_sages → **if scenario: 邹蕴 declares track, skip to Phase 0.5 auto-proceed; if not: AskUser Phase 0 mode**. *(turn ends only if AskUser)*
+2. Phase 1 routing + memory injection(dry-run) + data collection(scenario) → roster auto-proceed or confirm → **Phase 2 → 3 → 4 → 5a in ONE continuous response**. *(one big turn)*
+3. **Phase 5b AskUser (memory+export merged)** → write files → 邹蕴总结结论 → report paths → `议会到此结束。` → STOP. *(turn ends)*
 
-Total: **3 AskUser + 1 roster confirmation = 4 turns** end to end (verdict/briefing: 1 turn).
+Total: **1-2 AskUser = 2-3 turns** end to end (verdict/briefing/scenario: 1-2 turns). Second use: Phase 0 skipped (remembered), 5b defaults to write — down to **1 turn** for repeat scenario.
 
 Total: ideally **3–4 turns** end to end (mode → invite/roster → deliberation → export/close). Never more than necessary. After close, do not speak again until the user gives a new instruction.
 

@@ -104,9 +104,9 @@
 - [蔡悦] 建议：UWB备选方案做技术预研，分摊单一蓝牙路径风险。
 - [邹蕴] 收口：议会决定采用AOA主导规避方案——新款蓝牙定位模组主用到达角(AOA)、RSSI作降级备选，不落入风险专利权1。关键理由：卢若雨引用半年前FTO经验确认AOA规避有效，王升确认硬件层也需差异化。风险：需年度复核风险专利有效性+UWB备选预研，风险专利转让时触发重新分析。
 
-## 交付物（直投 patents/fto-reports/）
+## 交付物（默认写 sptler-meetings/，用户说"直投项目目录"则写 patents/fto-reports/）
 
-`patents/fto-reports/deliverable-fto-蓝牙定位模组-{ts}.md`：
+`sptler-meetings/deliverable-fto-蓝牙定位模组-{ts}.md`：
 
 ```markdown
 # FTO自由实施分析报告 · 蓝牙定位模组
