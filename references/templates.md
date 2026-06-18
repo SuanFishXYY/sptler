@@ -521,6 +521,7 @@ python scripts/index_meeting.py --batch sptler-index-xxx.json
 # 查新检索报告 · {技术方案}
 
 > 议会 {meeting_id} ｜ 主笔 {王升}，检索 {陆一帆}，边界 {卢若雨} ｜ 日期 {YYYY-MM-DD}
+> ⚠️ sptler 不自行检索专利库，不生成专利号/公开号。以下检索数据字段须由用户提供或标注[待检索填充]。sptler 只做结构化分析。
 
 ## 一、待检索技术方案
 {技术方案简述 + 权利要求要点}
@@ -540,7 +541,7 @@ python scripts/index_meeting.py --batch sptler-index-xxx.json
 ## 四、对比文件清单
 | 序号 | 对比文件 | 公开日 | 相关特征 | 相关度 |
 |---|---|---|---|---|
-| 1 | {公开号/出处} | ... | 特征A+B | 高/中/低 |
+| 1 | {公开号/出处}[待用户提供] | {待用户提供} | 特征A+B | 高/中/低 |
 
 ## 五、新颖性判断（王升+卢若雨）
 - 与对比文件1的区别：{...}
@@ -565,6 +566,7 @@ python scripts/index_meeting.py --batch sptler-index-xxx.json
 
 > 议会 {meeting_id} ｜ 边界 {卢若雨}，结构 {王升}，合规 {陈方移} ｜ 日期 {YYYY-MM-DD}
 > ⚠️ 本报告为内部技术分析，非法律意见。
+> ⚠️ sptler 不自行检索专利库，不生成专利号。风险专利清单须由用户提供或标注[待检索填充]。sptler 只做侵权比对与规避分析。
 
 ## 一、分析对象
 {产品/技术方案 + 目标市场}
