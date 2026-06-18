@@ -204,18 +204,66 @@ def update_profile(profile: dict, exp: dict):
     profile["last_updated"] = datetime.now().strftime("%Y-%m-%d")
 
 
+def _init_value_fields(exp: dict):
+    """按记忆哲学宪法初始化价值/引用/superseded 字段。"""
+    passed = 1 if (exp.get("verdict") == "通过") else 0
+    exp.setdefault("citation_count", 0)
+    exp.setdefault("superseded", False)
+    exp.setdefault("supersedes", [])
+    exp.setdefault("is_turning_point", False)
+    # value_score = 通过?1:0 × (citation_count+1)
+    exp["value_score"] = passed * (int(exp["citation_count"]) + 1)
+    return exp
+
+
+def _apply_supersedes(mem: dict, supersedes: list):
+    """新经历声明推翻了哪些旧 meeting_id：标记旧为 superseded+转折点。"""
+    if not supersedes:
+        return
+    sup_set = {str(s) for s in supersedes}
+    for e in mem.get("experiences", []):
+        if str(e.get("meeting_id", "")) in sup_set and not e.get("superseded"):
+            e["superseded"] = True
+            e["is_turning_point"] = True
+
+
+def _compute_profile_recent(mem: dict, window: int = 30) -> dict:
+    """基于最近 window 次经历重算短期画像（profile_recent）。"""
+    recent = (mem.get("experiences", []) or [])[-window:]
+    prof = _fresh_profile()
+    for e in recent:
+        update_profile(prof, e)
+    # total_meetings 在 update_profile 里是每次+1，这里要重置为窗口内的实际计数
+    prof["total_meetings"] = len(recent)
+    return prof
+
+
 def record_one(sage: str, exp: dict, verbose: bool = True) -> dict:
     mem = load_memory(sage)
     if "domain" not in exp or not exp["domain"]:
         exp["domain"] = infer_domain(exp.get("topic", ""))
     exp["recorded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+    # 哲学宪法：先处理 supersedes（标记旧记忆为转折点），再初始化新经历价值字段
+    supersedes = exp.get("supersedes") or []
+    if supersedes:
+        _apply_supersedes(mem, supersedes)
+        exp["is_turning_point"] = True  # 推翻者也标记为转折点
+    _init_value_fields(exp)
     mem["experiences"].append(exp)
     update_profile(mem["profile"], exp)
+    # 双画像：profile_recent 仅基于最近30次
+    mem["profile_recent"] = _compute_profile_recent(mem, window=30)
     memory_path(sage).write_text(
         json.dumps(mem, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     if verbose:
-        print(f"✅ {sage}：记录第 {len(mem['experiences'])} 次经历（领域={exp['domain']}，立场={exp.get('stance','')}）")
+        flags = []
+        if exp.get("is_turning_point"):
+            flags.append("转折点")
+        if exp.get("supersedes"):
+            flags.append(f"推翻{len(exp['supersedes'])}旧")
+        tag = ("[" + "/".join(flags) + "]") if flags else ""
+        print(f"✅ {sage}：记录第 {len(mem['experiences'])} 次经历（领域={exp['domain']}，立场={exp.get('stance','')}，价值={exp['value_score']}）{tag}")
     return mem
 
 
@@ -264,6 +312,10 @@ def main():
             "topic", "meeting_id", "mode", "verdict",
             "meeting_type", "parent_meeting_id", "followup_type", "followup_target",
         )}
+        # supersedes：会议级声明，推翻哪些旧 meeting_id（list，保持原样）
+        base_supersedes = data.get("supersedes") or []
+        if not isinstance(base_supersedes, list):
+            base_supersedes = []
         if not base["meeting_id"]:
             prefix = "SPTLER-FOLLOWUP-" if base.get("meeting_type") == "followup" else "SPTLER-"
             base["meeting_id"] = prefix + datetime.now().strftime("%Y%m%d%H%M%S")
@@ -292,6 +344,7 @@ def main():
                 "reason": att.get("reason") or "",
                 "ideas": att.get("ideas") or "",
                 "recommendation": att.get("recommendation") or "",
+                "supersedes": base_supersedes,
             }
             record_one(sage, exp)
             recorded += 1
