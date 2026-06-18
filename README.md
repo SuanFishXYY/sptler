@@ -4,10 +4,10 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Skill](https://img.shields.io/badge/Claude%20Code-Skill-orange)
-![Sages](https://img.shields.io/badge/圣人-22位-green)
+![Sages](https://img.shields.io/badge/圣人-28位-green)
 ![Tracks](https://img.shields.io/badge/轨道-4轨自动降级-purple)
 
-**22 位带灵魂与记忆的圣人专家班子，按问题重量自动开议会。**
+**28 位带灵魂与记忆的圣人专家班子，按问题重量自动开议会。**
 
 不是又一个 prompt 模板——这是一套会**记住你所有决定**的专家系统：日常小问题让最相关的 1 位圣人 3 句话裁决，复杂议题才召集多位圣人做加权投票；而当你第二次问同类问题，圣人开口第一句就引用上次的结论。
 
@@ -68,7 +68,7 @@ git clone https://github.com/SuanFishXYY/sptler.git ~/.claude/skills/sptler
 - **议长 / 主持人（固定，权重 0 不投票）**：邹蕴（决策圣 · 郭嘉）——主持模式选择、议程、四律检查、僵局裁决、收口。
 - **四核心（权重 3.0）**：王升（结构圣·结构律）、张鑫（控制圣·控制律）、徐奕阳（铸模圣·铸模律）、范征（价值圣·价值律）。
 - **三大专业委员会首席（权重 2.0）**：孙高德（平台委员会）、蔡悦（跨界集成委员会）、黄嵩泉（组合工程委员会）。
-- **专科圣人（权重 1.0）**：其余 14 位按议题路由入会。
+- **专科圣人（权重 1.0）**：其余 20 位按议题路由入会。
 
 ## 四轨制（按问题重量自动降级）
 
@@ -138,38 +138,66 @@ sptler 自动按问题复杂度选择最轻的轨道，避免"小问题走大流
 
 ```
 sptler/
-├── SKILL.md                  技能主文件（六阶段编排器）
-├── saints/                   OpenClaw 圣人操作系统：每位圣人独立灵魂目录
+├── SKILL.md                  技能主文件（1796词，流程骨架+指针）
+├── saints/                   OpenClaw 圣人操作系统：28位圣人独立灵魂目录
 │   └── 王升/
-│       ├── SOUL.md           灵魂命题、说话风格、失败模式
+│       ├── SOUL.md           灵魂命题/内在冲突/说话风格/典型句式/思维模式/张力/失败模式
 │       ├── IDENTITY.md       圣号/官职/三国/权重/对应律
 │       ├── BOUNDARY.md       必须反对与必须追问
 │       ├── SUMMON.md         召唤/避免召唤规则
-│       ├── GROWTH.md         成长日志
-│       └── RELATIONS.json    关系网（预留）
-├── references/
-│   ├── saints.registry.json  机器可读圣人注册表
-│   ├── routing_rules.json    路由规则配置（轨道关键词/规模/权重/领域必到/兜底）
-│   ├── roster.md             22 圣人名册 + 权重 + 路由关键词 + 路由速查表
-│   ├── philosophy.md         四律一核（结构/控制/铸模/价值）+ 否决信号
-│   ├── orglaw.md             三种会议模式 + 议事程序 + 加权投票规则
-│   └── templates.md          四类输出模板 + [姓名] 格式 + 记忆 batch json 格式
-├── scripts/
-│   ├── generate_saints.py    从内置数据生成 saints/ 与 saints.registry.json
-│   ├── read_soul.py          读取某圣人的SOUL/IDENTITY/BOUNDARY/SUMMON供注入
-│   ├── summon_sage.py        一次性召唤完整圣人上下文（灵魂+记忆+关系）
-│   ├── update_growth.py      根据记忆自动更新 GROWTH.md
-│   ├── build_relations.py    根据会议索引构建 RELATIONS.json 关系网
-│   ├── validate_saints.py    校验 saints/ 与 registry 一致性
-│   ├── route_sages.py        自动路由圣人名单（topic/mode/track/invites → roster+weights）
-│   ├── record_memory.py      记录圣人经历 + 更新画像（支持 --batch 文件或 --batch - stdin、--mem-dir）
-│   ├── read_memory.py        读取圣人记忆摘要供入会发言注入（支持 --mem-dir）
-│   ├── list_memories.py      总览所有圣人记忆 / 查询某人完整档案（支持 --mem-dir）
-│   ├── index_meeting.py      登记会议/续议索引到 sptler-meetings/index.json
-│   ├── continue_meeting.py   读取上次会议/行动项上下文，支持续议
-│   ├── compact_memories.py   压缩记忆档案，保留profile+最近N次经历
-│   └── validate_sptler.py    一键自检技能结构、引用、脚本语法、旧规则残留
-└── memories/                 运行时生成：每位圣人一个 <姓名>.json（默认不入库）
+│       ├── GROWTH.md         成长日志（双画像+高价值+转折点）
+│       └── RELATIONS.json    关系网（会议共现构建）
+├── references/               模块化参考文件（5目录）
+│   ├── core/                 核心制度
+│   │   ├── orglaw.md         四轨制+议事程序+加权投票规则+续议制度
+│   │   ├── philosophy.md     四律一核（结构/控制/铸模/价值）+ 否决信号
+│   │   └── runtime.md        运行时细则（Phase详细步骤+脚本参数+投票规则+输出命名）
+│   ├── saints/               圣人数据
+│   │   ├── roster.md         28圣人名册 + 权重 + 路由关键词 + 路由速查表
+│   │   └── saints.registry.json  机器可读圣人注册表
+│   ├── memory/               记忆系统
+│   │   └── memory_philosophy.md  记忆哲学宪法（分层/价值驱动/superseded/双画像）
+│   ├── scenarios/            专利场景
+│   │   ├── scenarios.md      6专利场景流程指引（查新/FTO/价值/OA/布局/无效）
+│   │   ├── feature_analysis.md  特征分析框架（三要素拆解+语义扩展+检索式构建）
+│   │   └── routing_rules.json    路由规则配置（轨道/权重/场景/领域必到/兜底）
+│   └── templates/            输出模板
+│       └── templates.md      结果md/纪要/过程/记忆batch/6专利交付物/续议/索引 模板
+├── scripts/                  模块化脚本（5目录22脚本）
+│   ├── routing/              路由与召集
+│   │   ├── route_sages.py    自动路由（topic/mode/track/invites → roster+weights）
+│   │   ├── auto_invite.py    智能动态补人（能力缺口检测+主动邀请）
+│   │   ├── sptler_prelude.py 议题预热（判断是否值得开议会）
+│   │   └── sptler_run.py     总控脚本（route/record/check 一条龙）
+│   ├── memory/               记忆系统（10脚本）
+│   │   ├── summon_sage.py    一次性召唤完整上下文（灵魂+记忆+关系+dry-run）
+│   │   ├── read_soul.py      读取灵魂注入块
+│   │   ├── read_memory.py    读取记忆摘要
+│   │   ├── record_memory.py  记录经历+价值分+superseded（支持batch stdin）
+│   │   ├── commit_citations.py  批量提交引用计数
+│   │   ├── update_growth.py  自动更新GROWTH.md（双画像+高价值+转折点）
+│   │   ├── build_relations.py   构建RELATIONS.json关系网
+│   │   ├── compact_memories.py  价值驱动压缩（留/纲/删/转折豁免）
+│   │   ├── memory_io.py      记忆导入导出
+│   │   └── watch_memory.py   主动提醒记忆（未入会圣人的相关历史）
+│   ├── output/               输出与跟踪
+│   │   ├── index_meeting.py  登记会议索引
+│   │   ├── continue_meeting.py  读取续议上下文
+│   │   ├── briefing.py       议会简报（一键回顾）
+│   │   └── action_board.py   行动项看板（跨会议跟踪+标记完成）
+│   ├── saints/               圣人生成与查询
+│   │   ├── generate_saints.py   生成灵魂文件+registry
+│   │   └── list_memories.py     记忆总览查询
+│   └── validate/             自检
+│       ├── validate_sptler.py   全系统自检（文件/关键词/语法/旧规则残留）
+│       └── validate_saints.py   圣人OS文件一致性校验
+├── examples/                 5个脱敏案例
+│   ├── 01-快速轨-OA流水线.md
+│   ├── 02-魔法时刻-同类议题记忆引用.md
+│   ├── 03-单圣人裁决-日常生产力.md
+│   ├── 04-FTO场景-蓝牙定位模组.md
+│   └── README.md
+└── memories/                 运行时生成：每位圣人一个<姓名>.json（默认不入库）
 ```
 
 ## 圣人记忆系统
