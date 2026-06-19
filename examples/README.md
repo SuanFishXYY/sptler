@@ -2,26 +2,29 @@
 
 这里是 sptler 真实跑通的使用案例（脱敏），帮助新用户理解"它能给我带来什么生产力"。
 
-## 四个核心场景
+## 七个核心场景
 
 | 示例 | 轨道 | 展示价值 |
 |---|---|---|
 | [01-快速轨-OA流水线](01-快速轨-OA流水线.md) | fast | 中等议题走快速轨，产出 SOP 交付物 + 决策记录，6 圣人积累记忆/成长/关系 |
 | [02-魔法时刻-同类议题记忆引用](02-魔法时刻-同类议题记忆引用.md) | fast | 同类问题第二次问，圣人开口引用上次经历——系统有积累的瞬间 |
 | [03-单圣人裁决-日常生产力](03-单圣人裁决-日常生产力.md) | verdict | 单一明确问题自动降级为 1 圣人 3 句话，日常最高频模式 |
-| [04-FTO场景-蓝牙定位模组](04-FTO场景-蓝牙定位模组.md) | formal·专利场景 | FTO自由实施分析全流程：场景识别+主动提醒+魔法时刻+侵权比对+规避设计+合规留痕+交付物直投 |
+| [04-FTO场景-蓝牙定位模组](04-FTO场景-蓝牙定位模组.md) | formal·FTO | FTO全流程：场景识别+主动提醒+侵权比对+规避设计+合规留痕 |
+| [05-查新场景-蓝牙AOA](05-查新场景-蓝牙定位AOA.md) | formal·查新 | 三要素拆解+语义矩阵+检索式构建+检索完备性自检 |
+| [06-价值评估-锂电材料](06-价值评估场景-锂电材料专利.md) | formal·价值评估 | 五维打分（权重可调）+SABC分级+运营建议 |
+| [07-OA答复-机械夹持装置](07-OA答复场景-机械装置.md) | formal·OA答复 | 审查意见解读+区别特征提炼+权利要求修改方案+答复口径模板 |
 
 ## 怎么读
 
 - 想看"完整议会流程" → 01
 - 想看"为什么比裸 Claude 强" → 02
 - 想看"日常怎么用最省事" → 03
-- 想看"专利场景怎么用" → 04
+- 想看"FTO/查新/价值评估/OA答复怎么用" → 04/05/06/07
 
 ## 复现
 
 ```bash
-python scripts/validate_sptler.py     # 先自检
-python scripts/route_sages.py --topic "OA审查意见答复AI流水线" --track auto   # 看路由判定
-python scripts/summon_sage.py --sage 徐奕阳 --topic "OA答复"                 # 看召唤+记忆
+python scripts/validate/validate_sptler.py     # 先自检
+python scripts/routing/route_sages.py --topic "蓝牙AOA查新" --track auto   # 看路由判定
+python scripts/memory/summon_sage.py --sage 王升 --topic "查新"            # 看召唤+记忆
 ```
