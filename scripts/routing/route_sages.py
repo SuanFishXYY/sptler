@@ -43,9 +43,9 @@ SAGES = {
     "陈哲锋": {"role": "专科", "title": "材料工艺圣", "keywords": "材料 化工 锂电 高分子 参数 配方 放大 工艺 反应 组分 复合"},
     "陆一帆": {"role": "专科", "title": "数据炼金圣", "keywords": "数据 飞轮 检索 语义 向量 schema 可观测 指标 清洗 聚合 数据治理 召回"},
     "金辰宇": {"role": "专科", "title": "接口圣", "keywords": "接口 协议 契约 前端 网页 事件流 api 对接 交互 入口 端"},
-    "徐骋": {"role": "专科", "title": "流式圣", "keywords": "流水线 长链路 状态图 节点 事件 流式 oa 翻译 质量闭环 编排 异步"},
+    "徐骋": {"role": "专科", "title": "流式圣", "keywords": "流水线 长链路 状态图 节点 事件 流式 审查意见 翻译 质量闭环 编排 异步"},
     "陈方移": {"role": "专科", "title": "基座圣", "keywords": "基座 安全 合规 访问控制 审计 留痕 变更 审批 运维 部署 回退 it 底座"},
-    "陈彤": {"role": "专科", "title": "流程圣", "keywords": "流程 oa 节点 字段 标准化 可追溯 官文 答复 审查意见 流程图 规则"},
+    "陈彤": {"role": "专科", "title": "流程圣", "keywords": "流程 审查意见 节点 字段 标准化 可追溯 官文 答复 流程图 规则"},
     "江漪": {"role": "专科", "title": "闭环圣", "keywords": "流体 闭环 传感器 控制器 执行器 卫浴 水质 回路 密封 管路 物理"},
     "陆诗杰": {"role": "专科", "title": "度量圣", "keywords": "指标 评价 度量 量化 评分 权重 可视化 看板 平台 对接 算法 向量 评价体系"},
     "周全": {"role": "专科", "title": "通域圣", "keywords": "涉外 涉外专利 电学物理二部 ai专利 医疗器械专利 无效宣告 跨法域翻译 pct布局 多国权利要求 桥接"},
@@ -61,7 +61,7 @@ for n in SAGES:
 
 
 def load_rules() -> dict:
-    path = Path(__file__).resolve().parent.parent.parent / "references" / "routing_rules.json"
+    path = Path(__file__).resolve().parent.parent.parent / "references" / "scenarios" / "routing_rules.json"
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
