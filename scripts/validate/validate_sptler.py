@@ -464,6 +464,59 @@ def main():
         finally:
             shutil.rmtree(tmpd4, ignore_errors=True)
 
+    # 哲学脚本行为守卫（iter 49）：lineage/tensions/merit_weight 三脚本零行为门控=验证盲区
+    print("\n== 哲学脚本行为守卫 ==")
+    # lineage.py：传承包可跑 + 含 inherit_proposition 字段
+    lineage_p = ROOT / "scripts" / "saints" / "lineage.py"
+    if lineage_p.exists():
+        try:
+            out = subprocess.run([sys.executable, str(lineage_p), "--sage", "王升", "--inheritance", "--json"],
+                                 capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            if d.get("inherit_proposition") and d.get("initial_proposition"):
+                ok("lineage.py 传承包可跑（含 inherit_proposition）")
+            else:
+                bad("lineage.py 传承包缺 inherit_proposition 或 initial_proposition"); failed += 1
+        except Exception as e:
+            bad(f"lineage.py 行为校验失败: {e}"); failed += 1
+    # tensions.py：双人返回张力对
+    tensions_p = ROOT / "scripts" / "routing" / "tensions.py"
+    if tensions_p.exists():
+        try:
+            out = subprocess.run([sys.executable, str(tensions_p), "--roster", "王升,张鑫", "--json"],
+                                 capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            if isinstance(d, list) and len(d) >= 1 and "pair" in d[0]:
+                ok(f"tensions.py 双人返回张力对（{len(d)} 对）")
+            else:
+                bad("tensions.py 双人未返回张力对"); failed += 1
+        except Exception as e:
+            bad(f"tensions.py 行为校验失败: {e}"); failed += 1
+    # merit_weight.py：功绩权重可跑 + lite 减半逻辑
+    merit_p = ROOT / "scripts" / "routing" / "merit_weight.py"
+    if merit_p.exists():
+        try:
+            out = subprocess.run([sys.executable, str(merit_p), "--sage", "王升", "--json"],
+                                 capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            if "total" in d and "base" in d and "merit" in d:
+                ok(f"merit_weight.py 功绩权重可跑（base={d['base']} merit={d['merit']} total={d['total']}）")
+            else:
+                bad("merit_weight.py 缺 base/merit/total 字段"); failed += 1
+        except Exception as e:
+            bad(f"merit_weight.py 行为校验失败: {e}"); failed += 1
+    # compact 自动触发：record_memory 超 50 条有提示
+    rm_p = ROOT / "scripts" / "memory" / "record_memory.py"
+    if rm_p.exists():
+        try:
+            src = rm_p.read_text(encoding="utf-8")
+            if "n_exp >= 50" in src and "compact_memories" in src:
+                ok("record_memory compact 自动触发提示（≥50 条）")
+            else:
+                bad("record_memory 缺 compact 自动触发逻辑"); failed += 1
+        except Exception as e:
+            bad(f"record_memory compact 门校验失败: {e}"); failed += 1
+
     # 检查 auto_invite 能力表
     ai_path = ROOT / "scripts" / "routing" / "auto_invite.py"
     if ai_path.exists():
