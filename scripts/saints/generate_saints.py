@@ -74,7 +74,7 @@ def main():
         d = SAINTS_DIR / name
         fields = {
             "SOUL.md": f"""# {name} · {s['title']} SOUL\n\n## 核心命题\n{s['soul']}\n\n## 内在冲突\n{s.get('conflict','（暂无）')}\n\n## 说话风格\n{s['style']}\n\n## 典型句式\n""" + "\n".join(f"- {q}" for q in s.get('quotes','').split(';') if q.strip()) + f"""\n\n## 失败模式\n当其执念过度时，可能把自己的专业原则扩张到不适合的场景。\n""",
-            "IDENTITY.md": f"""# {name} · IDENTITY\n\n- 圣号：{s['title']}\n- 官职：{s['office']}\n- 角色：{s['role']}\n- 三国映射：{s['sanguo']}\n- 议会权重：{s['weight']}\n- 对应律/委员会：{s['law']}\n""",
+            "IDENTITY.md": f"""# {name} · IDENTITY\n\n- 圣号：{s['title']}\n- 官职：{s['office']}\n- 角色：{s['role']}\n- 三国映射：{s['sanguo']}\n- 议会权重：{s['weight']}\n- 对应律/委员会：{s['law']}\n- 师承：{s.get('lineage_from','（初代·无师承）')}\n- 传承给：{s.get('lineage_to','（在任·未传承）')}\n""",
             "BOUNDARY.md": f"""# {name} · BOUNDARY\n\n## 必须反对\n""" + "\n".join(f"- {x}" for x in s['must'].split(';')) + "\n\n## 必须追问\n" + "\n".join(f"- {x}" for x in s['ask'].split(';')) + "\n",
             "SUMMON.md": f"""# 何时召唤 {name}\n\n## 必须优先考虑\n""" + "\n".join(f"- {x}" for x in s['summon'].split(';')) + "\n\n## 避免召唤\n- 与其专长完全无关且已有更匹配圣人时\n- 只需要简短结论且其专业不会改变判断时\n",
             "GROWTH.md": f"""# {name} · GROWTH\n\n> 成长日志由议会记忆系统逐步沉淀。\n\n## 初始状态\n- 生成时间：{datetime.now().strftime('%Y-%m-%d')}\n- 初始核心命题：{s['soul']}\n\n## 演化记录\n- （暂无，由后续议会自动补充）\n""",
