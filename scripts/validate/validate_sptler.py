@@ -132,6 +132,33 @@ def main():
         if len(body.split()) <= 5000: ok(f"body<=5000词 ({len(body.split())})")
         else: bad(f"body过长 ({len(body.split())})"); failed += 1
 
+    # 子 skill (sptler-brief/sptler-lite) frontmatter 守卫：独立 skill 目录的 SKILL.md 也须合法，
+    # 否则 Claude Code 不识别——主 validator 只查根 SKILL.md，子 skill 坏了抓不到。
+    print("\n== 子 skill frontmatter ==")
+    for sub in ["sptler-brief", "sptler-lite"]:
+        sp = ROOT / sub / "SKILL.md"
+        if not sp.exists():
+            bad(f"{sub}/SKILL.md 缺失"); failed += 1; continue
+        st = sp.read_text(encoding="utf-8")
+        sm = re.match(r"^---\n(.*?)\n---", st, re.S)
+        if not sm:
+            bad(f"{sub} frontmatter 缺失"); failed += 1; continue
+        if yaml:
+            sfm = yaml.safe_load(sm.group(1))
+            sextra = set(sfm.keys()) - allowed
+            schecks = [
+                (not sextra, f"{sub} 无非法字段 {sextra}"),
+                (sfm.get("name") == sub, f"{sub} name={sub}"),
+                (len(sfm.get("description", "")) <= 1024, f"{sub} description<=1024"),
+                ("<" not in sfm.get("description", "") and ">" not in sfm.get("description", ""), f"{sub} description无尖括号"),
+            ]
+            for passed, label in schecks:
+                if passed: ok(label)
+                else: bad(label); failed += 1
+        sbody = st[sm.end():]
+        if len(sbody.split()) <= 5000: ok(f"{sub} body<=5000词 ({len(sbody.split())})")
+        else: bad(f"{sub} body过长"); failed += 1
+
     print("\n== 关键能力关键词 ==")
     all_text = "\n".join((ROOT / f).read_text(encoding="utf-8") for f in ["SKILL.md", "references/core/orglaw.md", "references/templates/templates.md"])
     for k in KEYWORDS:
