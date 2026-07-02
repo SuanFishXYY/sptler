@@ -40,8 +40,13 @@ def load_index(meetings_dir: Path) -> list[dict]:
         return []
 
 
+INDEX_MAX = 200  # index.json 保留最近 200 条，防长期无限增长
+
 def save_index(meetings_dir: Path, entries: list[dict]):
     meetings_dir.mkdir(parents=True, exist_ok=True)
+    # 截断：保留最近 INDEX_MAX 条（按 created_at 排序后取尾部），防 index.json 无限膨胀
+    if len(entries) > INDEX_MAX:
+        entries = entries[-INDEX_MAX:]
     index_path(meetings_dir).write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

@@ -272,6 +272,10 @@ def record_one(sage: str, exp: dict, verbose: bool = True, lite: bool = False) -
             flags.append(f"推翻{len(exp['supersedes'])}旧")
         tag = ("[" + "/".join(flags) + "]") if flags else ""
         print(f"✅ {sage}：记录第 {len(mem['experiences'])} 次经历（领域={exp['domain']}，立场={exp.get('stance','')}，价值={exp['value_score']}）{tag}")
+    # compact 自动触发提示：experiences 超 50 条时提醒 compact（防长期膨胀）
+    n_exp = len(mem.get("experiences", []))
+    if n_exp >= 50 and n_exp % 10 == 0:  # 50/60/70... 每10条提醒一次
+        print(f"💡 {sage} 已有 {n_exp} 条经历，建议运行 compact_memories.py --keep 30 压缩（防记忆膨胀）", file=sys.stderr)
     return mem
 
 
@@ -307,6 +311,9 @@ def main():
             if args.batch == "-":
                 # Windows/Git Bash 下 sys.stdin 文本解码可能使用本地编码，导致中文乱码；强制按 UTF-8 读取 bytes。
                 raw = sys.stdin.buffer.read().decode("utf-8-sig")
+                if not raw.strip():
+                    print("❌ batch stdin 为空——请提供 JSON 对象（会议经历）", file=sys.stderr)
+                    sys.exit(1)
                 data = json.loads(raw)
             else:
                 data = json.loads(Path(args.batch).read_text(encoding="utf-8"))
