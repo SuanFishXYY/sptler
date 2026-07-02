@@ -28,6 +28,7 @@ metadata:
 - **强制 fast、≤5**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --briefing`
   - `--briefing` 强制：fast 轨、规模封顶5、formal 降级 fast、返回 `briefing:true`
   - **场景不拒绝**（区别于 lite）：专利场景走**场景快评轨**（fast + 必到圣人 + 场景交付物，规模≤5），保留深度只跳 AskUser
+  - **场景命中时读专属流程**：若 route_sages 识别到场景（如 FTO/查新/OA），**必须读 `<SPTLER_DIR>/references/scenarios/scenarios.md` 中该场景的专属 Phase 流程**（如 FTO 的侵权比对+规避设计步骤），按专属流程走快评版（每步压缩到1-2句）。不读专属流程 = 场景快评漏关键步骤，等于假快评。
 - **完整灵魂 + 记忆注入**（保留魔法时刻）：`python scripts/memory/summon_sage.py --sage <名> --topic "<问题>"`（非 --lite，读 SOUL/记忆/关系）
 - **零 AskUser**：跳 Phase 0 模式选择、Phase 1 名单确认、Phase 5b 导出选项；单轮交付
 - **简洁输出**：每人 1 设想、1 组合方案、1 投票行、1 建议
