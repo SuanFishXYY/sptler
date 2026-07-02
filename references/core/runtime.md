@@ -127,3 +127,4 @@ Quick → 1 plan. Complex → 2-3 plans. No negation, only convergence.
 5e. `index_meeting.py` + `build_relations.py`.
    **lite (/sptler#) 5e**：`index_meeting.py --lite` 登记 `lite:true`（与 record_memory 的 lite=true、route_sages 的 lite 字段对齐，闭环）。续议时 `continue_meeting.py` 据此走精简续议（≤3人、不重跑四律、零 AskUser）。
 5f. 邹蕴 substantive conclusion (decision + reason + risk). File paths. Action items. `议会到此结束。` STOP.
+5g. **议会自省**（#4 哲学，强制）：收口前邹蕴用 1 句评议会本身——规模是否合适（过大/过小）/圣人是否匹配（有无缺席关键视角）/流程是否过重（verdict 级问题走了 fast 是否浪费）。写入结果 md 末尾「议会自省」栏。这是议会的元认知——防议会变机械流程，每次反思自身有效性。lite 模式也须自省（但 1 句，不展开）。
