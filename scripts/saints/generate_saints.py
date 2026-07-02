@@ -82,7 +82,16 @@ def main():
         }
         # GROWTH.md / RELATIONS.json 是运行时积累的数据（成长日志+关系网），--force 也不可覆盖，
         # 只在首次创建时生成——否则重建会擦掉圣人已积累的演化记录与共现关系。
+        # GROWTH.md/RELATIONS.json 是运行时积累的数据（成长日志+关系网），--force 也不可覆盖。
+        # SOUL.md：若已有版本节数 ≥ 模板版(5节)，说明是手写富版本，--force 不覆盖（防丢思维模式/张力节）。
+        # 只在 SOUL.md 不存在或节数 < 模板版时才生成。
         RUNTIME_PROTECTED = {"GROWTH.md", "RELATIONS.json"}
+        # SOUL.md 特殊处理：检测已有版本是否是富版本（节数 > 模板5节）
+        soul_path = d / "SOUL.md"
+        if soul_path.exists():
+            existing_sections = sum(1 for line in soul_path.read_text(encoding="utf-8").splitlines() if line.startswith("## "))
+            if existing_sections > 5:  # 富版本(思维模式/张力等), --force 不覆盖
+                fields = {k: v for k, v in fields.items() if k != "SOUL.md"}
         for fn, content in fields.items():
             allow_force = args.force and fn not in RUNTIME_PROTECTED
             if write(d / fn, content, allow_force):
