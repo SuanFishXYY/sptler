@@ -29,26 +29,33 @@ def main():
     if not d.exists():
         print(f'【{args.sage}】暂无圣人灵魂档案，请先运行 generate_saints.py'); return
     if args.lite:
-        # lite：身份(圣号/官职/角色) + 核心命题(灵魂思维内核,质量基石不该省) + 边界1条。
-        # 砍掉张力/失败模式/SUMMON——但保留命题，让圣人裁决时带专业直觉，而非空壳。
+        # lite 灵魂四件套：身份 + 核心命题(怎么想) + 边界1条(反对什么) + 失败模式1条(自警) + 必须追问1条(驱动要点)。
+        # 命题/边界/失败模式/追问 都是裁决质量基石——省 token 省张力/风格/句式，不省这四样。
         id_parts=[l.strip().lstrip('-').strip() for l in data['identity'].strip().splitlines()
                   if l.strip() and not l.startswith('#')][:3]
-        # 核心命题：SOUL.md "## 核心命题" 标题后的第一个非空非标题行
-        soul_lines = data['soul'].strip().splitlines()
-        prop = ''
-        in_prop = False
-        for l in soul_lines:
-            if l.strip().startswith('## 核心命题'):
-                in_prop = True; continue
-            if in_prop and l.strip().startswith('## '):
-                break
-            if in_prop and l.strip():
-                prop = l.strip(); break
-        bdy_first=next((l for l in data['boundary'].strip().splitlines()
-                        if l.strip() and not l.startswith('#')), '—')
-        bdy = bdy_first.strip().lstrip('-').strip()
-        prop_part = (' ｜ 命题：' + prop) if prop else ''
-        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + prop_part + ' ｜ 边界：' + bdy)
+        def first_under(text, heading):
+            """提取 '## heading' 后第一个非空非标题行（支持 `- xxx` 列表项）。"""
+            in_sec = False
+            for l in (text or '').strip().splitlines():
+                ls = l.strip()
+                if ls.startswith('## ' + heading):
+                    in_sec = True; continue
+                if in_sec and ls.startswith('## '):
+                    break
+                if in_sec and ls:
+                    # 多条用 ; 分隔时只取首条（lite 省 token，全塞违背初衷）
+                    return ls.lstrip('-').strip().split(';')[0].strip()
+            return ''
+        prop = first_under(data['soul'], '核心命题')
+        fail = first_under(data['soul'], '失败模式')
+        bdy = first_under(data['boundary'], '必须反对')
+        ask = first_under(data['boundary'], '必须追问')
+        parts = ['｜'.join(id_parts)]
+        if prop: parts.append('命题：' + prop)
+        if bdy: parts.append('边界：' + bdy)
+        if fail: parts.append('自警：' + fail)
+        if ask: parts.append('追问：' + ask)
+        print('【' + args.sage + '·lite】' + ' ｜ '.join(parts))
         return
     print(f'【{args.sage} OpenClaw灵魂注入】')
     for key,label in [('identity','身份'),('soul','灵魂'),('boundary','边界'),('summon','召唤')]:

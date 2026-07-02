@@ -216,26 +216,32 @@ def main():
     if not (ROOT/'saints'/args.sage).exists():
         print(f'【{args.sage}】暂无圣人OS档案，请先运行 generate_saints.py'); return
     if args.lite:
-        # lite 一行注入：身份 + 核心命题(灵魂思维内核) + 边界 1 条
+        # lite 灵魂四件套：身份 + 命题(怎么想) + 边界(反对什么) + 自警(失败模式) + 追问(驱动要点) + 上次lite指针
         id_parts=[l.strip().lstrip('-').strip() for l in (data.get('identity','') or '').strip().splitlines()
                   if l.strip() and not l.startswith('#')][:3]
-        # 核心命题：SOUL.md "## 核心命题" 后第一个非空非标题行
-        prop = ''
-        in_prop = False
-        for l in (data.get('soul','') or '').strip().splitlines():
-            if l.strip().startswith('## 核心命题'):
-                in_prop = True; continue
-            if in_prop and l.strip().startswith('## '):
-                break
-            if in_prop and l.strip():
-                prop = l.strip(); break
-        bdy_first=next((l for l in (data.get('boundary','') or '').strip().splitlines()
-                        if l.strip() and not l.startswith('#')), '—')
-        bdy = bdy_first.strip().lstrip('-').strip()
-        prop_part = (' ｜ 命题：' + prop) if prop else ''
+        def first_under(text, heading):
+            in_sec = False
+            for l in (text or '').strip().splitlines():
+                ls = l.strip()
+                if ls.startswith('## ' + heading):
+                    in_sec = True; continue
+                if in_sec and ls.startswith('## '):
+                    break
+                if in_sec and ls:
+                    return ls.lstrip('-').strip().split(';')[0].strip()
+            return ''
+        prop = first_under(data.get('soul',''), '核心命题')
+        fail = first_under(data.get('soul',''), '失败模式')
+        bdy = first_under(data.get('boundary',''), '必须反对')
+        ask = first_under(data.get('boundary',''), '必须追问')
+        parts = ['｜'.join(id_parts)]
+        if prop: parts.append('命题：' + prop)
+        if bdy: parts.append('边界：' + bdy)
+        if fail: parts.append('自警：' + fail)
+        if ask: parts.append('追问：' + ask)
         ptr = data.get('lite_memory_pointer') or ''
-        ptr_part = (' ｜ 上次lite：' + ptr) if ptr else ''
-        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + prop_part + ' ｜ 边界：' + bdy + ptr_part)
+        if ptr: parts.append('上次lite：' + ptr)
+        print('【' + args.sage + '·lite】' + ' ｜ '.join(parts))
         return
     print(f'【完整召唤：{args.sage}】' + (f'（议题：{args.topic}）' if args.topic else ''))
     for key,label in [('identity','身份'),('soul','灵魂'),('boundary','边界'),('summon','召唤')]:
