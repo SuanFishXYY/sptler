@@ -135,6 +135,20 @@ def turning_points(mem):
     """superseded=true 的旧立场（转折点），供提示"曾主张X后改Y"。"""
     return [e for e in (mem.get('experiences',[]) or []) if e.get('is_turning_point') and e.get('superseded')]
 
+
+def first_under(text, heading):
+    """提取 '## heading' 后第一个非空非标题行（首条，; 分隔取首）。模块级，summon/main 共用。"""
+    in_sec = False
+    for l in (text or '').strip().splitlines():
+        ls = l.strip()
+        if ls.startswith('## ' + heading):
+            in_sec = True; continue
+        if in_sec and ls.startswith('## '):
+            break
+        if in_sec and ls:
+            return ls.lstrip('-').strip().split(';')[0].strip()
+    return ''
+
 def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
     d = ROOT/'saints'/sage
     if lite:
@@ -160,6 +174,17 @@ def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
                     new_stance = e.get('recommendation', '') or e.get('reason', '') or ''
                     if new_stance:
                         prop_evo = f'命题演化→{new_stance[:40]}'
+                        # 立场漂移监督（#2 哲学）：演化命题与初始命题的关键词重叠度
+                        # 重叠低 = 漂移超阈值 → 警告"立场漂移"（命题可refine，核心不可丢）
+                        init_prop = first_under(read(d/'SOUL.md'), '核心命题')
+                        if init_prop:
+                            # 简易重叠：初始命题的二字组在新立场中命中数
+                            init_bigrams = {init_prop[i:i+2] for i in range(len(init_prop)-1) if len(init_prop[i:i+2])>=2}
+                            hits = sum(1 for bg in init_bigrams if bg in new_stance)
+                            total = len(init_bigrams) or 1
+                            overlap = hits / total
+                            if overlap < 0.15 and total >= 3:  # 重叠<15% 且初始命题够长
+                                prop_evo += ' ｜ ⚠️立场漂移:演化命题与初心重叠低,圣人可能偏离核心律'
                     break
         return {
             'sage': sage, 'topic': topic or '', 'lite': True,
@@ -229,17 +254,6 @@ def main():
         # lite 灵魂四件套：身份 + 命题(怎么想) + 边界(反对什么) + 自警(失败模式) + 追问(驱动要点) + 上次lite指针
         id_parts=[l.strip().lstrip('-').strip() for l in (data.get('identity','') or '').strip().splitlines()
                   if l.strip() and not l.startswith('#')][:3]
-        def first_under(text, heading):
-            in_sec = False
-            for l in (text or '').strip().splitlines():
-                ls = l.strip()
-                if ls.startswith('## ' + heading):
-                    in_sec = True; continue
-                if in_sec and ls.startswith('## '):
-                    break
-                if in_sec and ls:
-                    return ls.lstrip('-').strip().split(';')[0].strip()
-            return ''
         prop = first_under(data.get('soul',''), '核心命题')
         conflict = first_under(data.get('soul',''), '内在冲突')
         quote = first_under(data.get('soul',''), '典型句式')
