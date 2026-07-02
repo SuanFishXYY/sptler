@@ -284,7 +284,7 @@ def main():
             else:
                 bad(f"route_sages --lite 多域议题返回 {n} 人，超过 lite 封顶 3"); failed += 1
             # lite 薄灵魂须含核心命题(质量基石,iter33): summon --lite 输出有"命题："
-            out_sl = subprocess.run([sys.executable, str(rs_lit.parent / "memory" / "summon_sage.py"),
+            out_sl = subprocess.run([sys.executable, str(ROOT / "scripts" / "memory" / "summon_sage.py"),
                                      "--sage", "王升", "--lite"], capture_output=True, text=True, encoding="utf-8")
             if "命题：" in (out_sl.stdout or ""):
                 ok("summon --lite 含核心命题（质量基石，省 token 不省命题）")
