@@ -28,7 +28,7 @@ metadata:
 - **verdict 优先、硬上限 ≤3**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --lite`
   - `--lite` 强制：verdict优先、规模封顶3、formal降级fast、专利场景硬拒绝(`lite_rejected=true`+0人，提示用标准 /sptler)
   - `lite_quality_concern=true` → 邹蕴提示"本题formal级，lite 3人降级可能不充分，建议标准 /sptler"
-- **薄灵魂**：`python scripts/memory/summon_sage.py --sage <名> --lite`（一行：圣号/官职/角色+边界）
+- **薄灵魂**：`python scripts/memory/summon_sage.py --sage <名> --lite`（一行：圣号/官职/角色+核心命题+边界，若有lite记忆加"上次lite"指针）
 - **无记忆注入**：lite 跳记忆/关系/历史（无魔法时刻——这是 /sptler-lite 的明确代价）
 - **单轮、零 AskUser**：3 句裁决(结论/理由/风险) + 最简结果 md，然后 `议会到此结束。`
 - **轻量记忆**：`python scripts/memory/record_memory.py --batch - --lite`（标 lite=true，不翻转风险画像）

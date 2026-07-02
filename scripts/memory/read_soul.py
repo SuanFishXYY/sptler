@@ -29,14 +29,26 @@ def main():
     if not d.exists():
         print(f'【{args.sage}】暂无圣人灵魂档案，请先运行 generate_saints.py'); return
     if args.lite:
-        # lite：只够让圣人"按身份与边界说话"，砍掉灵魂命题/张力/失败模式/SUMMON。
-        # 身份取非标题行（圣号/官职/权重），边界取第 1 条「必须反对」。
+        # lite：身份(圣号/官职/角色) + 核心命题(灵魂思维内核,质量基石不该省) + 边界1条。
+        # 砍掉张力/失败模式/SUMMON——但保留命题，让圣人裁决时带专业直觉，而非空壳。
         id_parts=[l.strip().lstrip('-').strip() for l in data['identity'].strip().splitlines()
                   if l.strip() and not l.startswith('#')][:3]
+        # 核心命题：SOUL.md "## 核心命题" 标题后的第一个非空非标题行
+        soul_lines = data['soul'].strip().splitlines()
+        prop = ''
+        in_prop = False
+        for l in soul_lines:
+            if l.strip().startswith('## 核心命题'):
+                in_prop = True; continue
+            if in_prop and l.strip().startswith('## '):
+                break
+            if in_prop and l.strip():
+                prop = l.strip(); break
         bdy_first=next((l for l in data['boundary'].strip().splitlines()
                         if l.strip() and not l.startswith('#')), '—')
         bdy = bdy_first.strip().lstrip('-').strip()
-        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + ' ｜ 边界：' + bdy)
+        prop_part = (' ｜ 命题：' + prop) if prop else ''
+        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + prop_part + ' ｜ 边界：' + bdy)
         return
     print(f'【{args.sage} OpenClaw灵魂注入】')
     for key,label in [('identity','身份'),('soul','灵魂'),('boundary','边界'),('summon','召唤')]:

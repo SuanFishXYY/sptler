@@ -138,12 +138,26 @@ def turning_points(mem):
 def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
     d = ROOT/'saints'/sage
     if lite:
-        # lite：精简灵魂（身份+边界），不读记忆/关系/历史——把单圣人召唤从 ~50 词压到一行。
-        # 记忆仍可在 Phase 5b 由 record_memory 写入（默认写），只是不在入会时注入引用。
+        # lite：精简灵魂（身份+核心命题+边界）+ 轻记忆指针（最近1条lite经历，1行）。
+        # 不读记忆全文（省 token），但给1条"上次lite"指针——同类问题第二次问，圣人知道上次结论。
+        # 平衡：lite 保留极轻记忆连续性，代价仅 +1 行（远小于全文注入）。
+        lite_ptr = ''
+        mem = load_json(mem_path(sage, mem_dir))
+        if isinstance(mem, dict):
+            for e in reversed(mem.get('experiences', []) or []):
+                if isinstance(e, dict) and e.get('lite') and not e.get('superseded'):
+                    date = (e.get('recorded_at', '') or '')[:10]
+                    topic_e = e.get('topic', '') or ''
+                    rec = e.get('recommendation', '') or ''
+                    verdict = e.get('verdict', '') or ''
+                    lite_ptr = f'{date} {topic_e}({verdict})→{rec}'
+                    break
         return {
             'sage': sage, 'topic': topic or '', 'lite': True,
             'identity': read(d/'IDENTITY.md'),
+            'soul': read(d/'SOUL.md'),
             'boundary': read(d/'BOUNDARY.md'),
+            'lite_memory_pointer': lite_ptr,
             'memory': {}, 'relations': {},
         }
     msum = memory_summary(sage, mem_dir)
@@ -202,13 +216,26 @@ def main():
     if not (ROOT/'saints'/args.sage).exists():
         print(f'【{args.sage}】暂无圣人OS档案，请先运行 generate_saints.py'); return
     if args.lite:
-        # lite 一行注入：身份非标题行 + 边界 1 条
+        # lite 一行注入：身份 + 核心命题(灵魂思维内核) + 边界 1 条
         id_parts=[l.strip().lstrip('-').strip() for l in (data.get('identity','') or '').strip().splitlines()
                   if l.strip() and not l.startswith('#')][:3]
+        # 核心命题：SOUL.md "## 核心命题" 后第一个非空非标题行
+        prop = ''
+        in_prop = False
+        for l in (data.get('soul','') or '').strip().splitlines():
+            if l.strip().startswith('## 核心命题'):
+                in_prop = True; continue
+            if in_prop and l.strip().startswith('## '):
+                break
+            if in_prop and l.strip():
+                prop = l.strip(); break
         bdy_first=next((l for l in (data.get('boundary','') or '').strip().splitlines()
                         if l.strip() and not l.startswith('#')), '—')
         bdy = bdy_first.strip().lstrip('-').strip()
-        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + ' ｜ 边界：' + bdy)
+        prop_part = (' ｜ 命题：' + prop) if prop else ''
+        ptr = data.get('lite_memory_pointer') or ''
+        ptr_part = (' ｜ 上次lite：' + ptr) if ptr else ''
+        print('【' + args.sage + '·lite】' + '｜'.join(id_parts) + prop_part + ' ｜ 边界：' + bdy + ptr_part)
         return
     print(f'【完整召唤：{args.sage}】' + (f'（议题：{args.topic}）' if args.topic else ''))
     for key,label in [('identity','身份'),('soul','灵魂'),('boundary','边界'),('summon','召唤')]:
