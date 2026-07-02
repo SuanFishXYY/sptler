@@ -184,6 +184,14 @@ git clone https://github.com/SuanFishXYY/sptler.git ~/.claude/skills/sptler
 
 或先看真实案例感受效果 👉 [examples/](examples/README.md)
 
+**已安装用户更新**（保持 git clone 安装方式，一条命令升级）：
+
+```bash
+cd ~/.claude/skills/sptler && git pull
+```
+
+> ⚠️ 如果你是手动解压安装的（非 git clone），`git pull` 不可用——建议删掉旧目录重新 `git clone`，以后更新只需 `git pull`。运行时数据（`memories/*.json`、`sptler-meetings/`）已被 `.gitignore` 排除，重新 clone 不会丢你的议事记录。
+
 ## 议会结构
 
 - **议长 / 主持人（固定，权重 0 不投票）**：邹蕴（决策圣 · 郭嘉）——主持模式选择、议程、四律检查、僵局裁决、收口。
