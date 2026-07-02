@@ -27,21 +27,46 @@ def load_tensions():
         return {}
 
 
+def load_relations(sage):
+    """读某圣人的 RELATIONS.json，返回 {对方: {co_meetings, topics, last_topic}}。"""
+    p = ROOT / "saints" / sage / "RELATIONS.json"
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        rels = d.get("relations", {}) if isinstance(d, dict) else {}
+        return rels if isinstance(rels, dict) else {}
+    except Exception:
+        return {}
+
+
 def relevant_tensions(roster, tensions):
-    """返回入会名单中两两相关的张力对。"""
+    """返回入会名单中两两相关的张力对 + 共现历史演化（议会动态灵魂）。"""
     roster_set = {n.strip() for n in roster if n.strip()}
     out = []
     for key, val in tensions.items():
-        # key 形如 "王升-张鑫" 或 "邹蕴-四核心"
         parts = key.split("-")
-        if len(parts) == 2:
-            a, b = parts
-            # 四核心 是个组，若名单含任一核心且含邹蕴则命中
-            if b == "四核心":
-                if "邹蕴" in roster_set and any(c in roster_set for c in ["王升", "张鑫", "徐奕阳", "范征"]):
-                    out.append({"pair": key, **val})
-            elif a in roster_set and b in roster_set:
-                out.append({"pair": key, **val})
+        if len(parts) != 2:
+            continue
+        a, b = parts
+        matched = False
+        if b == "四核心":
+            if "邹蕴" in roster_set and any(c in roster_set for c in ["王升", "张鑫", "徐奕阳", "范征"]):
+                matched = True
+        elif a in roster_set and b in roster_set:
+            matched = True
+        if not matched:
+            continue
+        entry = {"pair": key, **val}
+        # 议会动态：查共现历史，若共议≥2 次，张力演化
+        if a != "邹蕴" and b != "四核心":
+            rels_a = load_relations(a)
+            rel = rels_a.get(b, {})
+            n = rel.get("co_meetings", 0)
+            if n >= 2:
+                topics = rel.get("topics", []) or []
+                t_str = "、".join(topics[:3]) if topics else "—"
+                # 演化方向：共议多次，张力从"碰撞"转"磨合"（预设交锋→实战收敛/深化）
+                entry["evolution"] = f"已共议{n}次（{t_str}），张力经实战磨合——交锋点从'谁先'转向'如何协同'"
+        out.append(entry)
     return out
 
 
@@ -60,7 +85,9 @@ def main():
         return
     print("[邹蕴] 入会张力（驱动辩论交锋，非各说各话）：")
     for t in rel:
-        print(f"  ⚡ {t['pair']}（{t.get('axis','')}）：{t.get('交锋点','')}")
+        evo = t.get("evolution", "")
+        evo_part = f" ｜ 🔄{evo}" if evo else ""
+        print(f"  ⚡ {t['pair']}（{t.get('axis','')}）：{t.get('交锋点','')}{evo_part}")
 
 
 if __name__ == "__main__":

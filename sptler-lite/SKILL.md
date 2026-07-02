@@ -29,7 +29,7 @@ metadata:
   - `--lite` 强制：verdict优先、规模封顶3、formal降级fast、专利场景硬拒绝(`lite_rejected=true`+0人，提示用标准 /sptler)
   - `lite_quality_concern=true` → 邹蕴提示"本题formal级，lite 3人降级可能不充分，建议标准 /sptler"
 - **薄灵魂**：`python scripts/memory/summon_sage.py --sage <名> --lite`（一行：身份+命题+冲突+边界+自警+追问+句式，若有lite记忆加"上次lite"指针）
-- **议会张力**（≤3 人时）：`python scripts/routing/tensions.py --roster <名单>` ——注入入会圣人间的预设张力对（如王升vs张鑫"结构vs控制"），驱动辩论有交锋而非各说各话。这是议会灵魂——单圣人有命题，多圣人要有碰撞。
+- **议会张力**（≤3 人时）：`python scripts/routing/tensions.py --roster <名单>` ——注入入会圣人间的预设张力对（如王升vs张鑫"结构vs控制"）；若该对有共议历史(RELATIONS.json)，张力演化(交锋从"谁先"转"如何协同")。驱动辩论有交锋，且随共议磨合。
 - **无记忆注入**：lite 跳记忆/关系/历史（无魔法时刻——这是 /sptler-lite 的明确代价）
 - **单轮、零 AskUser**：4 段裁决（见下）+ 最简结果 md，然后 `议会到此结束。`
 
