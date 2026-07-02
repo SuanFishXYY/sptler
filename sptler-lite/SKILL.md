@@ -14,7 +14,9 @@ metadata:
 
 > `/sptler-lite {问题}` = `/sptler# {问题}` 的独立入口——省 token 快车道。
 
-本 skill 是 `/sptler` 的精简变体，**复用 sptler 的 28 圣人 + 22 脚本 + references**，只换运行时行为（省 token）。所有脚本在 sptler 目录内运行（`cd ~/.claude/skills/sptler`），`--lite` flag 强制精简行为。
+本 skill 是 `/sptler` 的精简变体，**复用 sptler 的 28 圣人 + 22 脚本 + references**，只换运行时行为（省 token）。所有脚本在 sptler 目录内运行，`--lite` flag 强制精简行为。
+
+**定位 sptler 目录**（跨平台，不硬编码路径）：优先 `${CLAUDE_SKILL_DIR}/../sptler`（Claude Code 标准）；若该变量未替换或不存在，按序检查 `~/.claude/skills/sptler`、`~/.codex/skills/sptler`、`.github/skills/sptler`、`.claude/skills/sptler`，取第一个含 `scripts/` 的。下文 `<SPTLER_DIR>` 代指定位到的目录。
 
 ## 触发
 
@@ -23,7 +25,7 @@ metadata:
 ## 精简行为（强制）
 
 - **不读 references**：orglaw/philosophy/runtime/templates/memory_philosophy 都不开，下面 cheat-sheet 即内核
-- **verdict 优先、硬上限 ≤3**：`cd ~/.claude/skills/sptler && python scripts/routing/route_sages.py --topic "<问题>" --lite`
+- **verdict 优先、硬上限 ≤3**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --lite`
   - `--lite` 强制：verdict优先、规模封顶3、formal降级fast、专利场景硬拒绝(`lite_rejected=true`+0人，提示用标准 /sptler)
   - `lite_quality_concern=true` → 邹蕴提示"本题formal级，lite 3人降级可能不充分，建议标准 /sptler"
 - **薄灵魂**：`python scripts/memory/summon_sage.py --sage <名> --lite`（一行：圣号/官职/角色+边界）
@@ -67,4 +69,4 @@ metadata:
 
 ## 复用说明
 
-本 skill 不自带脚本/saints/references，全部复用 sptler 安装目录（`~/.claude/skills/sptler`）。sptler 更新（`cd ~/.claude/skills/sptler && git pull`）后，sptler-lite 自动获得最新脚本与圣人。
+本 skill 不自带脚本/saints/references，全部复用 sptler 目录（见上方"定位 sptler 目录"）。sptler 更新（`cd <SPTLER_DIR> && git pull`）后，sptler-lite 自动获得最新脚本与圣人。

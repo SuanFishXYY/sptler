@@ -14,7 +14,9 @@ metadata:
 
 > `/sptler-brief {问题}` = `/sptler! {问题}` 的词化入口——免提问的中等议题议会。
 
-本 skill 是 `/sptler` 的简报变体，**复用 sptler 的 28 圣人 + 22 脚本 + references**，只换运行时行为（跳 AskUser、强制 fast、≤5 人）。所有脚本在 sptler 目录内运行（`cd ~/.claude/skills/sptler`），`--briefing` flag 强制简报行为。
+本 skill 是 `/sptler` 的简报变体，**复用 sptler 的 28 圣人 + 22 脚本 + references**，只换运行时行为（跳 AskUser、强制 fast、≤5 人）。所有脚本在 sptler 目录内运行，`--briefing` flag 强制简报行为。
+
+**定位 sptler 目录**（跨平台，不硬编码路径）：优先 `${CLAUDE_SKILL_DIR}/../sptler`（Claude Code 标准）；若该变量未替换或不存在，按序检查 `~/.claude/skills/sptler`、`~/.codex/skills/sptler`、`.github/skills/sptler`、`.claude/skills/sptler`，取第一个含 `scripts/` 的。下文 `<SPTLER_DIR>` 代指定位到的目录。
 
 ## 触发
 
@@ -22,8 +24,8 @@ metadata:
 
 ## 简报行为（强制）
 
-- **读 references**（与 lite 不同，briefing 保留深度）：philosophy/orglaw/runtime/roster/templates 正常读，在 `~/.claude/skills/sptler/references/`
-- **强制 fast、≤5**：`cd ~/.claude/skills/sptler && python scripts/routing/route_sages.py --topic "<问题>" --briefing`
+- **读 references**（与 lite 不同，briefing 保留深度）：philosophy/orglaw/runtime/roster/templates 正常读，在 `<SPTLER_DIR>/references/`
+- **强制 fast、≤5**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --briefing`
   - `--briefing` 强制：fast 轨、规模封顶5、formal 降级 fast、返回 `briefing:true`
   - **场景不拒绝**（区别于 lite）：专利场景走**场景快评轨**（fast + 必到圣人 + 场景交付物，规模≤5），保留深度只跳 AskUser
 - **完整灵魂 + 记忆注入**（保留魔法时刻）：`python scripts/memory/summon_sage.py --sage <名> --topic "<问题>"`（非 --lite，读 SOUL/记忆/关系）
@@ -52,4 +54,4 @@ metadata:
 
 ## 复用说明
 
-本 skill 不自带脚本/saints/references，全部复用 sptler 安装目录（`~/.claude/skills/sptler`）。sptler 更新（`cd ~/.claude/skills/sptler && git pull`）后，sptler-brief 自动获得最新脚本与圣人。
+本 skill 不自带脚本/saints/references，全部复用 sptler 目录（见上方"定位 sptler 目录"）。sptler 更新（`cd <SPTLER_DIR> && git pull`）后，sptler-brief 自动获得最新脚本与圣人。
