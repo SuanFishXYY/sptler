@@ -231,14 +231,18 @@ def main():
                     return ls.lstrip('-').strip().split(';')[0].strip()
             return ''
         prop = first_under(data.get('soul',''), '核心命题')
+        conflict = first_under(data.get('soul',''), '内在冲突')
+        quote = first_under(data.get('soul',''), '典型句式')
         fail = first_under(data.get('soul',''), '失败模式')
         bdy = first_under(data.get('boundary',''), '必须反对')
         ask = first_under(data.get('boundary',''), '必须追问')
         parts = ['｜'.join(id_parts)]
         if prop: parts.append('命题：' + prop)
+        if conflict: parts.append('冲突：' + conflict)
         if bdy: parts.append('边界：' + bdy)
         if fail: parts.append('自警：' + fail)
         if ask: parts.append('追问：' + ask)
+        if quote: parts.append('句式：' + quote)
         ptr = data.get('lite_memory_pointer') or ''
         if ptr: parts.append('上次lite：' + ptr)
         print('【' + args.sage + '·lite】' + ' ｜ '.join(parts))
