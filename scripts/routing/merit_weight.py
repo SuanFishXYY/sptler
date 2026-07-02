@@ -44,8 +44,13 @@ def merit_coefficient(sage):
         return 0.0
     total = mem.get("profile", {}).get("total_meetings", 0) or 0
     # 引用数 = 所有经历的 citation_count 之和
-    cites = sum(int(e.get("citation_count", 0) or 0) for e in (mem.get("experiences", []) or []) if isinstance(e, dict))
-    return min(total * 0.02 + cites * 0.05, MERIT_CAP)
+    exps = [e for e in (mem.get("experiences", []) or []) if isinstance(e, dict)]
+    cites = sum(int(e.get("citation_count", 0) or 0) for e in exps)
+    # 功绩区分 lite vs 正式：lite 快调是"事件留痕"非"深度贡献"，功绩减半计
+    formal = sum(1 for e in exps if not e.get("lite"))
+    lite_n = sum(1 for e in exps if e.get("lite"))
+    # 正式议事 ×0.02 + lite议事 ×0.01(减半) + 被引 ×0.05
+    return min(formal * 0.02 + lite_n * 0.01 + cites * 0.05, MERIT_CAP)
 
 
 def merit_weight(sage, registry):
