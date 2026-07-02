@@ -323,6 +323,14 @@ def main():
                 ok(f"briefing 场景题截到 {n} 人 fast（≤5，非 formal 8）")
             else:
                 bad(f"briefing 未强制：attendees={n} size={sz} track={tk} briefing={d.get('briefing')}"); failed += 1
+            # briefing verdict 单域题不应膨胀成 fast 多人（按问题重量降级是核心设计）
+            out5 = subprocess.run([sys.executable, str(rs_lit), "--topic", "权利要求边界怎么收",
+                                   "--briefing", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d5 = _json.loads(out5.stdout)
+            if d5.get("track") == "verdict" and len(d5.get("attendees", [])) <= 1:
+                ok("briefing verdict 单域题不膨胀（按重量降级，1 人裁决）")
+            else:
+                bad(f"briefing 把 verdict 膨胀成 {d5.get('track')} {len(d5.get('attendees',[]))}人 — 违反按重量降级"); failed += 1
         except Exception as e:
             bad(f"route_sages --briefing 行为校验失败: {e}"); failed += 1
     # lite 记忆守卫：record_memory --lite 不得翻转圣人风险画像（事件留痕、画像不动）

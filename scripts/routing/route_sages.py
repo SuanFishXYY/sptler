@@ -199,10 +199,15 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
     # 两者同传时，lite 语义更窄(≤3)会压过 briefing(≤5)，但应告警——用户大概率误用。
     if briefing and lite:
         print("⚠️  --briefing 与 --lite 互斥（前者要深度/后者省 token），已按 lite(更窄) 执行，建议二选一。", file=sys.stderr)
-    # briefing：免提问简报——强制 fast 轨（场景走快评保留必到圣人），cap ≤5。与 lite 不同：
+    # briefing：免提问简报——场景走快评(必到圣人保留)、cap ≤5、formal 降级 fast。与 lite 不同：
     # briefing 不拒绝场景（保留场景深度，只跳 AskUser），不标 quality_concern（briefing 接受深度取舍）。
-    if briefing and track == "auto":
-        track = "fast"  # 让下方场景分支走"场景快评"（mode=fast 分支）；非场景则 mode_size 给 fast
+    # 注意：briefing 对非场景题不强制 track——verdict 级单域问题即使 briefing 也走 1 人裁决
+    # （按问题重量降级是核心设计）。只对场景走快评、对 formal(7-9全会) 降级 fast+cap5。
+    # (旧实现 `if briefing and track=="auto": track="fast"` 会把 verdict 膨胀成 4 人 fast，已修。)
+    if briefing and scenario_name and track == "auto":
+        track = "fast"  # 仅场景走快评（保留必到圣人，规模缩到 fast）；非场景让 decide_track 正常判 verdict
+        scenario_rule = {**scenario_rule, "track": "fast"}
+        scenario_track_reason = f"场景快评轨(briefing)：识别【{scenario_name}】场景，保留必到圣人但规模缩为快速"
     # lite：精简模式——verdict 优先、≤3 人硬上限。专利场景在 lite 下应被拒绝（场景需专属流程，lite 跳过）。
     lite_rejected = bool(lite and scenario_name)
     if lite_rejected:
