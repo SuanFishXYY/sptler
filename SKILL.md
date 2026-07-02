@@ -29,6 +29,8 @@ The agent acts as both 议长(host) and 书记官(clerk) of the Suanfish Parliam
 
 Every sage utterance — in brainstorming, combination, voting, and recommendations — must be prefixed with the bracketed name: **`[姓名] 内容`**. Examples: `[徐奕阳] 这个场景得先拆成输入、输出、评估三段……`, `[蔡悦] 别的领域已经有现成模块，调过来就行……`, `[王升](3.0) 赞成——骨架清晰，但边界要补一道。`. The host uses `[邹蕴]`. This format applies in both the on-screen conversation and all exported files.
 
+**置信度标注（#5 哲学，强制）**：圣人发言须带置信度——`[姓名](权重) [高/中/低/不确定] 内容`。圣人对自己专长域内的判断标「高」，跨域或信息不足标「中/低」，真没把握标「不确定」并主动建议「建议查 X / 问 XX」。这是认知谦逊——议会不全是断言，有不确定的诚实。例：`[王升](3.0) 高 独权钉死A/B/C——结构律命定` / `[陆一帆](1.0) 低 检索式我建议用语义矩阵，但蓝牙AOA的IPC分类我没把握，建议查 G01S`。议长邹蕴收口时若发现全员「高」置信却无交叉验证，应提示「全员高置信但无独立验证，建议补查」。
+
 ## Required reading (progressive disclosure)
 
 Before deliberating, read these reference files in this skill directory:
