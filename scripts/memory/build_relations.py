@@ -19,10 +19,12 @@ def main():
     ap.add_argument('--meetings-dir', default='')
     args=ap.parse_args()
     md=Path(args.meetings_dir).expanduser().resolve() if args.meetings_dir else default_meetings_dir()
-    index=load(md/'index.json') or []
+    raw=load(md/'index.json')
+    # index.json 必须是 list；只保留 dict 条目，过滤非 dict（防 e.get 崩溃，同源 bug 类）
+    index=[e for e in (raw or []) if isinstance(e, dict)] if isinstance(raw, list) else []
     rel=defaultdict(lambda: defaultdict(lambda: {'co_meetings':0,'topics':[],'last_topic':'','last_meeting_id':'','last_updated':''}))
     for e in index:
-        attendees=[a for a in (e.get('attendees') or []) if a and a!='邹蕴']
+        attendees=[a for a in (e.get('attendees') or []) if isinstance(a,str) and a and a!='邹蕴']
         for i,a in enumerate(attendees):
             for b in attendees[i+1:]:
                 for x,y in [(a,b),(b,a)]:

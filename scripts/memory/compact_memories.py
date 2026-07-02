@@ -39,12 +39,16 @@ def classify(e: dict, is_recent: bool) -> str:
         return "keep"
     if vs == 1:
         return "keep" if is_recent else "archive"
-    # vs == 0
+    # vs == 0：仅真正的单圣人裁决轨(verdict)才是可删琐事——它本就零留痕(不入记忆)，
+    # 故此分支实际极少命中。空 mode 的常规会议（如「否决」未通过决议）是反面教材，
+    # 须按哲学宪法「未通过/被否决→保留」归档而非物理删除，故 mode 不可含 ""。
+    # lite 记忆(lite=true)是事件留痕（iter 16：上次 lite 快调可回溯），不可物理删——归档为纲。
     is_trivial = (
         str(e.get("meeting_type", "regular")) == "regular"
-        and e.get("mode", "") in ("单圣人裁决", "verdict", "")
+        and e.get("mode", "") in ("单圣人裁决", "verdict")
         and int(e.get("citation_count", 0) or 0) == 0
         and not e.get("parent_meeting_id")  # 无 followup 衍生
+        and not e.get("lite")  # lite 留痕不可物理删，归档保留可回溯性
     )
     return "delete" if is_trivial else "archive"
 
@@ -55,6 +59,8 @@ def compact_file(path: Path, keep: int, dry_run: bool = False) -> tuple[bool, st
         data = json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
         return False, f"跳过损坏文件 {path.name}: {e}"
+    if not isinstance(data, dict):
+        return False, f"跳过非记忆文件 {path.name}（根结构非对象）"
     exps = data.get("experiences", []) or []
     if len(exps) <= keep:
         return True, f"{path.stem}: {len(exps)} 条，无需压缩"

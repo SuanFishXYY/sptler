@@ -57,9 +57,11 @@ def do_import(sage, text, topic, verdict, mem_dir):
     for e in exps:
         e["verdict"] = verdict
         e["mode"] = "导入"
+        e["imported"] = True  # 外部导入标记：与正式议会经历区分，不翻转风险画像
         e["meeting_id"] = "IMPORT-" + datetime.now().strftime("%Y%m%d%H%M%S")
         rm.MEM_DIR = mem_dir
-        rm.record_one(sage, e, verbose=False)
+        # 用 lite 路径记录：外部导入是"补充事件"非"立场转变"，不重算 risk_tendency/specialty
+        rm.record_one(sage, e, verbose=False, lite=True)
     print(f"✅ 导入 {len(exps)} 条经历到 {sage} 记忆")
 
 
@@ -68,11 +70,18 @@ def do_export(sage, out_path, mem_dir):
     if not p.exists():
         print(f"（{sage} 暂无记忆档案）")
         return
-    mem = json.loads(p.read_text(encoding="utf-8"))
-    prof = mem.get("profile", {})
-    prof_r = mem.get("profile_recent", {})
-    exps = mem.get("experiences", []) or []
-    arch = mem.get("archive_summary", {}) or {}
+    try:
+        mem = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        print(f"（{sage} 记忆文件损坏，无法导出）")
+        return
+    if not isinstance(mem, dict):
+        print(f"（{sage} 记忆文件根结构非对象，无法导出）")
+        return
+    prof = mem.get("profile", {}) if isinstance(mem.get("profile"), dict) else {}
+    prof_r = mem.get("profile_recent", {}) if isinstance(mem.get("profile_recent"), dict) else {}
+    exps = [e for e in (mem.get("experiences", []) or []) if isinstance(e, dict)]
+    arch = mem.get("archive_summary", {}) if isinstance(mem.get("archive_summary"), dict) else {}
     lines = [f"# {sage} · 记忆导出", "", f"> 导出时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}", "", "## 长期画像（底色）"]
     lines.append(f"- 总议事：{prof.get('total_meetings',0)}次")
     lines.append(f"- 风险偏好：{prof.get('risk_tendency','未知')}")

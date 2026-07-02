@@ -51,9 +51,14 @@ def all_memories() -> list:
     out = []
     for p in sorted(MEM_DIR.glob("*.json")):
         try:
-            out.append(json.loads(p.read_text(encoding="utf-8")))
+            data = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             print(f"⚠️  跳过损坏的记忆文件：{p.name}", file=sys.stderr)
+            continue
+        if not isinstance(data, dict):
+            print(f"⚠️  跳过非记忆文件：{p.name}（根结构非对象）", file=sys.stderr)
+            continue
+        out.append(data)
     return out
 
 

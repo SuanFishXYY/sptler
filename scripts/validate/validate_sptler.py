@@ -58,7 +58,8 @@ REQUIRED = [
 
 KEYWORDS = [
     "/sptler!",
-    "Phase 0.5",
+    "/sptler#",
+    "名单确认",
     "加权投票",
     "[姓名]",
     "record_memory",
@@ -152,6 +153,31 @@ def main():
         except Exception as e:
             bad(f"{p.name}: {e}"); failed += 1
 
+    # JSON 遍历/加载脚本必须 isinstance 守卫：杂散的非对象 JSON（合法 list、
+    # list-of-non-dict、dict-when-list-expected）曾导致 7 个脚本崩溃（同源 bug 类）。
+    # 覆盖：记忆目录遍历（compact/watch/update_growth/list_memories）+
+    #       会议索引加载（continue_meeting/index_meeting/build_relations）。
+    GLOB_GUARD = [
+        "scripts/memory/compact_memories.py",
+        "scripts/memory/watch_memory.py",
+        "scripts/memory/update_growth.py",
+        "scripts/saints/list_memories.py",
+        "scripts/output/continue_meeting.py",
+        "scripts/output/index_meeting.py",
+        "scripts/memory/build_relations.py",
+        "scripts/output/briefing.py",
+        "scripts/output/action_board.py",
+        "scripts/memory/memory_io.py",
+    ]
+    print("\n== JSON 遍历脚本守卫 ==")
+    for rel in GLOB_GUARD:
+        src = (ROOT / rel).read_text(encoding="utf-8")
+        # 精确匹配 isinstance(x, dict) 守卫（", dict)" 避开 defaultdict 等误匹配）。
+        if "isinstance(" in src and ", dict)" in src:
+            ok(f"{rel} 含 isinstance(dict) 守卫")
+        else:
+            bad(f"{rel} 缺 isinstance(dict) 守卫 — 杂散 JSON 会致崩溃"); failed += 1
+
     print("\n== 运行时自检（RULES/场景/路由）==")
     import importlib.util
     # 加载 route_sages
@@ -201,6 +227,201 @@ def main():
     else:
         bad("route_sages.py 不存在"); failed += 1
 
+    # 检查 lite 模式（/sptler#）：read_soul 与 summon_sage 必须支持 --lite，否则精简模式静默失效
+    print("\n== lite 模式守卫 ==")
+    import subprocess
+    import json as _json
+    for rel in ["scripts/memory/read_soul.py", "scripts/memory/summon_sage.py", "scripts/routing/route_sages.py", "scripts/memory/record_memory.py", "scripts/output/index_meeting.py"]:
+        p = ROOT / rel
+        if not p.exists():
+            bad(f"{rel} 不存在"); failed += 1
+            continue
+        try:
+            out = subprocess.run([sys.executable, str(p), "--help"], capture_output=True, text=True, encoding="utf-8")
+            if "--lite" in (out.stdout or ""):
+                ok(f"{rel} 支持 --lite（/sptler# 精简模式可用）")
+            else:
+                bad(f"{rel} 缺 --lite — /sptler# 会静默退化为完整模式"); failed += 1
+        except Exception as e:
+            bad(f"{rel} --help 执行失败: {e}"); failed += 1
+    # lite 行为守卫：route_sages --lite 必须把多域议题截到 ≤3 人、专利场景拒绝
+    rs_lit = ROOT / "scripts" / "routing" / "route_sages.py"
+    if rs_lit.exists():
+        try:
+            out = subprocess.run([sys.executable, str(rs_lit), "--topic", "AI检索流水线落地架构",
+                                  "--lite", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            n = len(d.get("attendees", []))
+            if n <= 3:
+                ok(f"route_sages --lite 多域议题截到 {n} 人（≤3）")
+            else:
+                bad(f"route_sages --lite 多域议题返回 {n} 人，超过 lite 封顶 3"); failed += 1
+            out2 = subprocess.run([sys.executable, str(rs_lit), "--topic", "查新检索蓝牙AOA新颖性",
+                                   "--lite", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d2 = _json.loads(out2.stdout)
+            if d2.get("lite_rejected") and len(d2.get("attendees", [])) == 0:
+                ok("route_sages --lite 拒绝专利场景（lite_rejected=true，0 人）")
+            else:
+                bad("route_sages --lite 未拒绝专利场景 — 会用精简模式跑专属流程"); failed += 1
+            out3 = subprocess.run([sys.executable, str(rs_lit), "--topic", "战略平台建设方向预算",
+                                   "--lite", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d3 = _json.loads(out3.stdout)
+            if d3.get("lite_quality_concern"):
+                ok("route_sages --lite formal 降级时标 lite_quality_concern（质量护栏）")
+            else:
+                bad("route_sages --lite 对 formal 降级未标 lite_quality_concern — 质量存疑无信号"); failed += 1
+            # lite + 多邀请：邀请不可被 cap 静默截断（Discipline #10 Honor invites）
+            out4 = subprocess.run([sys.executable, str(rs_lit), "--topic", "边界问题",
+                                   "--invites", "王升,张鑫,徐奕阳,范征", "--lite", "--json"],
+                                  capture_output=True, text=True, encoding="utf-8")
+            d4 = _json.loads(out4.stdout)
+            got = {a["name"] for a in d4.get("attendees", [])}
+            need = {"王升", "张鑫", "徐奕阳", "范征"}
+            if need.issubset(got):
+                ok("lite cap 不截断用户邀请（Honor invites，超 cap 全留+告警）")
+            else:
+                bad(f"lite cap 截断了用户邀请 {need - got} — 违反 Honor invites"); failed += 1
+        except Exception as e:
+            bad(f"route_sages --lite 行为校验失败: {e}"); failed += 1
+    # briefing 守卫：route_sages --briefing 场景题须 ≤5 且 fast（非 formal 8），briefing:true
+    if rs_lit.exists():
+        try:
+            out = subprocess.run([sys.executable, str(rs_lit), "--topic", "OA审查意见答复AI流水线怎么落地",
+                                  "--briefing", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            n = len(d.get("attendees", []))
+            sz = d.get("target_size", 0)
+            tk = d.get("track", "")
+            if d.get("briefing") and n <= 5 and sz <= 5 and tk != "formal":
+                ok(f"briefing 场景题截到 {n} 人 fast（≤5，非 formal 8）")
+            else:
+                bad(f"briefing 未强制：attendees={n} size={sz} track={tk} briefing={d.get('briefing')}"); failed += 1
+        except Exception as e:
+            bad(f"route_sages --briefing 行为校验失败: {e}"); failed += 1
+    # lite 记忆守卫：record_memory --lite 不得翻转圣人风险画像（事件留痕、画像不动）
+    import tempfile, shutil
+    rm_lit = ROOT / "scripts" / "memory" / "record_memory.py"
+    if rm_lit.exists():
+        tmpd = Path(tempfile.mkdtemp())
+        try:
+            base = {"topic":"T","meeting_id":"S0","mode":"快速","verdict":"通过","meeting_type":"regular",
+                    "attendees":[{"sage":"王升","stance":"赞成","reason":"r","ideas":"i","recommendation":"rec"}]}
+            opp = {"topic":"T","meeting_id":"L0","mode":"快速","verdict":"否决","meeting_type":"regular",
+                   "attendees":[{"sage":"王升","stance":"反对","reason":"r","ideas":"i","recommendation":"rec"}]}
+            for b, lite in [(base, False), (opp, True)]:
+                bp = tmpd / "b.json"; bp.write_text(_json.dumps(b, ensure_ascii=False), encoding="utf-8")
+                subprocess.run([sys.executable, str(rm_lit), "--batch", str(bp), "--mem-dir", str(tmpd)]
+                               + (["--lite"] if lite else []), capture_output=True)
+            mf = [f for f in tmpd.iterdir() if f.suffix == ".json" and f.name != "b.json"][0]
+            m = _json.loads(mf.read_text(encoding="utf-8"))
+            risk = m["profile"].get("risk_tendency", "")
+            has_lite_tag = any(e.get("lite") for e in m["experiences"])
+            # 1赞1反对(50% oppose) 标准→审慎保守；lite 不应重算→应停在 平衡中立(来自首条标准记录)
+            if has_lite_tag and risk == "平衡中立":
+                ok("record_memory --lite 不翻转风险画像（lite=true 标记 + risk 未重算）")
+            else:
+                bad(f"record_memory --lite 翻转了画像或未标 lite（risk={risk}, lite_tag={has_lite_tag}）"); failed += 1
+        except Exception as e:
+            bad(f"record_memory --lite 行为校验失败: {e}"); failed += 1
+        finally:
+            shutil.rmtree(tmpd, ignore_errors=True)
+    # lite 记忆降权守卫：构造 lite 记忆原始分更高(更新)但正式记忆应排前的场景。
+    # 正式记忆 2年前(decay 0.15) vs lite 记忆今天(decay 1.0)：无降权时 lite 赢(0.15<1.0)；
+    # 有降权时 lite×0.5，若原始分相近则正式可反超——这里用同原始分让 lite 0.5×仍可能输。
+    # 更严格：让 lite 原始分 = 正式×2，降权后 lite = 正式，平分时稳定排序正式先(插入序)。
+    try:
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("_ss", str(ROOT / "scripts" / "memory" / "summon_sage.py"))
+        _ss = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ss)
+        # 正式：今天、value_score=2 → final = s*1.0*2 = 2s
+        # lite：今天、value_score=3 → 无降权=3s (lite赢)；降权=3s*0.5=1.5s < 2s (正式赢)
+        # 这是唯一能区分降权是否生效的分值组合：lite 原始分更高，降权后才输给正式。
+        _mem = {"experiences": [
+            {"topic":"权利要求边界","domain":"边界/权利要求","stance":"赞成","verdict":"通过","value_score":2,"recorded_at":"2026-07-01 00:00"},
+            {"topic":"权利要求边界","domain":"边界/权利要求","stance":"赞成","verdict":"通过","value_score":3,"recorded_at":"2026-07-01 00:00","lite":True,"citation_count":2},
+        ]}
+        _hits = _ss.relevant_experiences(_mem, "权利要求边界")
+        if _hits and not _hits[0][0].get("lite"):
+            ok("lite 记忆降权：正式记忆排前，lite 不污染引用")
+        else:
+            bad("lite 记忆未降权 — lite 快调可能平权污染正式引用"); failed += 1
+    except Exception as e:
+        bad(f"lite 记忆降权校验失败: {e}"); failed += 1
+    # lite 留痕守卫：compact 不得物理删除 lite:true 记忆（lite 是事件留痕，可回溯）
+    try:
+        _cspec = _ilu.spec_from_file_location("_cc", str(ROOT / "scripts" / "memory" / "compact_memories.py"))
+        _cc = _ilu.module_from_spec(_cspec); _cspec.loader.exec_module(_cc)
+        _lite_trivial = _cc.classify(
+            {'is_turning_point': False, 'value_score': 0, 'meeting_type': 'regular',
+             'mode': 'verdict', 'citation_count': 0, 'parent_meeting_id': '', 'lite': True}, False)
+        if _lite_trivial != "delete":
+            ok(f"compact 不物理删 lite 记忆（判 {_lite_trivial}，留痕可回溯）")
+        else:
+            bad("compact 物理删 lite 记忆 — 破坏 lite 事件留痕可回溯性"); failed += 1
+    except Exception as e:
+        bad(f"compact lite 留痕校验失败: {e}"); failed += 1
+    # lite 索引闭环守卫：index_meeting --lite 写 lite:true，continue_meeting 读回 lite:true
+    im_lit = ROOT / "scripts" / "output" / "index_meeting.py"
+    cm_lit = ROOT / "scripts" / "output" / "continue_meeting.py"
+    if im_lit.exists() and cm_lit.exists():
+        tmpd2 = Path(tempfile.mkdtemp())
+        try:
+            subprocess.run([sys.executable, str(im_lit), "--meeting-id", "LGATE", "--topic", "T",
+                            "--mode", "lite·裁决", "--attendees", "王升", "--lite", "--meetings-dir", str(tmpd2)],
+                           capture_output=True)
+            out = subprocess.run([sys.executable, str(cm_lit), "--last", "--json", "--meetings-dir", str(tmpd2)],
+                                 capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            if d.get("lite") is True:
+                ok("lite 索引闭环：index_meeting --lite 写入 → continue_meeting 读回 lite:true")
+            else:
+                bad(f"lite 索引闭环断裂（continue_meeting 读到 lite={d.get('lite')}）"); failed += 1
+        except Exception as e:
+            bad(f"lite 索引闭环校验失败: {e}"); failed += 1
+        finally:
+            shutil.rmtree(tmpd2, ignore_errors=True)
+    # lite 回顾守卫：briefing.py 读到 lite 会议须标"lite快调"（防 lite 快调在回顾里与正式议会平权呈现）
+    bf_lit = ROOT / "scripts" / "output" / "briefing.py"
+    if bf_lit.exists() and im_lit.exists():
+        tmpd3 = Path(tempfile.mkdtemp())
+        try:
+            subprocess.run([sys.executable, str(im_lit), "--meeting-id", "BGATE", "--topic", "T",
+                            "--mode", "lite·裁决", "--attendees", "王升", "--lite", "--meetings-dir", str(tmpd3)],
+                           capture_output=True)
+            out = subprocess.run([sys.executable, str(bf_lit), "--meetings-dir", str(tmpd3)],
+                                 capture_output=True, text=True, encoding="utf-8")
+            if "⚡lite快调" in (out.stdout or "") and "BGATE" in (out.stdout or ""):
+                ok("briefing.py 区分 lite 会议（回顾标 lite 标记）")
+            else:
+                bad("briefing.py 未区分 lite 会议 — lite 快调在回顾里与正式平权"); failed += 1
+        except Exception as e:
+            bad(f"briefing lite 校验失败: {e}"); failed += 1
+        finally:
+            shutil.rmtree(tmpd3, ignore_errors=True)
+    # memory_io 导入守卫：import 须标 imported=true + 走 lite 路径不翻转画像
+    mio = ROOT / "scripts" / "memory" / "memory_io.py"
+    if mio.exists():
+        tmpd4 = Path(tempfile.mkdtemp())
+        try:
+            imp = tmpd4 / "imp.txt"
+            imp.write_text("议题:外部会议 | 立场:反对 | 建议:驳回", encoding="utf-8")
+            subprocess.run([sys.executable, str(mio), "import", "--sage", "王升",
+                            "--file", str(imp), "--topic", "外部", "--verdict", "否决",
+                            "--mem-dir", str(tmpd4)], capture_output=True)
+            mf = [f for f in tmpd4.iterdir() if f.suffix == ".json" and f.name != "imp.txt"][0]
+            m = _json.loads(mf.read_text(encoding="utf-8"))
+            tagged = any(e.get("imported") for e in m.get("experiences", []))
+            risk = m["profile"].get("risk_tendency", "")
+            # 1反对否决：标准→审慎保守；lite 路径→应停在 平衡中立 或 未知（不翻转）
+            if tagged and risk != "审慎保守":
+                ok("memory_io import 标 imported + 不翻转风险画像（lite 路径）")
+            else:
+                bad(f"memory_io import 未标 imported 或翻转了画像（tagged={tagged}, risk={risk}）"); failed += 1
+        except Exception as e:
+            bad(f"memory_io import 校验失败: {e}"); failed += 1
+        finally:
+            shutil.rmtree(tmpd4, ignore_errors=True)
+
     # 检查 auto_invite 能力表
     ai_path = ROOT / "scripts" / "routing" / "auto_invite.py"
     if ai_path.exists():
@@ -210,12 +431,14 @@ def main():
             ok(f"auto_invite 能力表完整 ({cap_count} 项能力)")
         else:
             bad(f"auto_invite 能力表不足 ({cap_count} 项, 预期≥12)"); failed += 1
-        # 检查6新圣人是否在能力表里
-        for sage in ["周全", "吴畏", "钱孟清", "叶诚", "须一平", "朱立鸣"]:
-            if sage in ai_text:
-                ok(f"auto_invite 含 {sage}")
-            else:
-                bad(f"auto_invite 缺 {sage}"); failed += 1
+        # 检查每位可路由圣人至少归属一个能力类别（智能补人无盲区）
+        # 邹蕴是固定议长，不入 route_sages.SAGES、不被「邀请」，故用 rs.SAGES 而非全注册表。
+        routeable = set(rs.SAGES.keys())
+        missing_cap = sorted(n for n in routeable if n not in ai_text)
+        if not missing_cap:
+            ok(f"auto_invite 能力表覆盖全部可路由圣人 ({len(routeable)} 位无盲区)")
+        else:
+            bad(f"auto_invite 缺能力覆盖的圣人: {missing_cap}（智能补人无法建议他们）"); failed += 1
     else:
         bad("auto_invite.py 不存在"); failed += 1
 

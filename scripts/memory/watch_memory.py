@@ -72,6 +72,8 @@ def watch(topic, roster, mem_dir):
         mem = load(p)
         if not mem:
             continue
+        if not isinstance(mem, dict):
+            continue  # 非记忆文件（如杂散 list json）跳过，避免 .get 崩溃
         best = None
         for e in (mem.get("experiences", []) or []):
             sc, hits = relevance(e, topic)

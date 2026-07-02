@@ -45,6 +45,17 @@ def save_index(meetings_dir: Path, entries: list[dict]):
     index_path(meetings_dir).write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _as_list(val) -> list:
+    """把 attendees/action_items 等字段规范化为 list[str]。
+    兼容三种来源：CLI 逗号串、batch 里的 list、batch 里误传的逗号串。
+    否则 build_relations 会 `for a in str` 逐字符迭代，污染关系网。"""
+    if isinstance(val, list):
+        return [str(x).strip() for x in val if str(x).strip()]
+    if isinstance(val, str) and val:
+        return [x.strip() for x in val.split(",") if x.strip()]
+    return []
+
+
 def normalize_entry(data: dict) -> dict:
     mid = data.get("meeting_id") or "SPTLER-" + datetime.now().strftime("%Y%m%d%H%M%S")
     return {
@@ -61,8 +72,9 @@ def normalize_entry(data: dict) -> dict:
         "deliver_dir": data.get("deliver_dir") or "",
         "summary_file": data.get("summary_file") or "",
         "transcript_file": data.get("transcript_file") or "",
-        "attendees": data.get("attendees") or [],
-        "action_items": data.get("action_items") or [],
+        "attendees": _as_list(data.get("attendees")),
+        "action_items": _as_list(data.get("action_items")),
+        "lite": bool(data.get("lite")),  # /sptler# 精简模式标记（与 record_memory 的 lite=true、route_sages 的 lite 字段对齐）
         "created_at": data.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
 
@@ -88,6 +100,7 @@ def main():
     ap.add_argument("--summary-file", default="", help="纪要md路径")
     ap.add_argument("--transcript-file", default="", help="过程md路径")
     ap.add_argument("--attendees", default="", help="与会者，逗号分隔")
+    ap.add_argument("--lite", action="store_true", help="标记为 /sptler# 精简模式会议（写入 lite:true）")
     args = ap.parse_args()
 
     meetings_dir = Path(args.meetings_dir).expanduser().resolve() if args.meetings_dir else default_meetings_dir()
@@ -108,6 +121,9 @@ def main():
     if args.batch:
         raw = sys.stdin.buffer.read().decode("utf-8-sig") if args.batch == "-" else Path(args.batch).read_text(encoding="utf-8")
         data = json.loads(raw)
+        if not isinstance(data, dict):
+            print(f"❌ batch 根结构必须是 JSON 对象（会议 entry），实际是 {type(data).__name__}", file=sys.stderr)
+            sys.exit(1)
     else:
         data = {
             "meeting_id": args.meeting_id,
@@ -118,6 +134,7 @@ def main():
             "summary_file": args.summary_file,
             "transcript_file": args.transcript_file,
             "attendees": [x.strip() for x in args.attendees.split(",") if x.strip()],
+            "lite": args.lite,
         }
 
     entry = normalize_entry(data)

@@ -125,7 +125,7 @@ def infer_domain(topic: str) -> str:
         return "其他"
     rules = [
         ("结构/专利", ["结构", "权利要求", "专利", "骨架", "边界"]),
-        ("控制/流程", ["控制", "流程", "安全", "兜底", "监控", "审计"]),
+        ("控制/流程", ["控制", "流程", "安全", "兜底", "监控", "审计", "风险"]),
         ("AI/铸模", ["ai", "prompt", "铸模", "模型", "工作流", "agent", "智能体"]),
         ("数据/检索", ["数据", "检索", "语义", "向量", "schema"]),
         ("价值/战略", ["价值", "客户", "战略", "roi", "资产", "市场"]),
@@ -144,8 +144,8 @@ def infer_domain(topic: str) -> str:
     return "其他"
 
 
-def update_profile(profile: dict, exp: dict):
-    """根据本次经历增量更新画像。"""
+def update_profile(profile: dict, exp: dict, lite: bool = False):
+    """根据本次经历增量更新画像。lite=True 时只计次数/立场，不重算风险画像。"""
     profile["total_meetings"] = profile.get("total_meetings", 0) + 1
 
     domain = exp.get("domain") or "其他"
@@ -188,6 +188,10 @@ def update_profile(profile: dict, exp: dict):
     profile["frequent_views"] = freq[:12]
 
     # 风险偏好：反对率越高越偏保守/审慎
+    # lite 会议是"快判断"而非"立场转变"——计入次数/立场计数，但不重算风险画像，
+    # 防止一次 lite 快调翻转圣人长期底色（如 3 次 lite 反对就把审慎底色染成保守）。
+    if lite:
+        return
     total = sum(profile["stances"].values()) or 1
     oppose_rate = profile["stances"]["反对"] / total
     if oppose_rate >= 0.4:
@@ -238,11 +242,13 @@ def _compute_profile_recent(mem: dict, window: int = 30) -> dict:
     return prof
 
 
-def record_one(sage: str, exp: dict, verbose: bool = True) -> dict:
+def record_one(sage: str, exp: dict, verbose: bool = True, lite: bool = False) -> dict:
     mem = load_memory(sage)
     if "domain" not in exp or not exp["domain"]:
         exp["domain"] = infer_domain(exp.get("topic", ""))
     exp["recorded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+    if lite:
+        exp["lite"] = True  # 标记：lite 快调，供 summon/read_memory 区分（不污染正式画像底色）
     # 哲学宪法：先处理 supersedes（标记旧记忆为转折点），再初始化新经历价值字段
     supersedes = exp.get("supersedes") or []
     if supersedes:
@@ -250,9 +256,11 @@ def record_one(sage: str, exp: dict, verbose: bool = True) -> dict:
         exp["is_turning_point"] = True  # 推翻者也标记为转折点
     _init_value_fields(exp)
     mem["experiences"].append(exp)
-    update_profile(mem["profile"], exp)
-    # 双画像：profile_recent 仅基于最近30次
-    mem["profile_recent"] = _compute_profile_recent(mem, window=30)
+    update_profile(mem["profile"], exp, lite=lite)
+    # 双画像：profile_recent 仅基于最近30次。lite 跳过该重算（O(全量经历)，省 token/IO），
+    # 保留上次 profile_recent——一次 lite 快调不值得重算近况画像。
+    if not lite:
+        mem["profile_recent"] = _compute_profile_recent(mem, window=30)
     memory_path(sage).write_text(
         json.dumps(mem, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -285,6 +293,7 @@ def main():
     ap.add_argument("--followup-target", default="", help="续议对象：行动项/圣人/风险点/方案/投票")
     ap.add_argument("--batch", help="批量 JSON 文件路径（覆盖单条参数）；传 - 表示从 stdin 读取")
     ap.add_argument("--mem-dir", help="覆盖记忆目录（默认：技能目录/memories）")
+    ap.add_argument("--lite", action="store_true", help="精简模式记录：标 lite=true、不重算 profile_recent/风险画像（/sptler# 用）")
     args = ap.parse_args()
 
     global MEM_DIR
@@ -346,7 +355,7 @@ def main():
                 "recommendation": att.get("recommendation") or "",
                 "supersedes": base_supersedes,
             }
-            record_one(sage, exp)
+            record_one(sage, exp, lite=args.lite)
             recorded += 1
         print(f"\n共记录 {recorded} 位圣人。")
         return

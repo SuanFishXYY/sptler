@@ -31,9 +31,13 @@ def load_index(meetings_dir: Path) -> list[dict]:
         return []
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
     except Exception:
         return []
+    if not isinstance(data, list):
+        return []
+    # 只保留 dict 条目：index.json 是用户可编辑文件，可能混入非 dict 元素，
+    # 直接 .get 会致 AttributeError 崩溃（与记忆目录遍历脚本同源 bug 类）。
+    return [e for e in data if isinstance(e, dict)]
 
 
 def choose_entry(entries: list[dict], meeting_id: str = "", last: bool = False) -> dict:
@@ -75,6 +79,7 @@ def main():
         "target": args.target or (f"行动项{args.item}" if args.item else (args.sage or "")),
         "target_sage": args.sage,
         "action_item": action,
+        "lite": bool(entry.get("lite")),  # 原会议是否 lite——续议据此走精简（≤3人，不重跑四律）
     }
 
     if args.json:
@@ -82,6 +87,8 @@ def main():
         return
 
     print(f"【续议上下文】原会议：{ctx['parent_meeting_id']}")
+    if ctx["lite"]:
+        print("· ⚡ 原会议为 lite 模式——续议走精简（≤3人，不重跑四律，零 AskUser）")
     print(f"· 原议题：{ctx['parent_topic']}")
     print(f"· 原结论：{ctx['parent_verdict']}")
     print(f"· 结果文件：{ctx['parent_result_file'] or '（未登记）'}")

@@ -56,6 +56,7 @@ def main():
     for p in paths:
         mem=load(p)
         if not mem: continue
+        if not isinstance(mem, dict): continue  # 非记忆文件（杂散 list json）跳过，避免 .get 崩溃
         sage=mem.get('sage') or p.stem
         d=ROOT/'saints'/sage
         if not d.exists(): continue

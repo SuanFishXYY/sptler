@@ -28,13 +28,17 @@ def load_index(meetings_dir):
         return []
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
-        return d if isinstance(d, list) else []
     except Exception:
         return []
+    if not isinstance(d, list):
+        return []
+    # 只保留 dict 条目：index.json 用户可编辑，可能混入非 dict（防 e.get 崩溃，同源 bug 类）
+    return [e for e in d if isinstance(e, dict)]
 
 
 def fmt_briefing(e: dict) -> str:
-    lines = [f"═══ {e.get('meeting_id','')} · {e.get('topic','')} ═══"]
+    lite_tag = " ｜ ⚡lite快调·可信度打折" if e.get("lite") else ""
+    lines = [f"═══ {e.get('meeting_id','')} · {e.get('topic','')} ═══{lite_tag}"]
     lines.append(f"类型：{e.get('meeting_type','regular')}｜模式：{e.get('mode','')}｜结论：{e.get('verdict','')}")
     lines.append(f"日期：{e.get('created_at','')}")
     if e.get("result_file"):

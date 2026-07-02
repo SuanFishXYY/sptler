@@ -162,8 +162,20 @@ def normalize_invites(invites: str) -> list[str]:
     raw = re.split(r"[,，、\s]+", invites.strip())
     out = []
     for x in raw:
-        if x in SAGES and x not in out:
-            out.append(x)
+        if not x:
+            continue
+        if x == HOST:
+            # 邹蕴是固定议长（权重0、不投票），每场必到、无需「邀请」。点名她属于误操作——
+            # 不能静默吞掉（用户以为邀请成功），应明确提示，但不计入 invited 名单。
+            print(f"⚠️  {HOST} 为固定议长，每场必到、无需指定邀请（已忽略该项）。", file=sys.stderr)
+            continue
+        if x in SAGES:
+            if x not in out:
+                out.append(x)
+        else:
+            # 未知圣人名（拼写错误/不在名册）。绝不可静默丢弃——用户以为某人必到，
+            # 实则被吞，会导致议会缺人。明确告警。
+            print(f"⚠️  未知名册中的圣人「{x}」，已忽略（请核对姓名，参考 roster.md 28 位圣人）。", file=sys.stderr)
     return out
 
 
@@ -181,16 +193,63 @@ def detect_scenario(topic: str) -> tuple[str, dict]:
     return "", {}
 
 
-def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto") -> dict:
+def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto", lite: bool = False, briefing: bool = False) -> dict:
     scenario_name, scenario_rule = detect_scenario(topic)
+    # briefing 与 lite 互斥：briefing=中等议题议会(要深度,读refs,记忆注入)，lite=省token快判断(不读refs)。
+    # 两者同传时，lite 语义更窄(≤3)会压过 briefing(≤5)，但应告警——用户大概率误用。
+    if briefing and lite:
+        print("⚠️  --briefing 与 --lite 互斥（前者要深度/后者省 token），已按 lite(更窄) 执行，建议二选一。", file=sys.stderr)
+    # briefing：免提问简报——强制 fast 轨（场景走快评保留必到圣人），cap ≤5。与 lite 不同：
+    # briefing 不拒绝场景（保留场景深度，只跳 AskUser），不标 quality_concern（briefing 接受深度取舍）。
+    if briefing and track == "auto":
+        track = "fast"  # 让下方场景分支走"场景快评"（mode=fast 分支）；非场景则 mode_size 给 fast
+    # lite：精简模式——verdict 优先、≤3 人硬上限。专利场景在 lite 下应被拒绝（场景需专属流程，lite 跳过）。
+    lite_rejected = bool(lite and scenario_name)
+    if lite_rejected:
+        print(f"⚠️  /sptler# 精简模式不处理专利场景【{scenario_name}】（需专属流程+feature_analysis，lite 跳过），请用标准 /sptler。", file=sys.stderr)
     # 专利专属场景：用户未显式指定 track 时默认 formal；但用户选"快速会议"则尊重用户，走场景快评轨(必到圣人保留,规模缩到fast)
+    scenario_track_reason = None  # 场景自动选轨时的真实理由（避免被 decide_track 误报为「用户指定」）
     if scenario_name and track == "auto":
         if mode in ("fast", "quick", "快速", "快速会议"):
             track = "fast"  # 场景快评：必到圣人在,但不升8人全会
             scenario_rule = {**scenario_rule, "track": "fast"}
+            scenario_track_reason = f"场景快评轨：识别【{scenario_name}】场景且用户选快速会议，保留必到圣人但规模缩为快速"
         else:
             track = scenario_rule.get("track", "formal")
+            scenario_track_reason = f"场景识别→{('正式轨' if track=='formal' else track)}：议题命中【{scenario_name}】场景，按场景规则选轨"
     target_size, resolved_mode, resolved_track, track_reason = mode_size(mode, topic, track)
+    # briefing 硬约束：规模封顶 5 人（文档声称 3-5）；formal 轨降级为 fast（briefing 不开 7-9 人全会）
+    if briefing:
+        if target_size > 5:
+            orig_mode = resolved_mode
+            target_size = 5
+            if resolved_track == "formal":
+                resolved_track = "fast"
+                resolved_mode = "briefing·快速轨(降级自正式)"
+                track_reason = "briefing 模式：规模封顶 5 人，formal 降级为 fast（不开全会）"
+            else:
+                resolved_mode = f"briefing·{orig_mode}"
+                track_reason = f"briefing 模式：规模封顶 5 人（原 {orig_mode}）"
+        elif not resolved_mode.startswith("briefing"):
+            resolved_mode = f"briefing·{resolved_mode}"
+    # lite 硬约束：规模封顶 3 人；formal 轨降级为 fast（lite 不开 7-9 人全会）
+    lite_quality_concern = False  # lite 质量护栏：formal 级议题被塞进 3 人 lite，答案可能不充分
+    if lite:
+        if target_size > 3:
+            orig_mode = resolved_mode  # 先存原值，供 reason 引用，避免双重 lite· 前缀
+            target_size = 3
+            if resolved_track == "formal":
+                resolved_track = "fast"
+                resolved_mode = "lite·快速轨(降级自正式)"
+                track_reason = "lite 模式：规模封顶 3 人，formal 降级为 fast（不开全会）"
+                # formal 级议题（战略/预算/不可逆/跨多委员会）本该开 7-9 人全会充分收敛，
+                # lite 强行 3 人处理是妥协——标记质量存疑，提示用户升档标准 /sptler。
+                lite_quality_concern = True
+            else:
+                resolved_mode = f"lite·{orig_mode}"
+                track_reason = f"lite 模式：规模封顶 3 人（原 {orig_mode}）"
+    if scenario_track_reason:
+        track_reason = scenario_track_reason  # 用场景真实理由覆盖 decide_track 的「用户指定」误报
     invited = normalize_invites(invites)
     roster = []
     reasons = {}
@@ -269,7 +328,22 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         add(n, "兜底补位", 0, [])
 
     attendees = []
-    for n in roster:
+    # lite 拒绝专利场景时不召集任何人——caller 据 lite_rejected=true 提示用户改用 /sptler。
+    if lite_rejected:
+        effective_roster = []
+    elif lite:
+        # lite 硬截断：must_attend/领域必到可能把 roster 撑过 target_size（它们在 cap 检查前无条件加入）。
+        # 按 roster 顺序（invited→场景必到→领域必到→评分→兜底，即优先级）截到 target_size——
+        # 但 invited 圣人不可截断（Discipline #10 Honor invites），即使超 cap 也全留并告警。
+        invited_in_roster = [n for n in roster if n in invited]
+        non_invited = [n for n in roster if n not in invited]
+        effective_roster = invited_in_roster + non_invited[:max(0, target_size - len(invited_in_roster))]
+        if len(invited_in_roster) > target_size:
+            print(f"⚠️  lite 封顶 {target_size} 人，但用户点名邀请 {len(invited_in_roster)} 人——邀请不可截断（Discipline #10），"
+                  f"全部保留但已超 cap，建议用标准 /sptler。", file=sys.stderr)
+    else:
+        effective_roster = roster
+    for n in effective_roster:
         base = WEIGHTS[n]
         boost = 0.0
         # 动态加成：分数最高的非邀请前两位 +0.5
@@ -297,6 +371,10 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         "track": resolved_track,
         "track_reason": track_reason,
         "target_size": target_size,
+        "lite": lite,
+        "lite_rejected": lite_rejected,
+        "lite_quality_concern": lite_quality_concern,
+        "briefing": briefing,
         "host": HOST,
         "scenario": scenario_name,
         "scenario_deliverable": scenario_rule.get("deliverable", "") if scenario_name else "",
@@ -311,9 +389,11 @@ def main():
     ap.add_argument("--mode", default="dynamic", help="fast/complex/dynamic 或 中文模式")
     ap.add_argument("--track", default="auto", help="fast/formal/followup/auto 或 中文轨道")
     ap.add_argument("--invites", default="", help="用户指定邀请名单，逗号分隔")
+    ap.add_argument("--lite", action="store_true", help="精简模式：verdict 优先、规模封顶 3 人、formal 降级 fast（/sptler# 用）")
+    ap.add_argument("--briefing", action="store_true", help="简报模式：强制 fast 轨、规模封顶 5 人、场景走快评不拒绝（/sptler! 用）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args()
-    result = route(args.topic, args.mode, args.invites, args.track)
+    result = route(args.topic, args.mode, args.invites, args.track, lite=args.lite, briefing=args.briefing)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return

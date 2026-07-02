@@ -29,6 +29,26 @@ def main():
             print(f'❌ {name}: RELATIONS sage字段不一致'); failed+=1
     if failed:
         print(f'❌ {failed} 项失败'); sys.exit(1)
+    # 三源一致性：generate_saints 内置 SAINTS 字典 == registry == saints/ 目录
+    # 防止扩展圣人只加了目录/registry 却漏改 generate_saints（--force 重建会丢人）
+    import importlib.util, os
+    gs_path = ROOT / 'scripts' / 'saints' / 'generate_saints.py'
+    if gs_path.exists():
+        try:
+            spec = importlib.util.spec_from_file_location('_gs', str(gs_path))
+            gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
+            gen = set(gs.SAINTS.keys())
+            regi = set(reg.keys())
+            dirs = {d for d in os.listdir(ROOT / 'saints') if (ROOT / 'saints' / d).is_dir()}
+            if gen == regi == dirs:
+                print(f'✅ 三源一致：generate_saints({len(gen)}) = registry({len(regi)}) = 目录({len(dirs)})')
+            else:
+                print(f'❌ 三源不一致: gen缺{sorted(dirs-gen)} reg缺{sorted(dirs-regi)}')
+                failed += 1
+        except Exception as e:
+            print(f'⚠️  generate_saints 一致性校验跳过: {e}')
+    if failed:
+        print(f'❌ {failed} 项失败'); sys.exit(1)
     print('✅ 全部圣人OS文件通过')
 
 if __name__=='__main__': main()
