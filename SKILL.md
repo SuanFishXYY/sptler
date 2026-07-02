@@ -83,52 +83,11 @@ Use `route_sages.py --topic "<topic>" --track auto` to make the track decision d
 
 ## Lite mode (精简省 token · `/sptler#`)
 
-`/sptler#` is a token-economy runtime for when ceremony tax isn't worth it. It trades depth for cost: **do NOT read any `references/` files** — the cheat-sheet below IS the kernel. Everything else (soul/memory/vote) is thinned or skipped.
+`/sptler#` is a token-economy runtime — **do NOT read any `references/` files**; the inline cheat-sheet in `sptler-lite/SKILL.md` IS the kernel. Core behavior: no ref reads, verdict-first (≤3, `route_sages.py --lite` enforces cap + formal downgrade + scenario rejection), thin soul (`summon_sage.py --lite`), no memory injection, single-turn zero-AskUser, 4-part verdict (命题推理结论/可执行要点/风险/收口), quality self-check (命题用上/要点可执行/风险落实), lightweight memory write (`record_memory.py --lite`, lite=true, no portrait shift, downweighted×0.5 in standard recall).
 
-**Lite behavior (mandatory):**
-- **No reference reads** — orglaw/philosophy/runtime/templates/memory_philosophy are NOT opened; the cheat-sheet below replaces them.
-- **Verdict-first, hard-capped ≤3** — run `route_sages.py --topic "<q>" --lite` (the `--lite` flag enforces: verdict-first, target_size capped to 3, formal downgraded to fast, patent scenarios **rejected** with `lite_rejected=true` + 0 attendees — if rejected, 邹蕴 tells the user to use standard `/sptler` and stops). Never formal/7-9 in lite. The cap is script-enforced, not a soft prompt instruction.
-- **Quality guardrail** — if `route_sages --lite` returns `lite_quality_concern=true` (a formal-grade question was forced into 3-person lite), 邹蕴 must tell the user: "本题为 formal 级复杂度，lite 3 人降级处理可能不充分，建议用标准 /sptler 开全会" — then either proceed-lite-with-caveat or stop per user's call. This is the mechanism-enforced "lite may be the wrong tool" signal, not left to agent judgement.
-- **Thin soul** — `summon_sage.py --sage <name> --lite` (one line: 圣号/官职/角色 + 边界). No full SOUL/SUMMON.
-- **No memory injection** — lite skips memory/relations/history at entry. `--lite` implies `--dry-run`-style zero-injection.
-- **Lightweight memory write (Phase 5b)** — `record_memory.py --batch - --lite`: writes the experience tagged `lite=true` (event preserved — "last lite call" is recallable) but **skips profile_recent recompute + risk-tendency/specialty recalc**, so one lite call never flips a sage's long-term portrait (a fast call is an event, not a stance shift). Also skip `commit_citations.py` + `update_growth.py` in lite. (Standard verdict-track is fully zero-trace; lite ≤3-sage keeps a light trace.)
-- **Lite memory is subordinate** — a `lite:true` experience is a quick call (possibly insufficient, esp. on `lite_quality_concern`), NOT a peer conclusion. Standard `summon_sage` (non-lite) **downweights** lite memories (×0.5) so they rank below formal memories — only cited when no formal match, and flagged `⚠️ lite快调·可能不充分`. This prevents a lite quick-call from being cited as a settled conclusion in later formal decisions. Lite writes memory but `summon --lite` never reads it (token saving) — so lite mode itself has no memory-magic-moment; that's the explicit cost of `/sptler#`.
-- **Single-turn, zero AskUser** — lite delivers 4-part verdict (结论[用核心命题推理]/可执行要点2-3条/风险/收口) + minimal result md in one response, then `议会到此结束。` See sptler-lite SKILL §lite 裁决 4 段结构. **Quality self-check mandatory** (邹蕴 checks 命题用上/要点可执行/风险落实 before收口 — lite skips四律+投票, this is its quality gate). See sptler-lite SKILL §lite 裁决后质量自检.
-- **Minimal result md** — 4 sections only (议题/裁决[含1-sage建议]/交付物指针/收口), ≤15 lines; skip voting detail, four-law table, transcript. Self-contained — the cheat-sheet tells you the structure; templates.md §模板九 is the reference if needed but lite does NOT open it by default.
+**Full lite contract** (cheat-sheet, 4-part verdict structure, quality self-check, template九, lite-vs-briefing matrix) is in `sptler-lite/SKILL.md` — read it when executing `/sptler#`. Do NOT duplicate here.
 
-**Lite cheat-sheet (the whole kernel — read THIS, not the references):**
-```
-四律否决闸（投票前置；触发否决信号→对应核心必反）：
-  结构律·王升(3.0)：先骨架后血肉；否决「先做起来边做边想/单指标独断/缺中间层硬接」
-  控制律·张鑫(3.0)：流动有界、自动化有兜底；否决「全交AI无人管/无监控回退/权限全开」
-  铸模律·徐奕阳(3.0)：经验铸成可复用模板；否决「只能靠经验没法模板/通用模型直套/输出无理由」
-  价值律·范征(3.0)：价值落点在哪；否决「价值后看/凑数量/酷但不知给谁用」
-权重：核心3.0 / 首席2.0(孙高德·蔡悦·黄嵩泉) / 专科1.0 / 议长邹蕴0不投票 / +0.5动态加成(至多2人)
-计票：赞成权重和 vs 反对权重和(弃权不计)；通过=赞成>反对；差距≤1.0或平票→邹蕴裁决；重大事项≥60%且无核心反对
-格式：所有发言 [姓名] 内容；建议 [姓名] 建议：xxx；收口 邹蕴；终止语 议会到此结束。
-轨道：verdict(1人3句,零留痕) > fast(3-5人) > formal(7-9人) > followup；lite 默认 verdict，最多3人
-交付物：议会是手段、交付物是目的(专利→权要骨架/架构→ADR/流程→SOP)；结果md强制写 sptler-meetings/
-```
-
-**When NOT to use lite**: irreversible/strategic decisions, patent scenarios (查新/FTO/OA/布局/无效 — these need feature_analysis.md + scenario专属流程, which lite skips), anything needing memory continuity. Lite is for fast daily calls where a single sage's judgment suffices.
-
-### `/sptler!` (briefing) vs `/sptler#` (lite) — 怎么选
-
-两者都是轻量、单轮、零/一 AskUser，但**目的不同**——别凭感觉选：
-
-| 维度 | `/sptler!` briefing | `/sptler#` lite |
-|---|---|---|
-| 目的 | 免提问的中等议题议会（要深度，只是不想被 AskUser 打断） | 省 token 的快判断（要快、要便宜） |
-| references 读取 | ✅ 读（philosophy/orglaw/runtime/roster/templates） | ❌ 不读（内联 cheat-sheet） |
-| 灵魂注入 | ✅ 完整 SOUL/IDENTITY/BOUNDARY/SUMMON | ❌ 薄灵魂一行 |
-| 记忆注入 | ✅ 读相关记忆+引用回写（**保留魔法时刻**） | ❌ 不读（**无魔法时刻**——lite 的明确代价） |
-| 规模 | 3–5 人（fast 轨） | ≤3 人（verdict 优先，硬上限） |
-| 记忆写入 | 全量（画像随会议演化） | 轻量（lite=true，画像不翻转，且被降权引用） |
-| 质量护栏 | 无（fast 本就匹配中等议题） | 有（formal 降级→`lite_quality_concern`） |
-| 场景处理 | ✅ 走场景专属流程 | ❌ 硬拒绝（`lite_rejected`） |
-| 适合 | 中等多域、要专家深度、要记忆积累、可付 token | 单域快判断、token 敏感、可接受无积累 |
-
-**一句话决策**：要"专家深议但不打断"用 `!`；要"快、省、单判断"用 `#`。记忆连续性是分水岭——第二次问想引用上次 → 必须标准或 `!`，`#` 不读记忆。
+**When NOT to use lite**: irreversible/strategic, patent scenarios (lite rejects), need memory continuity (lite has no magic moment).
 
 ## The deliberation phases
 
