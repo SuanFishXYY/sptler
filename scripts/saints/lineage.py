@@ -75,6 +75,7 @@ def inheritance_pack(sage):
     ask = first_under(bdy, "必须追问")
     # 查记忆的命题演化
     evo = ""
+    drift = ""  # 漂移检查（#2×#1 组合）：漂移命题不该传接班人
     mem_p = ROOT / "memories" / f"{sage}.json"
     if mem_p.exists():
         try:
@@ -82,13 +83,24 @@ def inheritance_pack(sage):
             for e in reversed(mem.get("experiences", []) or []):
                 if isinstance(e, dict) and e.get("is_turning_point") and not e.get("superseded"):
                     evo = (e.get("recommendation", "") or e.get("reason", ""))[:60]
+                    # 漂移检查：演化命题与初始命题重叠低 → 标漂移，传初始命题而非漂移的
+                    if evo and prop:
+                        init_bigrams = {prop[i:i+2] for i in range(len(prop)-1) if len(prop[i:i+2])>=2}
+                        hits = sum(1 for bg in init_bigrams if bg in evo)
+                        overlap = hits / (len(init_bigrams) or 1)
+                        if overlap < 0.15 and len(init_bigrams) >= 3:
+                            drift = f"⚠️ 演化命题与初心重叠低（立场漂移），传承包传初始命题而非漂移态"
                     break
         except Exception:
             pass
+    # 传承命题：漂移则传初始（守恒），未漂移则传演化态
+    inherit_prop = prop if drift else (evo or prop)
     return {
         "sage": sage,
         "initial_proposition": prop,
         "evolved_proposition": evo or "（无转折，命题未演化）",
+        "inherit_proposition": inherit_prop,  # 接班人实际继承的命题（漂移时回退初始）
+        "drift_warning": drift,
         "failure_mode": fail,
         "must_oppose": oppose,
         "must_ask": ask,
@@ -110,6 +122,9 @@ def main():
         print(f"【{args.sage} 传承包】（接班人继承的精华）")
         print(f"· 初始命题：{pack.get('initial_proposition','—')}")
         print(f"· 演化命题：{pack.get('evolved_proposition','—')}")
+        print(f"· 传承命题（接班人继承）：{pack.get('inherit_proposition','—')}")
+        if pack.get("drift_warning"):
+            print(f"· {pack['drift_warning']}")
         print(f"· 失败模式（自警）：{pack.get('failure_mode','—')}")
         print(f"· 必须反对（边界）：{pack.get('must_oppose','—')}")
         print(f"· 必须追问：{pack.get('must_ask','—')}")
