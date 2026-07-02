@@ -142,6 +142,7 @@ def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
         # 不读记忆全文（省 token），但给1条"上次lite"指针——同类问题第二次问，圣人知道上次结论。
         # 平衡：lite 保留极轻记忆连续性，代价仅 +1 行（远小于全文注入）。
         lite_ptr = ''
+        prop_evo = ''  # 命题演化：若有转折点，注入"初始命题→最近新立场"
         mem = load_json(mem_path(sage, mem_dir))
         if isinstance(mem, dict):
             for e in reversed(mem.get('experiences', []) or []):
@@ -152,12 +153,21 @@ def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
                     verdict = e.get('verdict', '') or ''
                     lite_ptr = f'{date} {topic_e}({verdict})→{rec}'
                     break
+            # 动态灵魂：找最近的转折点（推翻旧立场的新立场），提炼命题演化
+            # 新立场 = is_turning_point 且 not superseded（推翻者）；旧立场 = superseded
+            for e in reversed(mem.get('experiences', []) or []):
+                if isinstance(e, dict) and e.get('is_turning_point') and not e.get('superseded'):
+                    new_stance = e.get('recommendation', '') or e.get('reason', '') or ''
+                    if new_stance:
+                        prop_evo = f'命题演化→{new_stance[:40]}'
+                    break
         return {
             'sage': sage, 'topic': topic or '', 'lite': True,
             'identity': read(d/'IDENTITY.md'),
             'soul': read(d/'SOUL.md'),
             'boundary': read(d/'BOUNDARY.md'),
             'lite_memory_pointer': lite_ptr,
+            'prop_evolution': prop_evo,
             'memory': {}, 'relations': {},
         }
     msum = memory_summary(sage, mem_dir)
@@ -245,6 +255,8 @@ def main():
         if quote: parts.append('句式：' + quote)
         ptr = data.get('lite_memory_pointer') or ''
         if ptr: parts.append('上次lite：' + ptr)
+        evo = data.get('prop_evolution') or ''
+        if evo: parts.append(evo)
         print('【' + args.sage + '·lite】' + ' ｜ '.join(parts))
         return
     print(f'【完整召唤：{args.sage}】' + (f'（议题：{args.topic}）' if args.topic else ''))
