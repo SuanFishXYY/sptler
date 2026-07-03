@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-算鱼议会 · 功绩权重 (merit_weight.py)
+算鱼议会 · 功绩权重 (merit_weight.py) [实验性·需记忆积累才触发]
 
 功绩哲学：权重随贡献演化，非世袭固定。
 weight = base + min(功绩系数, 上限1.0)
