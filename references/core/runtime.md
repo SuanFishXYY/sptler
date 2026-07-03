@@ -66,9 +66,11 @@
 - 会议纪要/过程（可选）：`sptler-{summary|transcript}-{slug}-{ts}.md`
 - 续议：`sptler-{followup|amendment|revote}-{slug}-{ts}.md`
 - 记忆 batch json：`sptler-memory-{slug}-{ts}.json`
-- 会议索引：`index.json`（累计）
+- 会议索引：`index.json`（累计，自动截断保留最近 200 条）
 
 主题 slug：议题前8汉字或关键英文词，去标点。UTF-8 编码。写盘后告知用户绝对路径。
+
+> **文件清理**：`index.json` 自动截 200 条，但 `sptler-meetings/*.md` 文件会持续累积。长期使用后建议定期清理旧文件（保留最近 N 次的 result/deliverable md，删旧的 summary/transcript）。清理脚本暂未提供，用户自行管理。
 
 ## Phase 详细步骤（从 SKILL.md 沉降）
 
