@@ -3,7 +3,7 @@ name: sptler-brief
 description: 算鱼议会·简报模式（免提问中等议题议会）。中等多域议题、要专家深度但不想被AskUser打断时用——读references、完整灵魂+记忆注入(保留魔法时刻)、强制fast轨、规模≤5、场景走快评不拒绝、零AskUser单轮收口。是 /sptler 的简报变体，复用其28圣人+脚本。触发：/sptler-brief、/sptler!、/议会!。不适合：不可逆战略决策(formal级)、单域快判断(用/sptler-lite)、需正式投票审计。
 license: MIT
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   author: 算鱼工作室
   language: zh-CN
   variant_of: sptler

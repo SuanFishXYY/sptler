@@ -3,7 +3,7 @@ name: sptler-lite
 description: 算鱼议会·精简模式（省token快车道）。单域快判断、token敏感时用——不读references、薄灵魂、无记忆注入、verdict优先(1圣人,≤3人)、零AskUser单轮收口、最简结果md。是 /sptler 的省token变体，复用其28圣人+脚本。触发：/sptler-lite、/sptler#、/议会#、/议一议#。不适合：不可逆战略决策、专利场景(查新/FTO/OA/布局/无效需专属流程，lite硬拒绝)、需记忆连续性。
 license: MIT
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   author: 算鱼工作室
   language: zh-CN
   variant_of: sptler
