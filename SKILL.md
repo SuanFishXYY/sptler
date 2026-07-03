@@ -40,7 +40,7 @@ Before deliberating, read these reference files in this skill directory:
 - `saints/<姓名>/SOUL.md`, `IDENTITY.md`, `BOUNDARY.md`, `SUMMON.md` — each sage's human-readable soul, identity, boundary, and summon rules.
 - `references/core/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/core/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
-- `references/templates/templates.md` — the templates (result / summary / transcript / memory batch / patent scenario deliverables), `[姓名]` format, and file naming rules.
+- `references/templates/templates.md` — **do NOT read all 9 templates at once**. Read only the template(s) needed for the current track: verdict/fast → 模板一(result md) + 模板四(memory batch) + 模板五(index); formal → + 模板七(deliverable); scenario → + 模板八(scenario deliverable); followup → 模板六; lite → 模板九. 模板二/三(summary/transcript) only if user asks. `[姓名]` format and file naming rules are at the top of the file.
 - `references/scenarios/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): **each has its own Phase flow** (not the unified six phases). When a scenario is identified, read the scenario's专属Phase流程 from this file instead of the generic Phase 0-5.
 - `references/scenarios/feature_analysis.md` — professional feature decomposition (问题-方案-效果三要素拆解 + 语义扩展 + 检索式构建). Used by 查新/FTO/无效 scenes.
 
