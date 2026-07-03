@@ -35,8 +35,8 @@ Every sage utterance — in brainstorming, combination, voting, and recommendati
 
 Before deliberating, read these reference files in this skill directory:
 
-- `references/saints/roster.md` — 28 sages, weights, routing keywords, domain→sage routing table.
-- `references/saints/saints.registry.json` — machine-readable OpenClaw Saint OS registry.
+- `references/saints/roster.md` — 28 sages' routing keywords + domain→sage routing table. **Read the routing table at the bottom (§路由速查) for quick matching; read individual sage entries only when they are selected for the meeting.** Full roster scan is unnecessary — `route_sages.py` does the matching.
+- `references/saints/saints.registry.json` — machine-readable registry (used internally by `route_sages.py`; **agent does NOT need to read this file directly** — the script handles it).
 - `saints/<姓名>/SOUL.md`, `IDENTITY.md`, `BOUNDARY.md`, `SUMMON.md` — each sage's human-readable soul, identity, boundary, and summon rules.
 - `references/core/philosophy.md` — the four laws (结构/控制/铸模/价值) and their veto signals.
 - `references/core/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
