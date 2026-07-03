@@ -40,7 +40,7 @@ sptler 采用**四轨制**（按问题重量自动降级，最轻优先）：
 
 轨道由 `route_sages.py --track auto` 自动判定（见 `references/scenarios/routing_rules.json`）。用户也可显式 `--track verdict|fast|formal|followup`。
 
-用户发送需求后、路由入会前，议长邹蕴用 AskUser 询问会议模式。若用户使用 `/sptler!` 或 `/议会!` 触发，则进入**简报快线**：跳过模式选择、名单确认（含邀请）、导出选项，自动动态路由 3–5 人，单轮给出结论并强制导出结果 md。
+用户发送需求后、路由入会前，议长邹蕴用 AskUser 询问会议模式。若用户使用 `/sptler!` 或 `/议会!` 触发，则进入**简报快线**：跳过模式选择、名单确认（含邀请）、导出选项，自动动态路由（`--briefing` 强制 fast、cap ≤5、verdict 级问题仍走 1 人裁决、场景走快评不拒绝），单轮给出结论并强制导出结果 md。
 
 标准触发时的三种会议模式（在 fast/formal 轨道内进一步选定规模）：
 
