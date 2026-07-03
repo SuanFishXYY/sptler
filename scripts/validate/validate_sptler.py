@@ -389,17 +389,22 @@ def main():
             bad("lite 记忆未降权 — lite 快调可能平权污染正式引用"); failed += 1
     except Exception as e:
         bad(f"lite 记忆降权校验失败: {e}"); failed += 1
-    # lite 留痕守卫：compact 不得物理删除 lite:true 记忆（lite 是事件留痕，可回溯）
+    # lite 留痕守卫：compact 对 lite:value>=1 不删（留痕有回溯价值）；lite:value0+verdict+琐碎 该删（防膨胀）
     try:
         _cspec = _ilu.spec_from_file_location("_cc", str(ROOT / "scripts" / "memory" / "compact_memories.py"))
         _cc = _ilu.module_from_spec(_cspec); _cspec.loader.exec_module(_cc)
+        # lite value1(通过) → archive（留痕不删）
+        _lite_pass = _cc.classify(
+            {'is_turning_point': False, 'value_score': 1, 'meeting_type': 'regular',
+             'mode': '快速', 'citation_count': 0, 'parent_meeting_id': '', 'lite': True}, False)
+        # lite value0+verdict+琐碎 → delete（防膨胀）
         _lite_trivial = _cc.classify(
             {'is_turning_point': False, 'value_score': 0, 'meeting_type': 'regular',
              'mode': 'verdict', 'citation_count': 0, 'parent_meeting_id': '', 'lite': True}, False)
-        if _lite_trivial != "delete":
-            ok(f"compact 不物理删 lite 记忆（判 {_lite_trivial}，留痕可回溯）")
+        if _lite_pass != "delete" and _lite_trivial == "delete":
+            ok(f"compact lite 留痕区分：value1→{_lite_pass}(留痕), value0琐碎→{_lite_trivial}(防膨胀)")
         else:
-            bad("compact 物理删 lite 记忆 — 破坏 lite 事件留痕可回溯性"); failed += 1
+            bad(f"compact lite 留痕逻辑错：value1→{_lite_pass}, value0→{_lite_trivial}"); failed += 1
     except Exception as e:
         bad(f"compact lite 留痕校验失败: {e}"); failed += 1
     # lite 索引闭环守卫：index_meeting --lite 写 lite:true，continue_meeting 读回 lite:true
