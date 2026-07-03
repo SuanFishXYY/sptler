@@ -42,14 +42,17 @@ def classify(e: dict, is_recent: bool) -> str:
     # vs == 0：仅真正的单圣人裁决轨(verdict)才是可删琐事——它本就零留痕(不入记忆)，
     # 故此分支实际极少命中。空 mode 的常规会议（如「否决」未通过决议）是反面教材，
     # 须按哲学宪法「未通过/被否决→保留」归档而非物理删除，故 mode 不可含 ""。
-    # lite 记忆(lite=true)是事件留痕（iter 16：上次 lite 快调可回溯），不可物理删——归档为纲。
+    # lite 记忆(lite=true)：value_score>=1 的留痕不删（归档保可回溯）；
+    # 但 value_score==0(否决/未通过) + 零引用 + 无followup = 纯琐事 lite 快调，该删（防膨胀）。
     is_trivial = (
         str(e.get("meeting_type", "regular")) == "regular"
         and e.get("mode", "") in ("单圣人裁决", "verdict")
         and int(e.get("citation_count", 0) or 0) == 0
         and not e.get("parent_meeting_id")  # 无 followup 衍生
-        and not e.get("lite")  # lite 留痕不可物理删，归档保留可回溯性
     )
+    # lite value_score>=1 不删（留痕有回溯价值）；lite value_score==0 且琐碎 → 删（防膨胀）
+    if e.get("lite") and int(e.get("value_score", 0) or 0) >= 1:
+        return "archive"  # lite 留痕(通过过的)归档不删
     return "delete" if is_trivial else "archive"
 
 
