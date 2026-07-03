@@ -42,7 +42,7 @@ Before deliberating, read these reference files in this skill directory:
 - `references/core/orglaw.md` — the three meeting modes, procedure, weighted voting rules, deadlock handling, committees.
 - `references/templates/templates.md` — **do NOT read all 9 templates at once**. Read only the template(s) needed for the current track: verdict/fast → 模板一(result md) + 模板四(memory batch) + 模板五(index); formal → + 模板七(deliverable); scenario → + 模板八(scenario deliverable); followup → 模板六; lite → 模板九. 模板二/三(summary/transcript) only if user asks. `[姓名]` format and file naming rules are at the top of the file.
 - `references/scenarios/scenarios.md` — six patent-specific scenarios (查新检索 / FTO / 价值评估 / OA答复 / 布局选型 / 无效攻防): **each has its own Phase flow** (not the unified six phases). When a scenario is identified, read the scenario's专属Phase流程 from this file instead of the generic Phase 0-5.
-- `references/scenarios/feature_analysis.md` — **三层交叉拆解（权要×子特征×技术维度）+ 等同特征簇 + 双路语义扩展（关键词11维+语义4维）+ 场景化检索策略 + 结构化Markdown产出**. Used by 查新/FTO/无效 scenes. Read this when executing any patent scenario — it defines the analysis depth that makes sptler deeper than naked Claude.
+- `references/scenarios/feature_analysis.md` — **三层交叉拆解 + 等同特征簇双路 + 11维关键词 + 语义路5准度优化(多粒度/锚定/组合/风格匹配/负面示例) + 组合新颖性 + 字段映射 + 去重策略 + 技术领域自适应 + 下游反馈闭环**. Used by 查新/FTO/无效 scenes. Read this when executing any patent scenario — it defines the analysis depth that makes sptler deeper than naked Claude.
 
 ## Sage memory system
 
