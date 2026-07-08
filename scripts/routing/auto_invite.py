@@ -120,7 +120,7 @@ def check_capabilities(topic: str, roster: list) -> list:
     for cap, rule in CAPABILITIES.items():
         triggers = rule["triggers"]
         # 议题命中该能力的触发词
-        if not any(tr in t for tr in triggers):
+        if not any(r.kw_match(tr, t) for tr in triggers):
             continue
         # 检查当前名单是否已有具备该能力的圣人
         has_cap = any(s in roster_set for s in rule["sages"])
@@ -134,7 +134,7 @@ def check_capabilities(topic: str, roster: list) -> list:
                     "suggested_sage": sage,
                     "title": r.SAGES[sage]["title"],
                     "reason": f"议题涉及「{cap}」，当前名单缺少该能力",
-                    "triggered_by": [tr for tr in triggers if tr in t][:3],
+                    "triggered_by": [tr for tr in triggers if r.kw_match(tr, t)][:3],
                 })
                 break
     return suggestions

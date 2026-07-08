@@ -74,7 +74,7 @@ Brevity caps (enforced everywhere): one idea = one sentence; voting reason = one
 
 sptler auto-sizes the deliberation to the question. Four tracks, lightest first:
 
-- **Verdict track (单圣人裁决)** — for single, clear, single-domain questions ("这个权利要求边界怎么收"). 1 sage + 邹蕴. The sage gives a 3-sentence judgment (call / why / risk). No brainstorm, no vote, no four-law gate. **Zero-trace**: summon with `--dry-run` (mandatory) — verdict does NOT write memory/citation/growth; only the deliverable + minimal result md + index are produced. This is the daily-productivity mode — most questions land here. Auto-triggered by `route_sages.py --track auto` when no formal signal, ≤1 committee domain, no medium markers.
+- **Verdict track (单圣人裁决)** — for single, clear, single-domain questions ("这个权利要求边界怎么收"). 1 sage + 邹蕴. The sage gives a 4-sentence judgment (结论 / 理由[引命题推导] / 风险[本议题具体] / 可执行要点[1-2条写/查/改]) + 邹蕴质量自检(专长域/风险具体/要点可执行, 不达标补写). No brainstorm, no vote, no four-law gate - but verdict skips the process gate, so this output self-check backs it up (same principle as lite verdict). **Zero-trace**: summon with `--dry-run` (mandatory) — verdict does NOT write memory/citation/growth; only the deliverable + minimal result md + index are produced. This is the daily-productivity mode — most questions land here. Auto-triggered by `route_sages.py --track auto` when no formal signal, ≤1 committee domain, no medium markers.
 - **Fast track (快速轨)** — for medium multi-domain questions. 3–5 sages, one combined plan, short weighted vote, mandatory result md. `/sptler!` forces fast-track briefing.
 - **Formal track (正式轨)** — for strategic/cross-domain/irreversible decisions. 7–9 sages, full six-stage deliberation, complete four-law check, formal resolution, meeting index, memories.
 - **Follow-up track (续议轨)** — after a meeting closes. Minimal召集, ≤8 bullets, uses `continue_meeting.py`, exports followup/amendment/revote only when needed.
@@ -135,7 +135,7 @@ Quick → 1 plan. Complex → 2-3. No negation. Detail: runtime.md §Phase 3.
 11. **Anti-drag** — max 2 AskUser; Phase 2→5a one turn; 1 idea = 1 sentence; `议会到此结束。` then stop.
 12. **Close with paths not questions** — only file paths + `议会到此结束。`; no "还有什么需要帮助".
 13. **Cite memory (no hallucination)** — every attendee summoned via `--dry-run`; cite real dates only; no-match sages speak naturally.
-14. **邹蕴 must conclude** — substantive conclusion (decision + reason + risk); if user can't tell what was decided, parliament failed. (Verdict track exempt — the sage's 3-sentence judgment IS the conclusion; see runtime.md §Verdict.)
+14. **邹蕴 must conclude** — substantive conclusion (decision + reason + risk); if user can't tell what was decided, parliament failed. (Verdict track exempt — the sage's 4-sentence judgment IS the conclusion; see runtime.md §Verdict.)
 15. **Honest scope refusal** — beyond deliverable templates (filing-ready final/litigation documents/financial models) → 邹蕴 says "超出能力" before Phase 0; never hard-stuff templates. **草稿 OK / 终稿 NO (D9 全局)**: sptler 可产出草稿级文件(权利要求骨架/说明书草稿/答复策略等,含 ⚠️草稿标记 + 补全 checklist),但不产出可提交终稿——草稿结构性缺失(无附图/实验数据/正式编号/正式摘要),代理师须复核完善。专利挖掘场景(D5)出完整草稿属此规则允许范围。
 
 ## Host behavior (邹蕴)

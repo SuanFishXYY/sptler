@@ -42,7 +42,7 @@ SAGES = {
     "钱文宇": {"role": "专科", "title": "生命工艺圣", "keywords": "生物 生命 医药 制药 工艺 生物工艺 基因 酶 发酵 稳定性 医疗"},
     "陈哲锋": {"role": "专科", "title": "材料工艺圣", "keywords": "材料 化工 锂电 高分子 参数 配方 放大 工艺 反应 组分 复合"},
     "陆一帆": {"role": "专科", "title": "数据炼金圣", "keywords": "数据 飞轮 检索 语义 向量 schema 可观测 指标 清洗 聚合 数据治理 召回"},
-    "金辰宇": {"role": "专科", "title": "接口圣", "keywords": "接口 协议 契约 前端 网页 事件流 api 对接 交互 入口 端"},
+    "金辰宇": {"role": "专科", "title": "接口圣", "keywords": "接口 协议 契约 前端 网页 事件流 api 对接 交互 入口"},
     "徐骋": {"role": "专科", "title": "流式圣", "keywords": "流水线 长链路 状态图 节点 事件 流式 审查意见 翻译 质量闭环 编排 异步"},
     "陈方移": {"role": "专科", "title": "基座圣", "keywords": "基座 安全 合规 访问控制 审计 留痕 变更 审批 运维 部署 回退 it 底座"},
     "陈彤": {"role": "专科", "title": "流程圣", "keywords": "流程 审查意见 节点 字段 标准化 可追溯 官文 答复 流程图 规则"},
@@ -88,13 +88,21 @@ def tokens(text: str) -> set[str]:
     return parts
 
 
+def kw_match(kw: str, text: str) -> bool:
+    """关键词匹配：英文用词界(\\b)，中文用子串。避免 ai∈available / it∈with / oa∈aoa 类误匹配（C2 根因）。"""
+    klow = kw.lower()
+    if re.fullmatch(r"[a-z0-9_]+", klow):
+        return re.search(r"\b" + re.escape(klow) + r"\b", text) is not None
+    return klow in text
+
+
 def score_sage(topic: str, sage: str, ignore_core_bias: bool = False) -> tuple[float, list[str]]:
     info = SAGES[sage]
     t = topic.lower()
     score = 0.0
     hits = []
     for kw in info["keywords"].split():
-        if kw.lower() in t:
+        if kw_match(kw, t):
             score += 3 if len(kw) >= 2 else 1
             hits.append(kw)
     # 四核心/首席由 min_core 和委员会必到规则保障；这里只给轻微基础分，避免无关核心压过命中关键词的专科。
@@ -105,6 +113,21 @@ def score_sage(topic: str, sage: str, ignore_core_bias: bool = False) -> tuple[f
         if sage in CHIEFS:
             score += 0.5
     return score, hits[:5]
+
+
+# ②精度：快速判断信号--是非题/how-to 短问。命中则：场景题降级场景快评(fast,必到圣人保留,≤5)、
+# 非场景题降级 verdict(1人快速裁决)。避免"能不能申请专利""OA怎么答复""这个方案行不行"这类
+# 快速判断需求被开成全会（代理师反馈"该轻太重"）。注意：靠意图信号而非纯长度，避免误降正式场景题。
+QUICK_SIGNALS = [
+    "行不行", "可不可以", "好不好", "值不值", "该不该", "能不能", "是不是", "对不对", "行吗", "成吗",
+    "怎么答复", "怎么处理", "怎么看", "怎么写", "怎么做", "怎么收", "如何答复", "如何处理",
+]
+
+
+def is_quick_question(topic: str) -> bool:
+    """是否为快速判断型问题（是非/how-to 短问）。靠意图信号，非纯长度。"""
+    t = (topic or "").lower()
+    return any(s in t for s in QUICK_SIGNALS)
 
 
 def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
@@ -126,6 +149,9 @@ def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
         return "formal", f"命中正式轨信号：{'、'.join(formal_hits[:3])}"
     if chief_domains >= 2:
         return "formal", "跨多个委员会领域，进入正式轨"
+    # ②精度：快速判断型问题(是非/how-to)且非跨多委员会、无战略信号 -> 单圣人裁决(快速判断不开议会)
+    if is_quick_question(topic) and chief_domains <= 1:
+        return "verdict", "快速判断型问题(是非/how-to)，单圣人裁决"
     medium_markers = sum(k in t for k in MEDIUM_MARKERS)
     if medium_markers >= 2:
         return "fast", "中等复杂但未触发正式轨，先走快速轨"
@@ -239,6 +265,10 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
             track = "fast"  # 场景快评：必到圣人在,但不升8人全会
             scenario_rule = {**scenario_rule, "track": "fast"}
             scenario_track_reason = f"场景快评轨：识别【{scenario_name}】场景且用户选快速会议，保留必到圣人但规模缩为快速"
+        elif is_quick_question(topic):
+            track = "fast"  # ②精度：快速判断型场景题(是非/how-to)降级快评,保留必到圣人但不开8人全会
+            scenario_rule = {**scenario_rule, "track": "fast"}
+            scenario_track_reason = f"场景快评轨(快速判断)：识别【{scenario_name}】场景且为是非/how-to 短问，保留必到圣人但规模缩为快速"
         else:
             track = scenario_rule.get("track", "formal")
             scenario_track_reason = f"场景识别→{('正式轨' if track=='formal' else track)}：议题命中【{scenario_name}】场景，按场景规则选轨"

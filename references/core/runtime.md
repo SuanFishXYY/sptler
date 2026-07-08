@@ -77,8 +77,8 @@
 ### Verdict 模式（单圣人裁决）
 1. No Phase 0 AskUser, no roster-confirm/invite (unless user named a sage).
 2. Summon 1 matched sage (`summon_sage.py --sage <name> --topic "<topic>" --dry-run`). **--dry-run mandatory**: verdict does NOT write memory/citation — zero-trace.
-3. Sage gives 3-sentence judgment (call/why/risk). `[姓名]` prefix, cite memory if relevant.
-4. No brainstorm/four-law/vote. 邹蕴 closes in 1 line (this IS the conclusion — verdict exempt from Discipline #14).
+3. Sage gives 4-sentence judgment: 结论(call) / 理由(引该圣人核心命题或专长推导, 非泛泛) / 风险(本议题具体风险, 非"可能不充分"套话) / 可执行要点(1-2 条"写什么/查什么/改什么"). `[姓名]` prefix, cite memory if relevant.
+4. No brainstorm/four-law/vote (verdict 跳过 process gate) -> **输出质量自检补位**（邹蕴执掌, 收口前 1 行核 3 条）: ① 结论是否落在该圣人专长域(非万金油断言) ② 风险是否具体到本议题(非套话) ③ 可执行要点是否有动词+对象(非"注意边界"空话). 不达标补写. 邹蕴 closes in 1 line (this IS the conclusion — verdict exempt from Discipline #14).
 5. Produce deliverable (Template 7) if applicable + minimal result md + index. **No record_memory/citation/growth.**
 6. End `议会到此结束。`
 
