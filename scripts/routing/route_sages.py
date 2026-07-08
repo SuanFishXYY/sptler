@@ -195,6 +195,17 @@ def detect_scenario(topic: str) -> tuple[str, dict]:
 
 def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "auto", lite: bool = False, briefing: bool = False) -> dict:
     scenario_name, scenario_rule = detect_scenario(topic)
+    # D40 触发碰撞检测：topic 命中 >1 场景时标 collision——邹蕴 declaration 提示用户可 redirect。
+    # 例:挖掘命中且也含查新/布局关键词 → collision=[专利挖掘,查新检索,...],邹蕴说"这像挖掘,要查新/布局请明说"。
+    scenario_collision = []
+    if scenario_name:
+        _t_lower = (topic or "").lower()
+        for _other_name, _other_rule in (RULES.get("scenarios", {}) or {}).items():
+            _other_kws = _other_rule.get("keywords", []) or []
+            if any(k.lower() in _t_lower for k in _other_kws):
+                scenario_collision.append(_other_name)
+        if len(scenario_collision) <= 1:
+            scenario_collision = []  # 仅 routed 场景命中,无碰撞
     # briefing 与 lite 互斥：briefing=中等议题议会(要深度,读refs,记忆注入)，lite=省token快判断(不读refs)。
     # 两者同传时，lite 语义更窄(≤3)会压过 briefing(≤5)，但应告警——用户大概率误用。
     if briefing and lite:
@@ -208,10 +219,18 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         track = "fast"  # 仅场景走快评（保留必到圣人，规模缩到 fast）；非场景让 decide_track 正常判 verdict
         scenario_rule = {**scenario_rule, "track": "fast"}
         scenario_track_reason = f"场景快评轨(briefing)：识别【{scenario_name}】场景，保留必到圣人但规模缩为快速"
-    # lite：精简模式——verdict 优先、≤3 人硬上限。专利场景在 lite 下应被拒绝（场景需专属流程，lite 跳过）。
-    lite_rejected = bool(lite and scenario_name)
-    if lite_rejected:
-        print(f"⚠️  /sptler# 精简模式不处理专利场景【{scenario_name}】（需专属流程+feature_analysis，lite 跳过），请用标准 /sptler。", file=sys.stderr)
+    # lite：精简模式——verdict 优先、≤3 人硬上限。专利场景在 lite 下默认拒绝（场景需专属流程+feature_analysis，lite 跳过）。
+    # D11/D15/D42 例外：feature_analysis:false 的场景（目前仅专利挖掘）lite 可跑轻量版——
+    # 挖掘核心=权利要求骨架(单 verdict 件,lite 可达),不像查新/FTO 需 feature_analysis 多步拆解。
+    # lite-挖掘 出骨架 only(无说明书),由 SKILL/scenarios.md 指令 agent 执行;route_sages 仅放行+cap≤3。
+    lite_rejected = False
+    if lite and scenario_name:
+        if scenario_rule.get("feature_analysis", True):
+            lite_rejected = True
+            print(f"⚠️  /sptler# 精简模式不处理专利场景【{scenario_name}】（需专属流程+feature_analysis，lite 跳过），请用标准 /sptler。", file=sys.stderr)
+        else:
+            # lite-挖掘 轻量版放行;agent 据 SKILL 指令出骨架 only
+            print(f"⚡ lite-挖掘 轻量版：仅出权利要求骨架(无说明书/实施例)，要完整草稿请用标准 /sptler。", file=sys.stderr)
     # 专利专属场景：用户未显式指定 track 时默认 formal；但用户选"快速会议"则尊重用户，走场景快评轨(必到圣人保留,规模缩到fast)
     scenario_track_reason = None  # 场景自动选轨时的真实理由（避免被 decide_track 误报为「用户指定」）
     if scenario_name and track == "auto":
@@ -382,6 +401,7 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         "briefing": briefing,
         "host": HOST,
         "scenario": scenario_name,
+        "scenario_collision": scenario_collision,
         "scenario_deliverable": scenario_rule.get("deliverable", "") if scenario_name else "",
         "deliver_dir": scenario_rule.get("deliver_dir", "") if scenario_name else "",
         "attendees": attendees,

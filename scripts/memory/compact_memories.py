@@ -49,6 +49,7 @@ def classify(e: dict, is_recent: bool) -> str:
         and e.get("mode", "") in ("单圣人裁决", "verdict")
         and int(e.get("citation_count", 0) or 0) == 0
         and not e.get("parent_meeting_id")  # 无 followup 衍生
+        and e.get("scenario") != "专利挖掘"  # D14: 挖掘 memory 是 pre-filing 草稿留痕,归档不删
     )
     # lite value_score>=1 不删（留痕有回溯价值）；lite value_score==0 且琐碎 → 删（防膨胀）
     if e.get("lite") and int(e.get("value_score", 0) or 0) >= 1:
@@ -85,11 +86,25 @@ def compact_file(path: Path, keep: int, dry_run: bool = False) -> tuple[bool, st
             t = e.get("topic") or ""
             if t and t not in summary["topics"]:
                 summary["topics"].append(t)
+            # D29: skeleton archive——保全挖掘/low_value/incomplete 等新字段,防 compact 静默丢弃
+            # (旧版只存 topic 字符串,新字段会丢→summon 降权失效)。skeleton 供召唤时识别挖掘记忆。
+            mid = e.get("meeting_id", "")
+            _digits = "".join(c for c in mid if c.isdigit())[:8]  # YYYYMMDD(兼容 SPTLER- / SPTLER-FOLLOWUP- 前缀)
+            skeleton = {
+                "topic": t,
+                "date": (_digits if len(_digits) == 8 else ""),
+                "meeting_id": mid,
+                "scenario": e.get("scenario", ""),
+                "low_value": bool(e.get("low_value")),
+                "elicitation_incomplete": bool(e.get("elicitation_incomplete")),
+            }
+            summary.setdefault("archived_skeletons", []).append(skeleton)
         else:  # delete
             deleted += 1
     summary["compacted_count"] += archived
     summary["deleted_count"] += deleted
     summary["topics"] = summary["topics"][-50:]
+    summary["archived_skeletons"] = summary.get("archived_skeletons", [])[-50:]  # D29: skeleton 同样封顶 50
     summary["last_compacted_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
     data["archive_summary"] = summary
     data["experiences"] = recent

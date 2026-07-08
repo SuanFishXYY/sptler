@@ -40,10 +40,13 @@ def time_decay(days):
     if days <= 730: return 0.4
     return 0.15
 
-def relevant_experiences(mem, topic, limit=3):
+def relevant_experiences(mem, topic, limit=3, resume=False):
     """按 domain+关键词命中 × 时效衰减 排序；排除 superseded。返回 (exp, score, days)。
     lite 记忆(lite=true)降权 ×0.5——它是快调（可能不充分），不得与正式结论平权引用，
-    只在无正式记忆匹配时才被引用，避免 lite 快调污染后续正式决策。"""
+    只在无正式记忆匹配时才被引用，避免 lite 快调污染后续正式决策。
+    D16/D21/D34/D38: 专利挖掘 memory 额外降权——挖掘是未验证初稿(pre-filing),不当定论引:
+    - scenario=专利挖掘 ×0.5(D16); low_value ×0.5(D21,0可专利点); multiplicative(D34)
+    - elicitation_incomplete ×0.5(D38,反问未补全,标准引用时); resume=True 时 lift 此因子(续议在议非定论)"""
     exps = (mem or {}).get('experiences',[]) or []
     if not exps or not topic:
         return []
@@ -67,6 +70,12 @@ def relevant_experiences(mem, topic, limit=3):
             days = recency_days(e.get('recorded_at',''))
             final = s * time_decay(days) * (e.get('value_score',1) or 1)
             if e.get('lite'):  # lite 快调降权：让位于正式结论，防止不充分快调被当定论引用
+                final *= 0.5
+            if e.get('scenario') == '专利挖掘':  # D16: 挖掘未验证初稿,降权
+                final *= 0.5
+            if e.get('low_value'):  # D21: 0 可专利点低价值,再降权
+                final *= 0.5
+            if e.get('elicitation_incomplete') and not resume:  # D38: 反问未补全,标准引用降权;续议 lift
                 final *= 0.5
             scored.append((final, days, e))
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -149,7 +158,7 @@ def first_under(text, heading):
             return ls.lstrip('-').strip().split(';')[0].strip()
     return ''
 
-def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
+def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False, resume=False):
     d = ROOT/'saints'/sage
     if lite:
         # lite：精简灵魂（身份+核心命题+边界）+ 轻记忆指针（最近1条lite经历，1行）。
@@ -199,7 +208,7 @@ def summon(sage, mem_dir=None, topic=None, dry_run=False, lite=False):
     mem = msum.pop('_mem', {})
     mem_file = msum.pop('_mem_file', None)
     if topic:
-        hits = relevant_experiences(mem, topic)
+        hits = relevant_experiences(mem, topic, resume=resume)
         if dry_run:
             # 延迟回写：只返回 pending 清单，不立即改 citation（等用户确认写入记忆）
             msum['pending_citations'] = pending_citations(mem, hits)
@@ -229,8 +238,11 @@ def fmt_exp(e, days=None):
     val = e.get('value_score',0)
     valtag = f"[价值{val}·引用{e.get('citation_count',0)}]" if val else ""
     litetag = " ｜⚠️ lite快调·可能不充分" if e.get('lite') else ""
+    miningtag = " ｜⛏️ 挖掘初稿·未验证" if e.get('scenario') == '专利挖掘' else ""
+    lowvaltag = " ｜⚠️ 低价值·0可专利点" if e.get('low_value') else ""
+    incompletetag = " ｜⚠️ 反问未补全" if e.get('elicitation_incomplete') else ""
     return (f"  - {age} {e.get('topic','')}（{e.get('mode','')}/{e.get('verdict','')}）："
-            f"立场={e.get('stance','')}，建议={e.get('recommendation','')} {valtag}{litetag}")
+            f"立场={e.get('stance','')}，建议={e.get('recommendation','')} {valtag}{litetag}{miningtag}{lowvaltag}{incompletetag}")
 
 def main():
     ap=argparse.ArgumentParser(description='完整召唤圣人上下文（记忆哲学宪法版）')
@@ -239,9 +251,10 @@ def main():
     ap.add_argument('--mem-dir', default='')
     ap.add_argument('--dry-run', action='store_true', help='延迟回写模式：不立即改citation，返回pending清单，等用户确认写入记忆后再回写')
     ap.add_argument('--lite', action='store_true', help='精简模式：只读身份+边界，不注入记忆/关系/历史（sptler# 用，省 token）')
+    ap.add_argument('--resume', action='store_true', help='续议模式：relevant_experiences 的 elicitation_incomplete 因子 lift(D38,在议非定论)')
     ap.add_argument('--json', action='store_true')
     args=ap.parse_args()
-    data=summon(args.sage, args.mem_dir or None, args.topic or None, dry_run=args.dry_run, lite=args.lite)
+    data=summon(args.sage, args.mem_dir or None, args.topic or None, dry_run=args.dry_run, lite=args.lite, resume=args.resume)
     if args.json:
         # relevant 里的 tuple 转成可序列化
         m=data['memory']

@@ -286,6 +286,9 @@ def main():
     ap.add_argument("--meeting-id", dest="meeting_id", help="决议编号")
     ap.add_argument("--mode", default="", help="会议模式")
     ap.add_argument("--verdict", default="", help="通过/否决")
+    ap.add_argument("--scenario", default="", help="场景名(如 专利挖掘)— D16 挖掘标记")
+    ap.add_argument("--low-value", dest="low_value", action="store_true", help="0 可专利点低价值标记 — D21/D32")
+    ap.add_argument("--elicitation-incomplete", dest="elicitation_incomplete", action="store_true", help="反问未补全标记 — D38")
     ap.add_argument("--stance", default="弃权", help="赞成/反对/弃权")
     ap.add_argument("--weight", default="", help="本次权重")
     ap.add_argument("--reason", default="", help="投票理由")
@@ -327,7 +330,11 @@ def main():
         base = {k: (data.get(k) or "") for k in (
             "topic", "meeting_id", "mode", "verdict",
             "meeting_type", "parent_meeting_id", "followup_type", "followup_target",
+            "scenario",  # D16: 专利挖掘场景标记(会议级)
         )}
+        # D32/D38: bool 字段(不用 or "" 模式,避免 False→"")
+        base["low_value"] = bool(data.get("low_value", False))  # D21: 0 可专利点低价值
+        base["elicitation_incomplete"] = bool(data.get("elicitation_incomplete", False))  # D38: 反问未补全
         # supersedes：会议级声明，推翻哪些旧 meeting_id（list，保持原样）
         base_supersedes = data.get("supersedes") or []
         if not isinstance(base_supersedes, list):
@@ -355,6 +362,9 @@ def main():
                 "parent_meeting_id": base.get("parent_meeting_id") or "",
                 "followup_type": base.get("followup_type") or "",
                 "followup_target": base.get("followup_target") or "",
+                "scenario": base.get("scenario", ""),  # D16
+                "low_value": base.get("low_value", False),  # D21/D32
+                "elicitation_incomplete": base.get("elicitation_incomplete", False),  # D38
                 "stance": att.get("stance") or "弃权",
                 "weight": att.get("weight") or "",
                 "reason": att.get("reason") or "",
@@ -379,6 +389,9 @@ def main():
         "parent_meeting_id": args.parent_meeting_id or "",
         "followup_type": args.followup_type or "",
         "followup_target": args.followup_target or "",
+        "scenario": args.scenario or "",  # D16
+        "low_value": args.low_value,  # D21/D32
+        "elicitation_incomplete": args.elicitation_incomplete,  # D38
         "stance": args.stance,
         "weight": args.weight,
         "reason": args.reason,

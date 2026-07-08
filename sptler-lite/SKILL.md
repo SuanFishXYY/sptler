@@ -3,7 +3,7 @@ name: sptler-lite
 description: 算鱼议会·精简模式（省token快车道）。单域快判断、token敏感时用——不读references、薄灵魂、无记忆注入、verdict优先(1圣人,≤3人)、零AskUser单轮收口、最简结果md。是 /sptler 的省token变体，复用其28圣人+脚本。触发：/sptler-lite、/sptler#、/议会#、/议一议#。不适合：不可逆战略决策、专利场景(查新/FTO/OA/布局/无效需专属流程，lite硬拒绝)、需记忆连续性。
 license: MIT
 metadata:
-  version: 1.4.0
+  version: 1.5.0
   author: 算鱼工作室
   language: zh-CN
   variant_of: sptler
@@ -26,7 +26,7 @@ metadata:
 
 - **不读 references**：orglaw/philosophy/runtime/templates/memory_philosophy 都不开，下面 cheat-sheet 即内核
 - **verdict 优先、硬上限 ≤3**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --lite`
-  - `--lite` 强制：verdict优先、规模封顶3、formal降级fast、专利场景硬拒绝(`lite_rejected=true`+0人，提示用标准 /sptler)
+  - `--lite` 强制：verdict优先、规模封顶3、formal降级fast、专利场景硬拒绝(`lite_rejected=true`+0人，提示用标准 /sptler)**——挖掘例外(D11/D42)**：`feature_analysis:false` 的挖掘场景 lite 放行(轻量版:无反问/≤3人/**仅出权利要求骨架**,无说明书)；route_sages stderr 提示"要完整草稿请用标准 /sptler"；输入过缺→`quality_concern`+建议标准
   - `lite_quality_concern=true` → 邹蕴提示"本题formal级，lite 3人降级可能不充分，建议标准 /sptler"
 - **薄灵魂**：`python scripts/memory/summon_sage.py --sage <名> --lite`（一行：身份+命题+冲突+边界+自警+追问+句式，若有lite记忆加"上次lite"指针）
 - **议会张力**（≤3 人时）：`python scripts/routing/tensions.py --roster <名单>` ——注入入会圣人间的预设张力对（如王升vs张鑫"结构vs控制"）；若该对有共议历史(RELATIONS.json)，张力演化(交锋从"谁先"转"如何协同")。驱动辩论有交锋，且随共议磨合。

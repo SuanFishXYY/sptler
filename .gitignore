@@ -5,6 +5,9 @@ sptler-meetings/
 # 保留目录结构（.gitkeep），但实际 memories/*.json 不提交
 memories/*.json
 
+# 专利交付物目录：含 pre-filing 草稿等敏感内容（D30 双保险——挖掘草稿强制 sptler-meetings/，patents/ 亦 ignore 防其他场景泄露）
+patents/
+
 # 系统/编辑器
 .DS_Store
 Thumbs.db

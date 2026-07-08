@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tracks": {
     "formal_keywords": [
       "战略",
@@ -67,6 +67,34 @@
     "范征"
   ],
   "scenarios": {
+    "专利挖掘": {
+      "keywords": [
+        "挖掘",
+        "可专利点",
+        "交底书提炼",
+        "权利要求草拟",
+        "发明挖掘",
+        "专利挖掘",
+        "挖可专利",
+        "提炼可专利",
+        "挖专利点",
+        "从交底书"
+      ],
+      "must_attend": [
+        "王升",
+        "卢若雨",
+        "范征"
+      ],
+      "suggested_extra": [
+        "邹蕴",
+        "徐奕阳"
+      ],
+      "deliverable": "deliverable-mining-{slug}-{ts}.md",
+      "deliver_dir": "sptler-meetings",
+      "track": "formal",
+      "priority": 11,
+      "feature_analysis": false
+    },
     "查新检索": {
       "keywords": [
         "查新",
@@ -90,7 +118,8 @@
       "deliverable": "deliverable-search-{slug}-{ts}.md",
       "deliver_dir": "patents/search-reports",
       "track": "formal",
-      "priority": 10
+      "priority": 10,
+      "feature_analysis": true
     },
     "FTO检索": {
       "keywords": [
@@ -115,7 +144,8 @@
       "deliverable": "deliverable-fto-{slug}-{ts}.md",
       "deliver_dir": "patents/fto-reports",
       "track": "formal",
-      "priority": 9
+      "priority": 9,
+      "feature_analysis": true
     },
     "专利价值评估": {
       "keywords": [
@@ -142,7 +172,8 @@
       "deliverable": "deliverable-valuation-{slug}-{ts}.md",
       "deliver_dir": "patents/valuations",
       "track": "formal",
-      "priority": 7
+      "priority": 7,
+      "feature_analysis": true
     },
     "OA答复策略": {
       "keywords": [
@@ -167,7 +198,8 @@
       "deliverable": "deliverable-oa-response-{slug}-{ts}.md",
       "deliver_dir": "patents/oa-responses",
       "track": "formal",
-      "priority": 8
+      "priority": 8,
+      "feature_analysis": true
     },
     "专利布局选型": {
       "keywords": [
@@ -195,7 +227,8 @@
       "deliverable": "deliverable-portfolio-{slug}-{ts}.md",
       "deliver_dir": "patents/portfolio",
       "track": "formal",
-      "priority": 6
+      "priority": 6,
+      "feature_analysis": true
     },
     "无效宣告攻防": {
       "keywords": [
@@ -220,7 +253,8 @@
       "deliverable": "deliverable-invalidation-{slug}-{ts}.md",
       "deliver_dir": "patents/invalidation",
       "track": "formal",
-      "priority": 5
+      "priority": 5,
+      "feature_analysis": true
     }
   },
   "deliver_dirs": {

@@ -3,7 +3,7 @@ name: sptler-brief
 description: 算鱼议会·简报模式（免提问中等议题议会）。中等多域议题、要专家深度但不想被AskUser打断时用——读references、完整灵魂+记忆注入(保留魔法时刻)、强制fast轨、规模≤5、场景走快评不拒绝、零AskUser单轮收口。是 /sptler 的简报变体，复用其28圣人+脚本。触发：/sptler-brief、/sptler!、/议会!。不适合：不可逆战略决策(formal级)、单域快判断(用/sptler-lite)、需正式投票审计。
 license: MIT
 metadata:
-  version: 1.4.0
+  version: 1.5.0
   author: 算鱼工作室
   language: zh-CN
   variant_of: sptler
@@ -28,7 +28,8 @@ metadata:
 - **强制 fast、≤5**：`cd <SPTLER_DIR> && python scripts/routing/route_sages.py --topic "<问题>" --briefing`
   - `--briefing` 强制：fast 轨、规模封顶5、formal 降级 fast、返回 `briefing:true`
   - **场景不拒绝**（区别于 lite）：专利场景走**场景快评轨**（fast + 必到圣人 + 场景交付物，规模≤5），保留深度只跳 AskUser
-  - **场景命中时读专属流程**：若 route_sages 识别到场景（如 FTO/查新/OA），**必须读 `<SPTLER_DIR>/references/scenarios/scenarios.md` 中该场景的专属 Phase 流程**（如 FTO 的侵权比对+规避设计步骤），按专属流程走快评版（每步压缩到1-2句）。不读专属流程 = 场景快评漏关键步骤，等于假快评。
+  - **场景命中时读专属流程**：若 route_sages 识别到场景（如 FTO/查新/OA/挖掘），**必须读 `<SPTLER_DIR>/references/scenarios/scenarios.md` 中该场景的专属 Phase 流程**（如 FTO 的侵权比对+规避设计步骤），按专属流程走快评版（每步压缩到1-2句）。不读专属流程 = 场景快评漏关键步骤，等于假快评。
+  - **挖掘场景 under briefing（D26）**：brief-挖掘 跳反问(零 AskUser)，输入需较完整；若三要素检测发现输入过缺 → `briefing_insufficient_input` + `briefing_quality_concern` + 建议标准 /sptler 做完整挖掘（含反问）。brief-挖掘 仍出骨架+说明书（≤5人快评），但说明书质量受限——`briefing_quality_concern` 标记提示用户。
 - **完整灵魂 + 记忆注入**（保留魔法时刻）：`python scripts/memory/summon_sage.py --sage <名> --topic "<问题>"`（非 --lite，读 SOUL/记忆/关系）
 - **零 AskUser**：跳 Phase 0 模式选择、Phase 1 名单确认、Phase 5b 导出选项；单轮交付
 - **简洁输出**：每人 1 设想、1 组合方案、1 投票行、1 建议

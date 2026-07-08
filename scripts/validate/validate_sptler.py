@@ -232,6 +232,7 @@ def main():
             "OA答复策略": "审查意见答复区别技术特征",
             "专利布局选型": "三个方案选哪个申请专利",
             "无效宣告攻防": "对手专利提无效宣告",
+            "专利挖掘": "挖掘这发明的可专利点",
         }
         for expected_scenario, test_topic in test_cases.items():
             name, rule = rs.detect_scenario(test_topic)
@@ -340,6 +341,94 @@ def main():
                 bad(f"briefing 把 verdict 膨胀成 {d5.get('track')} {len(d5.get('attendees',[]))}人 — 违反按重量降级"); failed += 1
         except Exception as e:
             bad(f"route_sages --briefing 行为校验失败: {e}"); failed += 1
+    # 挖掘场景守卫（D15 lite-挖掘放行 / D40 触发碰撞 / D30 deliverable+gitignore / D36 feature_analysis / D37 drift / D19 carve-out / D16+D21 记忆降权）
+    if rs_lit.exists():
+        try:
+            # D15: lite-挖掘 放行(非 lite_rejected) + ≤3 人 + scenario=专利挖掘
+            out = subprocess.run([sys.executable, str(rs_lit), "--topic", "挖掘这发明的可专利点",
+                                  "--lite", "--json"], capture_output=True, text=True, encoding="utf-8")
+            d = _json.loads(out.stdout)
+            if not d.get("lite_rejected") and d.get("scenario") == "专利挖掘" and len(d.get("attendees", [])) <= 3:
+                ok("lite-挖掘 放行（D15: 非 lite_rejected, ≤3 人, 例外于 lite 拒绝专利场景）")
+            else:
+                bad(f"lite-挖掘 未放行: lite_rejected={d.get('lite_rejected')} attendees={len(d.get('attendees',[]))} scenario={d.get('scenario')}"); failed += 1
+            # D40: 触发碰撞 — 挖掘+查新关键词同时命中 → scenario_collision 非空
+            out2 = subprocess.run([sys.executable, str(rs_lit), "--topic", "挖掘这发明能不能申请有没有现有技术",
+                                   "--json"], capture_output=True, text=True, encoding="utf-8")
+            d2 = _json.loads(out2.stdout)
+            if d2.get("scenario_collision"):
+                ok(f"触发碰撞检测（D40: scenario_collision 非空）")
+            else:
+                bad("触发碰撞未触发 — 挖掘+查新关键词同时命中时 scenario_collision 应非空"); failed += 1
+            # D30: 挖掘 deliverable 强制 sptler-meetings（禁直投 patents/，pre-filing 安全）
+            out3 = subprocess.run([sys.executable, str(rs_lit), "--topic", "挖掘这发明",
+                                   "--json"], capture_output=True, text=True, encoding="utf-8")
+            d3 = _json.loads(out3.stdout)
+            if d3.get("deliver_dir") == "sptler-meetings":
+                ok("挖掘 deliverable 强制 sptler-meetings（D30 pre-filing 安全, 禁直投 patents/）")
+            else:
+                bad(f"挖掘 deliver_dir={d3.get('deliver_dir')} — 应强制 sptler-meetings（D30）"); failed += 1
+            # D36: feature_analysis 字段 — 挖掘=false, 其他场景=true（mechanism-enforced lite 准则）
+            scenarios = rs.RULES.get("scenarios", {})
+            mining_fa = scenarios.get("专利挖掘", {}).get("feature_analysis")
+            other_fa = {n: r.get("feature_analysis") for n, r in scenarios.items() if n != "专利挖掘"}
+            if mining_fa is False and all(v is True for v in other_fa.values()):
+                ok(f"feature_analysis 字段（D36: 挖掘=false, 其他 {len(other_fa)} 场景=true）")
+            else:
+                bad(f"feature_analysis 错: 挖掘={mining_fa}, 其他={other_fa}"); failed += 1
+        except Exception as e:
+            bad(f"挖掘场景守卫失败: {e}"); failed += 1
+    # D30 .gitignore patents/ 双保险
+    gi = ROOT / ".gitignore"
+    if gi.exists() and "patents/" in gi.read_text(encoding="utf-8"):
+        ok(".gitignore 含 patents/（D30 pre-filing 双保险）")
+    else:
+        bad(".gitignore 缺 patents/ — pre-filing 草稿可能被 git track"); failed += 1
+    # D37 drift gate + D19 SKILL carve-out：边界 token 三文件一致 + Discipline 15 含挖掘 carve-out
+    skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8") if (ROOT / "SKILL.md").exists() else ""
+    readme_text = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").exists() else ""
+    sc_path = ROOT / "references" / "scenarios" / "scenarios.md"
+    sc_text = sc_path.read_text(encoding="utf-8") if sc_path.exists() else ""
+    boundary_token = "草稿 OK / 终稿 NO"
+    drift = {"SKILL.md": boundary_token in skill_text, "README.md": boundary_token in readme_text, "scenarios.md": boundary_token in sc_text}
+    if all(drift.values()):
+        ok("边界 token drift gate（D37: 草稿OK/终稿NO 在 SKILL/README/scenarios 三处一致）")
+    else:
+        bad(f"边界 token drift: {drift} — 三处不一致（D37）"); failed += 1
+    if "专利挖掘场景(D5)出完整草稿属此规则允许范围" in skill_text:
+        ok("SKILL Discipline 15 挖掘 carve-out（D19: 草稿级产出不被旧 full-pent-draft 阻断）")
+    else:
+        bad("SKILL Discipline 15 缺挖掘 carve-out — 草稿级产出可能被旧规则阻断"); failed += 1
+    # D16+D21 挖掘记忆降权：同主题 标准 memory 应排在 low_value挖掘 memory 前
+    sm = ROOT / "scripts" / "memory" / "summon_sage.py"
+    if sm.exists():
+        try:
+            import tempfile, shutil
+            from pathlib import Path as _P
+            tmpd = _P(tempfile.mkdtemp())
+            (tmpd / "memories").mkdir(parents=True, exist_ok=True)
+            mem = {"sage": "王升", "experiences": [
+                {"topic": "挖掘蓝牙定位骨架", "meeting_id": "SPTLER-202501011200", "mode": "复杂会议", "verdict": "通过", "stance": "赞成", "domain": "结构/专利", "recorded_at": "2025-01-01 12:00", "value_score": 2, "citation_count": 1, "supersedes": []},
+                {"topic": "挖掘蓝牙定位骨架", "meeting_id": "SPTLER-202501021200", "mode": "复杂会议", "verdict": "通过", "stance": "赞成", "domain": "结构/专利", "recorded_at": "2025-01-02 12:00", "value_score": 2, "citation_count": 1, "supersedes": [], "scenario": "专利挖掘", "low_value": True},
+            ]}
+            (tmpd / "memories" / "王升.json").write_text(_json.dumps(mem, ensure_ascii=False), encoding="utf-8")
+            out = subprocess.run([sys.executable, str(sm), "--sage", "王升", "--topic", "挖掘蓝牙定位骨架",
+                                  "--mem-dir", str(tmpd / "memories"), "--dry-run", "--json"],
+                                 capture_output=True, text=True, encoding="utf-8")
+            dd = _json.loads(out.stdout)
+            rel = dd.get("memory", {}).get("relevant", [])
+            if len(rel) >= 2:
+                first_mid = rel[0]["experience"].get("meeting_id", "")
+                # 标准 memory(01) 应排前(无降权); low_value挖掘(02) 应排后(scenario×0.5 × low_value×0.5)
+                if first_mid == "SPTLER-202501011200" and rel[0]["score"] > rel[1]["score"]:
+                    ok(f"挖掘记忆降权（D16+D21: 标准 {rel[0]['score']:.2f} > low_value挖掘 {rel[1]['score']:.2f}）")
+                else:
+                    bad(f"挖掘记忆降权失效: 排序={[r['experience'].get('meeting_id') for r in rel]} scores={[r['score'] for r in rel]}"); failed += 1
+            else:
+                bad(f"挖掘记忆守卫 relevant 不足: {len(rel)}"); failed += 1
+            shutil.rmtree(tmpd)
+        except Exception as e:
+            bad(f"挖掘记忆守卫失败: {e}"); failed += 1
     # lite 记忆守卫：record_memory --lite 不得翻转圣人风险画像（事件留痕、画像不动）
     import tempfile, shutil
     rm_lit = ROOT / "scripts" / "memory" / "record_memory.py"
