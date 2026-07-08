@@ -35,8 +35,8 @@ def should_skip(topic: str) -> tuple[bool, str]:
     for kw in SKIP_KEYWORDS:
         if kw in t:
             return True, f"命中事实/定义类信号「{kw}」，直接答即可"
-    # 纯是非题
-    if any(p in t for p in SKIP_PATTERNS) and len(t) < 15:
+    # 纯是非题（兼容无标点：用户常省略问号，bare"吗"结尾 + 短题也判是非题）
+    if (any(p in t for p in SKIP_PATTERNS) or t.endswith("吗")) and len(t) < 15:
         return True, "纯是非题，直接答即可"
     return False, ""
 

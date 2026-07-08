@@ -49,7 +49,7 @@ SAGES = {
     "江漪": {"role": "专科", "title": "闭环圣", "keywords": "流体 闭环 传感器 控制器 执行器 卫浴 水质 回路 密封 管路 物理"},
     "陆诗杰": {"role": "专科", "title": "度量圣", "keywords": "指标 评价 度量 量化 评分 权重 可视化 看板 平台 对接 算法 向量 评价体系"},
     "周全": {"role": "专科", "title": "通域圣", "keywords": "涉外 涉外专利 电学物理二部 ai专利 医疗器械专利 无效宣告 跨法域翻译 pct布局 多国权利要求 桥接"},
-    "吴畏": {"role": "专科", "title": "商标圣", "keywords": "商标 品牌 海外抢注 跨境商标 确权维权 马德里体系 恶意注册 使用证据 快消品 布局"},
+    "吴畏": {"role": "专科", "title": "商标圣", "keywords": "商标 品牌 海外抢注 跨境商标 确权维权 马德里体系 恶意注册 使用证据 快消品 商标布局"},
     "钱孟清": {"role": "专科", "title": "策护圣", "keywords": "电学物理一部 金融科技 生物识别 政策倡导 海外维权 行政诉讼 诉讼 政策 维权"},
     "叶诚": {"role": "专科", "title": "导航圣", "keywords": "专利导航 专利信息分析 无效诉讼 fto检索 战略咨询 导航 专利地图 央企 贯标"},
     "须一平": {"role": "顾问", "title": "开埠圣", "keywords": "制度建设 涉外专利 国际规则本土化 机构建制 审查制度 标准 秩序 开埠"},
@@ -215,6 +215,7 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
     # 注意：briefing 对非场景题不强制 track——verdict 级单域问题即使 briefing 也走 1 人裁决
     # （按问题重量降级是核心设计）。只对场景走快评、对 formal(7-9全会) 降级 fast+cap5。
     # (旧实现 `if briefing and track=="auto": track="fast"` 会把 verdict 膨胀成 4 人 fast，已修。)
+    scenario_track_reason = None  # 场景自动选轨真实理由（避免 decide_track 误报「用户指定」）；briefing/场景分支按需覆盖
     if briefing and scenario_name and track == "auto":
         track = "fast"  # 仅场景走快评（保留必到圣人，规模缩到 fast）；非场景让 decide_track 正常判 verdict
         scenario_rule = {**scenario_rule, "track": "fast"}
@@ -232,7 +233,7 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
             # lite-挖掘 轻量版放行;agent 据 SKILL 指令出骨架 only
             print(f"⚡ lite-挖掘 轻量版：仅出权利要求骨架(无说明书/实施例)，要完整草稿请用标准 /sptler。", file=sys.stderr)
     # 专利专属场景：用户未显式指定 track 时默认 formal；但用户选"快速会议"则尊重用户，走场景快评轨(必到圣人保留,规模缩到fast)
-    scenario_track_reason = None  # 场景自动选轨时的真实理由（避免被 decide_track 误报为「用户指定」）
+    # (scenario_track_reason 已在 briefing 块前初始化；此处各分支按需覆盖，不再 reset 以免抹掉 briefing 理由)
     if scenario_name and track == "auto":
         if mode in ("fast", "quick", "快速", "快速会议"):
             track = "fast"  # 场景快评：必到圣人在,但不升8人全会
@@ -258,8 +259,10 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
             resolved_mode = f"briefing·{resolved_mode}"
     # lite 硬约束：规模封顶 3 人；formal 轨降级为 fast（lite 不开 7-9 人全会）
     lite_quality_concern = False  # lite 质量护栏：formal 级议题被塞进 3 人 lite，答案可能不充分
-    if lite:
+    _lite_downgrade_reason = False  # C5b: lite 降级设了专门 reason，场景 override 不应覆盖（否则 track=fast 却报正式轨）
+    if lite and not lite_rejected:  # C4: lite_rejected 时不开会，cap/降级/质量存疑皆无意义
         if target_size > 3:
+            _lite_downgrade_reason = True  # lite 确实降级，track_reason 已是 lite 专用
             orig_mode = resolved_mode  # 先存原值，供 reason 引用，避免双重 lite· 前缀
             target_size = 3
             if resolved_track == "formal":
@@ -268,11 +271,13 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
                 track_reason = "lite 模式：规模封顶 3 人，formal 降级为 fast（不开全会）"
                 # formal 级议题（战略/预算/不可逆/跨多委员会）本该开 7-9 人全会充分收敛，
                 # lite 强行 3 人处理是妥协——标记质量存疑，提示用户升档标准 /sptler。
-                lite_quality_concern = True
+                # C5: feature_analysis:false 场景(挖掘)lite 是一等轻量路径，不算妥协，不标存疑
+                if not (scenario_name and not scenario_rule.get("feature_analysis", True)):
+                    lite_quality_concern = True
             else:
                 resolved_mode = f"lite·{orig_mode}"
                 track_reason = f"lite 模式：规模封顶 3 人（原 {orig_mode}）"
-    if scenario_track_reason:
+    if scenario_track_reason and not _lite_downgrade_reason:  # C5b: lite 降级 reason 不被场景覆盖
         track_reason = scenario_track_reason  # 用场景真实理由覆盖 decide_track 的「用户指定」误报
     invited = normalize_invites(invites)
     roster = []
@@ -365,6 +370,12 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         if len(invited_in_roster) > target_size:
             print(f"⚠️  lite 封顶 {target_size} 人，但用户点名邀请 {len(invited_in_roster)} 人——邀请不可截断（Discipline #10），"
                   f"全部保留但已超 cap，建议用标准 /sptler。", file=sys.stderr)
+        # C7: 场景必到圣人超 lite cap 时不静默截断--告警提示用标准模式保留全部必到（当前 7 场景 must_attend=3=cap，潜伏防御）
+        if scenario_name:
+            _must = [n for n in scenario_rule.get("must_attend", []) if n in SAGES]
+            _dropped = [n for n in _must if n not in effective_roster]
+            if _dropped:
+                print(f"⚠️  lite 封顶 {target_size} 人，场景必到圣人 {','.join(_dropped)} 被截断--建议用标准 /sptler 保留全部必到。", file=sys.stderr)
     else:
         effective_roster = roster
     for n in effective_roster:
@@ -382,7 +393,9 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         })
     # 给分数最高的前两位加成（不含host，且必须有命中）
     # 动态加成只给关键词高度契合者；用户邀请本身不等于议题契合，因此排除 invited。
-    boostable = [a for a in attendees if a["score"] > 0 and a.get("hits") and not a.get("invited")]
+    # C3: 动态加成只奖真实关键词命中者；排除 invited(score=999) 与场景必到(score=100)的人工分，
+    # 否则必到永远压过真实命中、boost 在场景路径形同虚设
+    boostable = [a for a in attendees if 0 < a["score"] < 100 and a.get("hits") and not a.get("invited")]
     boostable.sort(key=lambda a: a["score"], reverse=True)
     for a in boostable[:2]:
         a["dynamic_boost"] = 0.5
