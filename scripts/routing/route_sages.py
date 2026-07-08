@@ -27,7 +27,7 @@ CHIEFS = ["孙高德", "蔡悦", "黄嵩泉"]
 WEIGHTS = {HOST: 0, **{n: 3.0 for n in CORE}, **{n: 2.0 for n in CHIEFS}}
 
 SAGES = {
-    "王升": {"role": "四核心", "title": "结构圣", "keywords": "结构 骨架 维度 边界 中间层 分层 模块 框架 系统 架构 专利 权利要求 坐标 权重 复杂 全景"},
+    "王升": {"role": "四核心", "title": "结构圣", "keywords": "结构 骨架 维度 边界 中间层 分层 模块 框架 系统 架构 专利 权利要求 坐标 权重 复杂 全景 权要"},
     "张鑫": {"role": "四核心", "title": "控制圣", "keywords": "控制 输入 输出 异常 兜底 接管 流程 监控 审计 回退 权限 安全 加密 故障 自愈 风险 验证"},
     "徐奕阳": {"role": "四核心", "title": "铸模圣", "keywords": "铸模 模板 复用 自动化 ai prompt 标准化 资产化 工作流 产品化 场景 智能体 agent 推理 垂直模型"},
     "范征": {"role": "四核心", "title": "价值圣", "keywords": "价值 客户 roi 收益 回报 衡量 落点 为谁 兑现 战略 长期 资产 行业 标准 陪伴 市场"},
@@ -35,7 +35,7 @@ SAGES = {
     "蔡悦": {"role": "委员会首席", "title": "跨界圣", "keywords": "跨界 跨域 集成 场景 模块复用 迁移 5g 射频 太阳能 燃料电池 智能终端 车辆 参数调优 连接"},
     "黄嵩泉": {"role": "委员会首席", "title": "组合圣", "keywords": "冗余 组合 传感器 光源 光学 测量 电气 隔离 失效 备份 可靠 发明 工程冗余 单点"},
     "喻学兵": {"role": "专科", "title": "连接圣", "keywords": "连接 装配 配合 方位 公差 热失配 制造 工装 机械 实体 现场 装配序列"},
-    "卢若雨": {"role": "专科", "title": "位控圣", "keywords": "位置 边界 精修 复审 反驳 权利要求 语言 翻译 控制节点 空间定位 实施例"},
+    "卢若雨": {"role": "专科", "title": "位控圣", "keywords": "位置 边界 精修 复审 反驳 权利要求 语言 翻译 控制节点 空间定位 实施例 权要 独权 从权"},
     "顾峻峰": {"role": "专科", "title": "现场组合圣", "keywords": "现场 客户 模块化 可拆卸 节俭 废物 资源化 耐用 工地 车间 实物 落地 痛点"},
     "骆希聪": {"role": "专科", "title": "整车集成圣", "keywords": "整车 集成 机电软 子系统 制造 试验 安全 跨域整合 汽车 轨道 整机"},
     "徐伟": {"role": "专科", "title": "通桥圣", "keywords": "半导体 电力电子 车规 轨道 硬科技 架构 全栈 系统 桥接 电力 芯片"},
@@ -92,7 +92,7 @@ def kw_match(kw: str, text: str) -> bool:
     """关键词匹配：英文用词界(\\b)，中文用子串。避免 ai∈available / it∈with / oa∈aoa 类误匹配（C2 根因）。"""
     klow = kw.lower()
     if re.fullmatch(r"[a-z0-9_]+", klow):
-        return re.search(r"\b" + re.escape(klow) + r"\b", text) is not None
+        return re.search(r"(?<![a-z0-9])" + re.escape(klow) + r"(?![a-z0-9])", text) is not None
     return klow in text
 
 
@@ -120,7 +120,10 @@ def score_sage(topic: str, sage: str, ignore_core_bias: bool = False) -> tuple[f
 # 快速判断需求被开成全会（代理师反馈"该轻太重"）。注意：靠意图信号而非纯长度，避免误降正式场景题。
 QUICK_SIGNALS = [
     "行不行", "可不可以", "好不好", "值不值", "该不该", "能不能", "是不是", "对不对", "行吗", "成吗",
-    "怎么答复", "怎么处理", "怎么看", "怎么写", "怎么做", "怎么收", "如何答复", "如何处理",
+    # how-to 动词：判断/操作类(->verdict/快评)，不含"设计/构建/实现/搭建"等 substantive build(->fast/formal)
+    "怎么答复", "怎么处理", "怎么看", "怎么写", "怎么做", "怎么收", "怎么找", "怎么查",
+    "怎么挖", "怎么无效", "怎么布局", "怎么选", "怎么改", "怎么答", "怎么回",
+    "如何答复", "如何处理", "如何写", "如何做", "如何找",
 ]
 
 
@@ -213,7 +216,7 @@ def detect_scenario(topic: str) -> tuple[str, dict]:
     ordered = sorted(scenarios.items(), key=lambda x: x[1].get("priority", 0), reverse=True)
     for name, rule in ordered:
         kws = rule.get("keywords", []) or []
-        hits = [k for k in kws if k.lower() in t]
+        hits = [k for k in kws if kw_match(k, t)]
         if hits:
             return name, {**rule, "matched_keywords": hits}
     return "", {}
@@ -228,10 +231,16 @@ def route(topic: str, mode: str = "dynamic", invites: str = "", track: str = "au
         _t_lower = (topic or "").lower()
         for _other_name, _other_rule in (RULES.get("scenarios", {}) or {}).items():
             _other_kws = _other_rule.get("keywords", []) or []
-            if any(k.lower() in _t_lower for k in _other_kws):
+            if any(kw_match(k, _t_lower) for k in _other_kws):
                 scenario_collision.append(_other_name)
         if len(scenario_collision) <= 1:
             scenario_collision = []  # 仅 routed 场景命中,无碰撞
+        # ⑥精度：答复/审查员/驳回 上下文 -> OA 优先于查新/价值（"审查员说没新颖性怎么答复"该是 OA 不是查新）
+        if scenario_name != "OA答复策略" and "OA答复策略" in scenario_collision and any(w in (topic or "") for w in ("答复", "审查员", "驳回")):
+            _oa_rule = (RULES.get("scenarios", {}) or {}).get("OA答复策略", {})
+            if _oa_rule:
+                scenario_name = "OA答复策略"
+                scenario_rule = {**_oa_rule, "matched_keywords": ["答复/审查员上下文"]}
     # briefing 与 lite 互斥：briefing=中等议题议会(要深度,读refs,记忆注入)，lite=省token快判断(不读refs)。
     # 两者同传时，lite 语义更窄(≤3)会压过 briefing(≤5)，但应告警——用户大概率误用。
     if briefing and lite:
