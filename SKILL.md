@@ -137,6 +137,7 @@ Quick → 1 plan. Complex → 2-3. No negation. Detail: runtime.md §Phase 3.
 13. **Cite memory (no hallucination)** — every attendee summoned via `--dry-run`; cite real dates only; no-match sages speak naturally.
 14. **邹蕴 must conclude** — substantive conclusion (decision + reason + risk); if user can't tell what was decided, parliament failed. (Verdict track exempt — the sage's 4-sentence judgment IS the conclusion; see runtime.md §Verdict.)
 15. **Honest scope refusal** — beyond deliverable templates (filing-ready final/litigation documents/financial models) → 邹蕴 says "超出能力" before Phase 0; never hard-stuff templates. **草稿 OK / 终稿 NO (D9 全局)**: sptler 可产出草稿级文件(权利要求骨架/说明书草稿/答复策略等,含 ⚠️草稿标记 + 补全 checklist),但不产出可提交终稿——草稿结构性缺失(无附图/实验数据/正式编号/正式摘要),代理师须复核完善。专利挖掘场景(D5)出完整草稿属此规则允许范围。
+16. **元认知兜底（A4 第五方镜子）** - 议题核心为人本/伦理/价值观（非技术执行；专利含创意不触发）时，邹蕴 Phase 1 标 meta-cog flag，Phase 2 首句抛镜子框架问句「这个问题里人的感受/信任/价值观是什么？」，sages 须以非结构语言回应（forced reframing，破集体理智化）；Phase 5a 收口回扣该问句。非阻塞、不占 AskUser 名额、不暂停 Phase（与 #11 反拖延兼容）。近似而非等价原外部 第五方镜子（D26）。源：退役 `sages/collaboration/四核心协作协议.md` §4.7。
 
 ## Host behavior (邹蕴)
 

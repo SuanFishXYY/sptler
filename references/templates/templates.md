@@ -10,8 +10,8 @@
 - **结果 md**（强制）：`sptler-result-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议纪要**（可选）：`sptler-summary-{主题slug}-{YYYYMMDD-HHMM}.md`
 - **会议过程**（可选）：`sptler-transcript-{主题slug}-{YYYYMMDD-HHMM}.md`
-- **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/record_memory.py --batch <该json路径>` 写入圣人记忆；也可直接 `python scripts/record_memory.py --batch -` 从 stdin 读取 JSON（更适合免临时文件）。若 batch 缺 `meeting_id`，脚本会自动生成 `SPTLER-YYYYMMDDHHMMSS`。
-- **会议索引 json**（强制）：写入/更新 `sptler-meetings/index.json`，用 `python scripts/index_meeting.py --batch -` 登记 meeting_id、结果文件、行动项、与会者，供续议读取。
+- **记忆 batch json**（强制）：`sptler-memory-{主题slug}-{YYYYMMDD-HHMM}.json` —— 生成后立即运行 `python scripts/memory/record_memory.py --batch <该json路径>` 写入圣人记忆；也可直接 `python scripts/memory/record_memory.py --batch -` 从 stdin 读取 JSON（更适合免临时文件）。若 batch 缺 `meeting_id`，脚本会自动生成 `SPTLER-YYYYMMDDHHMMSS`。
+- **会议索引 json**（强制）：写入/更新 `sptler-meetings/index.json`，用 `python scripts/output/index_meeting.py --batch -` 登记 meeting_id、结果文件、行动项、与会者，供续议读取。
 - **续议 md**（按类型导出）：解释型默认不导出；行动项/风险复核建议导出 `sptler-followup-*`；修正型必须导出 `sptler-amendment-*`；重投票型必须导出 `sptler-revote-*`。
 - 主题 slug：取议题前 8 个汉字或关键英文词，去标点。
 - 所有文件 UTF-8 编码。
@@ -250,7 +250,7 @@
 
 ## 模板四：记忆 batch json（强制 · 每次议事后生成）
 
-> 议会 Phase 5b 强制生成此 json 并立即运行 `python scripts/record_memory.py --batch <路径>`，把每位与会圣人的经历写入 `memories/<姓名>.json` 并更新其画像。这是圣人积累记忆、随时间成长的唯一途径。
+> 议会 Phase 5b 强制生成此 json 并立即运行 `python scripts/memory/record_memory.py --batch <路径>`，把每位与会圣人的经历写入 `memories/<姓名>.json` 并更新其画像。这是圣人积累记忆、随时间成长的唯一途径。
 
 ```json
 {
@@ -345,8 +345,8 @@
 登记命令：
 
 ```bash
-python scripts/index_meeting.py --batch sptler-index-xxx.json
-# 或：cat sptler-index-xxx.json | python scripts/index_meeting.py --batch -
+python scripts/output/index_meeting.py --batch sptler-index-xxx.json
+# 或：cat sptler-index-xxx.json | python scripts/output/index_meeting.py --batch -
 ```
 
 ---

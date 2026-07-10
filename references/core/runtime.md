@@ -6,10 +6,10 @@
 
 记忆遵循 `references/memory/memory_philosophy.md`。运行时调用：
 
-- **Phase 1 注入**：`python scripts/summon_sage.py --sage <name> --topic "<topic>"` 一次加载灵魂+记忆+关系+相关历史记忆。命中记忆自动 citation+1 回写。
-- **Phase 5b 记录（用户确认后）**：先 AskUser 问是否写入记忆（写入记忆/不留痕）。选"写入记忆"才运行 `python scripts/record_memory.py --batch -`（stdin）或 `--batch <file>`。batch 可带 `supersedes: [旧meeting_id]` 标记推翻旧结论。选"不留痕"则跳过，仅保留结果 md。
-- **Phase 5b 成长**：`python scripts/update_growth.py` 更新 GROWTH.md（双画像+高价值+转折点）。
-- **Phase 5e 索引+关系**：`python scripts/index_meeting.py --batch -` 登记 index.json；`python scripts/build_relations.py` 更新 RELATIONS.json。
+- **Phase 1 注入**：`python scripts/memory/summon_sage.py --sage <name> --topic "<topic>"` 一次加载灵魂+记忆+关系+相关历史记忆。命中记忆自动 citation+1 回写。
+- **Phase 5b 记录（用户确认后）**：先 AskUser 问是否写入记忆（写入记忆/不留痕）。选"写入记忆"才运行 `python scripts/memory/record_memory.py --batch -`（stdin）或 `--batch <file>`。batch 可带 `supersedes: [旧meeting_id]` 标记推翻旧结论。选"不留痕"则跳过，仅保留结果 md。
+- **Phase 5b 成长**：`python scripts/memory/update_growth.py` 更新 GROWTH.md（双画像+高价值+转折点）。
+- **Phase 5e 索引+关系**：`python scripts/output/index_meeting.py --batch -` 登记 index.json；`python scripts/memory/build_relations.py` 更新 RELATIONS.json。
 
 记忆字段（value_score/citation_count/superseded/supersedes/is_turning_point）语义见 memory_philosophy.md。
 
@@ -26,7 +26,7 @@
 议会收口后用户说"展开""重议""行动项3深入""徐奕阳再讲讲""让陆一帆评估数据层"→ 视为续议，不重开全会：
 
 1. 不重走 Phase 0/1（模式选择 + 路由/名单确认）。
-2. 先 `python scripts/continue_meeting.py --last`（或 `--meeting-id`）读上下文，加 `--item N`/`--sage`/`--target`。
+2. 先 `python scripts/output/continue_meeting.py --last`（或 `--meeting-id`）读上下文，加 `--item N`/`--sage`/`--target`。
 3. 判续议类型：解释型/行动项型/风险复核型/修正型/重投票型。
 4. 最小召集（1-3人），读记忆，≤8条 `[姓名]` 输出。
 5. 改变原决议→小范围加权投票+导出 amendment/revote；否则只续议。
@@ -41,6 +41,7 @@
 - Phase 0 模式选择 + 动态判定理由
 - 名单确认 + 邀请（合并） + 会中插队处理
 - Phase 2 强制延迟评判（发现评判立即制止）
+- **元认知兜底（A4 第五方镜子）**：议题核心为人本/伦理/价值观（非技术执行）时，Phase 1 标 meta-cog flag；Phase 2 首句抛镜子框架问句「这个问题里人的感受/信任/价值观是什么？」，sages 须非结构语言回应（forced reframing）；Phase 5a 收口回扣。非阻塞、不占 AskUser 名额、不暂停 Phase。近似而非等价原外部 第五方镜子（D26）。
 - Phase 4a 四律检查
 - Phase 4b 接近/平票裁决（差距≤1.0 或 tie）
 - Phase 5a 收口综合
