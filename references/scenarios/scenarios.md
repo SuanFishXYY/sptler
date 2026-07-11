@@ -1,6 +1,6 @@
 # 专利专属场景流程指引
 
-> sptler 除通用决策外，内置六个专利/IP 高频场景。route_sages 自动识别场景并路由专属圣人、产出专属交付物。
+> sptler 除通用决策外，内置七个专利/IP 高频场景（含专利挖掘）。route_sages 自动识别场景并路由专属圣人、产出专属交付物。
 > **每个场景有专属Phase流程**——不是统一六阶段套所有场景。场景命中时读对应场景的Phase步骤。
 > 场景配置见 `references/scenarios/routing_rules.json` §scenarios。
 

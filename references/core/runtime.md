@@ -41,7 +41,7 @@
 - Phase 0 模式选择 + 动态判定理由
 - 名单确认 + 邀请（合并） + 会中插队处理
 - Phase 2 强制延迟评判（发现评判立即制止）
-- **元认知兜底（A4 第五方镜子）**：议题核心为人本/伦理/价值观（非技术执行）时，Phase 1 标 meta-cog flag；Phase 2 首句抛镜子框架问句「这个问题里人的感受/信任/价值观是什么？」，sages 须非结构语言回应（forced reframing）；Phase 5a 收口回扣。非阻塞、不占 AskUser 名额、不暂停 Phase。近似而非等价原外部 第五方镜子（D26）。
+- **元认知兜底（A4 第五方镜子）**：议题核心为人本/伦理/价值观（非技术执行；专利含创意不触发）时，Phase 1 标 meta-cog flag；Phase 2 首句抛镜子框架问句「这个问题里人的感受/信任/价值观是什么？」，sages 须非结构语言回应（forced reframing）；Phase 5a 收口回扣。非阻塞、不占 AskUser 名额、不暂停 Phase。近似而非等价原外部 第五方镜子（D26）。
 - Phase 4a 四律检查
 - Phase 4b 接近/平票裁决（差距≤1.0 或 tie）
 - Phase 5a 收口综合
@@ -129,5 +129,5 @@ Quick → 1 plan. Complex → 2-3 plans. No negation, only convergence.
 5d-bis. Write deliverable (Template 7/8). Default `sptler-meetings/`; user says "直投" → `deliver_dir`. Register in index.
 5e. `index_meeting.py` + `build_relations.py`.
    **lite (/sptler#) 5e**：`index_meeting.py --lite` 登记 `lite:true`（与 record_memory 的 lite=true、route_sages 的 lite 字段对齐，闭环）。续议时 `continue_meeting.py` 据此走精简续议（≤3人、不重跑四律、零 AskUser）。
-5f. 邹蕴 substantive conclusion (decision + reason + risk). File paths. Action items. `议会到此结束。` STOP.
-5g. **议会自省**（#4 哲学，强制）：收口前邹蕴用 1 句评议会本身——规模是否合适（过大/过小）/圣人是否匹配（有无缺席关键视角）/流程是否过重（verdict 级问题走了 fast 是否浪费）/**本次议会有无圣人立场漂移**（#2 交互：若某圣人发言偏离其核心律，自省点出）。写入结果 md 末尾「议会自省」栏。这是议会的元认知——防议会变机械流程，每次反思自身有效性。lite 模式也须自省（但 1 句，不展开）。
+5g. 邹蕴 substantive conclusion (decision + reason + risk). File paths. Action items. `议会到此结束。` STOP.
+5f. **议会自省**（#4 哲学，强制）：邹蕴用 1 句评议会本身——规模是否合适（过大/过小）/圣人是否匹配（有无缺席关键视角）/流程是否过重（verdict 级问题走了 fast 是否浪费）/**本次议会有无圣人立场漂移**（#2 交互：若某圣人发言偏离其核心律，自省点出）。写入结果 md 末尾「议会自省」栏。这是议会的元认知——防议会变机械流程，每次反思自身有效性。lite 模式也须自省（但 1 句，不展开）。

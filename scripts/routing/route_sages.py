@@ -119,7 +119,7 @@ def score_sage(topic: str, sage: str, ignore_core_bias: bool = False) -> tuple[f
 # 非场景题降级 verdict(1人快速裁决)。避免"能不能申请专利""OA怎么答复""这个方案行不行"这类
 # 快速判断需求被开成全会（代理师反馈"该轻太重"）。注意：靠意图信号而非纯长度，避免误降正式场景题。
 QUICK_SIGNALS = [
-    "行不行", "可不可以", "好不好", "值不值", "该不该", "能不能", "是不是", "对不对", "行吗", "成吗",
+    "行不行", "可不可以", "好不好", "值不值", "能不能", "是不是", "对不对", "行吗", "成吗",
     # how-to 动词：判断/操作类(->verdict/快评)，不含"设计/构建/实现/搭建"等 substantive build(->fast/formal)
     "怎么答复", "怎么处理", "怎么看", "怎么写", "怎么做", "怎么收", "怎么找", "怎么查",
     "怎么挖", "怎么无效", "怎么布局", "怎么选", "怎么改", "怎么答", "怎么回",
@@ -153,9 +153,8 @@ def decide_track(topic: str, track: str = "auto") -> tuple[str, str]:
     if chief_domains >= 2:
         return "formal", "跨多个委员会领域，进入正式轨"
     # ②精度：快速判断型问题(是非/how-to)且非跨多委员会、无战略信号 -> 单圣人裁决(快速判断不开议会)
-    if is_quick_question(topic) and chief_domains <= 1:
+    if is_quick_question(topic) and chief_domains <= 1 and medium_markers < 2:
         return "verdict", "快速判断型问题(是非/how-to)，单圣人裁决"
-    medium_markers = sum(k in t for k in MEDIUM_MARKERS)
     if medium_markers >= 2:
         return "fast", "中等复杂但未触发正式轨，先走快速轨"
     # 单一明确、单领域、无战略信号 → 单圣人裁决（最轻量，3 句话出结论）
