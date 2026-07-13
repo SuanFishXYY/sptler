@@ -420,7 +420,7 @@ python scripts/output/index_meeting.py --batch sptler-index-xxx.json
 ## 模板七：交付物（按议题类型产出，议会是手段，交付物是目的）
 
 > 议会不应只产出"关于会议的文档"，而应直接产出用户本来就要写的交付物。
-> Phase 5 根据议题类型选择一种交付物，写入 `sptler-meetings/` 并告知路径。结果 md 仍强制导出作为决策记录。
+> Phase 5 根据议题类型选择一种交付物，按 `routing_rules.json` 的 `deliver_dir` 写入（场景类多入 `patents/*`，挖掘/通用入 `sptler-meetings/`；用户说"直投"用 `deliver_dir`）并告知路径。结果 md 仍强制导出作为决策记录。
 
 ### 交付物类型判定
 
@@ -514,7 +514,7 @@ python scripts/output/index_meeting.py --batch sptler-index-xxx.json
 
 ## 模板八：专利专属场景交付物
 
-> 三个专利/IP 高频场景的专属交付物。route_sages 识别场景后，Phase 5d-bis 按场景产出对应交付物。
+> 六个专利/IP 高频场景的专属交付物（8-A..8-F）。route_sages 识别场景后，Phase 5d-bis 按场景产出对应交付物。
 
 ### 8-A. 查新检索报告（deliverable-search）
 
@@ -565,7 +565,7 @@ python scripts/output/index_meeting.py --batch sptler-index-xxx.json
 ### 关键词路 NOT 表达式
 ### 语义路负面示例
 
-## 九、完备性自检（36条）
+## 九、完备性自检（27条）
 
 ## 十、对比文件清单（用户提供/下游回填）
 | 序号 | 对比文件 | 公开日 | 覆盖子特征 | 相关度评分 |
@@ -795,9 +795,10 @@ python scripts/output/index_meeting.py --batch sptler-index-xxx.json
 | 我方主张 | 对方可能抗辩 | 我方反驳 |
 |---|---|---|
 
-## 九、完备性自检（36条）
+## 九、完备性自检（27条）
 
 ## 十、检索日志 + 下游反馈
+```
 
 ## 模板九：lite 结果 md（/sptler# 精简模式 · 强制）
 
