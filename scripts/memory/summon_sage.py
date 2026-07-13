@@ -81,14 +81,19 @@ def relevant_experiences(mem, topic, limit=3, resume=False):
     scored.sort(key=lambda x: x[0], reverse=True)
     return [(e, sc, d) for sc, d, e in scored[:limit]]
 
-def bump_citations(mem, mem_file, hits):
-    """命中记忆 citation_count += 1，重算 value_score，回写。"""
+def bump_citations(mem, mem_file, hits, cite_key=None):
+    """命中记忆 citation_count += 1，重算 value_score，回写。cite_key(meeting_id)给定时幂等：同 key 不重复计。"""
     if not hits or not mem_file:
         return
     changed = False
     hit_ids = {id(e) for e, _, _ in hits}
     for e in mem.get('experiences',[]) or []:
         if id(e) in hit_ids and not e.get('superseded'):
+            cited_by = e.setdefault('cited_by', [])
+            if cite_key and cite_key in cited_by:
+                continue  # 幂等：该 meeting 已计过引用，跳过
+            if cite_key:
+                cited_by.append(cite_key)
             e['citation_count'] = int(e.get('citation_count',0)) + 1
             passed = 1 if e.get('verdict')=='通过' else 0
             e['value_score'] = passed * (int(e['citation_count']) + 1)

@@ -196,7 +196,9 @@ def update_profile(profile: dict, exp: dict, lite: bool = False):
         return
     total = sum(profile["stances"].values()) or 1
     oppose_rate = profile["stances"]["反对"] / total
-    if oppose_rate >= 0.4:
+    if total < 5:
+        profile["risk_tendency"] = "平衡中立"  # small-N 守卫：不足5次正式立场不下底色判断（防2次会议翻底色）
+    elif oppose_rate >= 0.4:
         profile["risk_tendency"] = "审慎保守"
     elif oppose_rate <= 0.15 and profile["stances"]["赞成"] >= 3:
         profile["risk_tendency"] = "积极进取"
@@ -223,14 +225,17 @@ def _init_value_fields(exp: dict):
 
 
 def _apply_supersedes(mem: dict, supersedes: list):
-    """新经历声明推翻了哪些旧 meeting_id：标记旧为 superseded+转折点。"""
+    """新经历声明推翻了哪些旧 meeting_id：标记旧为 superseded+转折点。返回实际匹配数。"""
     if not supersedes:
-        return
+        return 0
     sup_set = {str(s) for s in supersedes}
+    matched = 0
     for e in mem.get("experiences", []):
         if str(e.get("meeting_id", "")) in sup_set and not e.get("superseded"):
             e["superseded"] = True
             e["is_turning_point"] = True
+            matched += 1
+    return matched
 
 
 def _compute_profile_recent(mem: dict, window: int = 30) -> dict:
@@ -260,8 +265,9 @@ def record_one(sage: str, exp: dict, verbose: bool = True, lite: bool = False) -
     # 哲学宪法：先处理 supersedes（标记旧记忆为转折点），再初始化新经历价值字段
     supersedes = exp.get("supersedes") or []
     if supersedes:
-        _apply_supersedes(mem, supersedes)
-        exp["is_turning_point"] = True  # 推翻者也标记为转折点
+        matched = _apply_supersedes(mem, supersedes)
+        if matched:  # 仅当真推翻了旧记忆才标转折点（防空匹配误标 + GROWTH 误渲染"推翻旧"）
+            exp["is_turning_point"] = True
     _init_value_fields(exp)
     mem["experiences"].append(exp)
     update_profile(mem["profile"], exp, lite=lite)
