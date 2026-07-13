@@ -152,12 +152,14 @@ def update_profile(profile: dict, exp: dict, lite: bool = False):
     profile.setdefault("domains", {})
     profile["domains"][domain] = profile["domains"].get(domain, 0) + 1
 
-    stance = exp.get("stance") or "弃权"
-    profile.setdefault("stances", {})
-    for k in ("赞成", "反对", "弃权"):
-        profile["stances"].setdefault(k, 0)
-    if stance in profile["stances"]:
-        profile["stances"][stance] += 1
+    # lite 不计入正式立场（防 lite 快调污染 risk_tendency 底色）；仅正式会议计立场
+    if not lite:
+        stance = exp.get("stance") or "弃权"
+        profile.setdefault("stances", {})
+        for k in ("赞成", "反对", "弃权"):
+            profile["stances"].setdefault(k, 0)
+        if stance in profile["stances"]:
+            profile["stances"][stance] += 1
 
     verdict = exp.get("verdict") or ""
     profile.setdefault("verdicts", {})
@@ -188,7 +190,7 @@ def update_profile(profile: dict, exp: dict, lite: bool = False):
     profile["frequent_views"] = freq[:12]
 
     # 风险偏好：反对率越高越偏保守/审慎
-    # lite 会议是"快判断"而非"立场转变"——计入次数/立场计数，但不重算风险画像，
+    # lite 会议是"快判断"而非"立场转变"——计入次数但不计入正式立场，不重算风险画像，
     # 防止一次 lite 快调翻转圣人长期底色（如 3 次 lite 反对就把审慎底色染成保守）。
     if lite:
         return
@@ -249,6 +251,12 @@ def record_one(sage: str, exp: dict, verbose: bool = True, lite: bool = False) -
     exp["recorded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
     if lite:
         exp["lite"] = True  # 标记：lite 快调，供 summon/read_memory 区分（不污染正式画像底色）
+    # 幂等：同一 meeting_id 不重复记录（防 re-index/re-batch 产生重复 exp，污染计数/引用/画像）
+    mid = exp.get("meeting_id")
+    if mid and any(e.get("meeting_id") == mid for e in mem.get("experiences", [])):
+        if verbose:
+            print(f"⏭️  {sage}：meeting_id={mid} 已记录，跳过（幂等）")
+        return {"sage": sage, "action": "skip-duplicate", "meeting_id": mid}
     # 哲学宪法：先处理 supersedes（标记旧记忆为转折点），再初始化新经历价值字段
     supersedes = exp.get("supersedes") or []
     if supersedes:

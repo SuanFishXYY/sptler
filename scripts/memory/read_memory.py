@@ -79,7 +79,7 @@ def summarize(mem, recent: int = 0) -> dict:
         "last_updated": prof.get("last_updated", ""),
     }
     if recent and recent > 0:
-        summary["recent_experiences"] = exps[-recent:]
+        summary["recent_experiences"] = [e for e in exps if not e.get("superseded")][-recent:]
     return summary
 
 

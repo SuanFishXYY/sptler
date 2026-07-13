@@ -133,7 +133,7 @@ def memory_summary(sage, mem_dir=None):
         'total_meetings': prof.get('total_meetings',0),
         'profile_longterm': profile_block(prof),
         'profile_recent': profile_block(prof_recent) or profile_block(prof),
-        'recent': (mem.get('experiences',[]) or [])[-3:],
+        'recent': [e for e in (mem.get('experiences',[]) or []) if not e.get('superseded')][-3:],
         'relevant': [],
         'turning_points': [],
         '_mem': mem,
