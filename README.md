@@ -1,5 +1,7 @@
 # 🏛️ 算鱼真人议会 · sptler
 
+<p align="center"><img src="banner.svg" alt="算鱼真人议会 · sptler · 28 位圣人加权议会" width="840"></p>
+
 > **先立骨，再铸模；以界为器，以值为尺。**
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
