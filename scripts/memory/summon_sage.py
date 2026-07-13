@@ -8,7 +8,7 @@
 - 输出双画像（长期 profile + 短期 profile_recent），圣人能表达"骨子 vs 近况"
 - superseded 记忆不引用，但提示"曾主张 X 后改 Y"（转折点可见但不污染）
 """
-import argparse, json, re, sys
+import argparse, json, os, re, sys
 from pathlib import Path
 from datetime import datetime
 if hasattr(sys.stdout,'reconfigure'):
@@ -100,7 +100,9 @@ def bump_citations(mem, mem_file, hits, cite_key=None):
             changed = True
     if changed:
         try:
-            mem_file.write_text(json.dumps(mem, ensure_ascii=False, indent=2), encoding='utf-8')
+            _tmp = mem_file.with_suffix(mem_file.suffix + '.tmp')
+            _tmp.write_text(json.dumps(mem, ensure_ascii=False, indent=2), encoding='utf-8')
+            os.replace(_tmp, mem_file)  # 原子写：防 citation 回写中途损坏记忆文件
         except Exception:
             pass
 

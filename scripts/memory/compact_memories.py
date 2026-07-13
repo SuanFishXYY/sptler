@@ -13,6 +13,7 @@
 """
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -109,7 +110,9 @@ def compact_file(path: Path, keep: int, dry_run: bool = False) -> tuple[bool, st
     data["archive_summary"] = summary
     data["experiences"] = recent
     if not dry_run:
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        _tmp = path.with_suffix(path.suffix + ".tmp")
+        _tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(_tmp, path)  # 原子写：防 compact 回写中途损坏记忆文件
     return True, f"{path.stem}: {len(exps)} → {len(recent)}（留老价值{kept_old}/归档{archived}/删琐事{deleted}）"
 
 

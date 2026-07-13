@@ -22,6 +22,7 @@
 """
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -275,9 +276,10 @@ def record_one(sage: str, exp: dict, verbose: bool = True, lite: bool = False) -
     # 保留上次 profile_recent——一次 lite 快调不值得重算近况画像。
     if not lite:
         mem["profile_recent"] = _compute_profile_recent(mem, window=30)
-    memory_path(sage).write_text(
-        json.dumps(mem, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    _p = memory_path(sage)
+    _tmp = _p.with_suffix(_p.suffix + ".tmp")
+    _tmp.write_text(json.dumps(mem, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(_tmp, _p)  # 原子写：防 crash 中途损坏整个记忆文件（数据丢失）
     if verbose:
         flags = []
         if exp.get("is_turning_point"):
